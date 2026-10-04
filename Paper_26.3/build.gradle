@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+}
+
+group = project.group
+version = project.version
+
+base {
+    archivesName = 'CutCleanReborn-Paper'
+}
+
+repositories {
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly("io.papermc.paper:paper-api:${project.paper_version}")
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+def devServerDir = layout.projectDirectory.dir('dev-server')
+def paperJar = devServerDir.file('paper-26.3.jar')
+
+tasks.register('downloadPaperServer') {
+    outputs.file(paperJar)
+    // Paper publishes frequent security and bug-fix builds for the same game version.
+    // Always refresh the isolated development server rather than retaining a stale JAR.
+    outputs.upToDateWhen { false }
+    doLast {
+        def target = paperJar.asFile
+        target.parentFile.mkdirs()
+        def metadataConnection = new URL('https://fill.papermc.io/v3/projects/paper/versions/26.3/builds/latest').openConnection()
+        metadataConnection.setRequestProperty('User-Agent', 'CutCleanReborn-Dev/0.1.0')
+        def metadata = new groovy.json.JsonSlurper().parse(metadataConnection.inputStream)
+        def downloadUrl = metadata.downloads['server:default'].url
+        new URL(downloadUrl).withInputStream { input -> target.withOutputStream { output -> output << input } }
+    }
+}
+
+tasks.register('preparePaperServer', Copy) {
+    dependsOn tasks.named('jar'), tasks.named('downloadPaperServer')
+    from(tasks.named('jar'))
+    into(devServerDir.dir('plugins'))
+    doLast {
+        def eula = devServerDir.file('eula.txt').asFile
+        if (!eula.exists()) {
+            eula.text = 'eula=true\n'
+        }
+    }
+}
+
+tasks.register('runServer', JavaExec) {
+    group = 'application'
+    description = 'Builds the plugin and starts an isolated local Paper 26.3 server.'
+    dependsOn tasks.named('preparePaperServer')
+    workingDir(devServerDir)
+    classpath(files(paperJar))
+    mainClass = 'io.papermc.paperclip.Main'
+    standardInput = System.in
+}

@@ -1,0 +1,27 @@
+{
+  "feature": "cutcleanreborn:legacy_debug_yellow_hotspot_wool_vein",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 3
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:height_range",
+      "height": {
+        "type": "minecraft:uniform",
+        "min_inclusive": {
+          "absolute": 7
+        },
+        "max_inclusive": {
+          "absolute": 18
+        }
+      }
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

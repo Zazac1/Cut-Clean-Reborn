@@ -1,0 +1,27 @@
+# Gradle and IDE state
+.gradle/
+**/.gradle/
+.idea/
+.vscode/
+*.iml
+
+# Build products
+build/
+**/build/
+
+# Local Minecraft/Paper development data, worlds and logs
+dev-server/
+**/dev-server/
+run/
+**/run/
+run-client/
+**/run-client/
+run-server/
+**/run-server/
+logs/
+*.log
+
+# Local environment files
+eula.txt
+usercache.json
+session.lock

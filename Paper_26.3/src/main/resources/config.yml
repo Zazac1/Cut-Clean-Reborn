@@ -1,0 +1,84 @@
+# Legacy global animal settings are preserved for existing servers. New per-mob
+# settings are written below `mobs` by the /ccr config interface.
+animal-drops:
+  # Raw meat and fish become cooked.
+  cook: true
+  # Final animal-drop quantity (1 to 5).
+  multiplier: 1
+  # Extra XP dropped on every animal death (0 to 50).
+  xp-bonus: 0
+  # At this distance from the killer, drops go directly into their inventory (0 to 32).
+  collection-range: 0
+  # Per-animal custom drops are added here from the submenu.
+  # Example: COW: DIAMOND
+  item-overrides: {}
+
+# Per-mob configuration is created on demand. Example:
+# mobs:
+#   ZOMBIE:
+#     xp-bonus: 5
+#     cooked-food: false
+#     # Entries here replace matching vanilla drops when they have been edited.
+#     vanilla-overrides: []
+#     drops:
+#       - item: minecraft:iron_ingot
+#         minimum: 1
+#         maximum: 2
+#         chance: 4.5
+mobs: {}
+
+# Ore settings are created in-game. Each block variant can override its vanilla
+# loot-table result and can receive extra drops.
+ore-drops:
+  # Smelts compatible vanilla ore drops and releases the furnace XP on the ground.
+  auto-smelt: false
+  # Fortune affects edited vanilla entries by default; extra drops are opt-in.
+  fortune-vanilla: true
+  fortune-custom: false
+
+mob-drops:
+  # Looting affects edited vanilla entries by default; extra drops are opt-in.
+  looting-vanilla: true
+  looting-custom: false
+
+tree-cutter:
+  enabled: true
+  hand: false
+  axes: {}
+  break-leaves: false
+  sneak-only: false
+  break-time:
+    enabled: false
+    # Additional time for the remaining logs, relative to normal breaking time.
+    percent: 100.0
+
+# Per-player preference and material mappings are created in-game.
+clean-stacks:
+  players: {}
+  wood: {}
+  stone: {}
+
+better-sugar-cane:
+  enabled: false
+  player:
+    enabled: true
+    chance: 100.0
+    minimum: 1
+    maximum: 3
+
+game-rules:
+  stuff-rules:
+    enabled: false
+    unique-mace:
+      enabled: false
+      exists: false
+    armor-rules: []
+    enchantment-caps: []
+
+# Automatic enchantments are configured in-game. Each processed ItemStack gets
+# a persistent CCR UUID marker, so it is never automatically changed again.
+automatic-enchantments:
+  enabled: true
+  refresh-version: 0
+  armor: {}
+  tools: {}

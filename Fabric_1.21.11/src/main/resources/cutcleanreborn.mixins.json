@@ -1,0 +1,21 @@
+{
+	"required": true,
+	"package": "fr.isaac.cutcleanreborn.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"LivingEntityDropMixin",
+		"CraftingResultSlotMixin",
+		"BlockDropStackMixin",
+		"AnimalExtraDropMixin"
+		,"ChunkGeneratorMixin"
+	],
+	"client": [
+		"CreateWorldScreenMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

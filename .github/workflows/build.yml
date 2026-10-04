@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Fabric 1.21.11
+            directory: Fabric_1.21.11
+            java: '21'
+          - platform: Paper 26.3
+            directory: Paper_26.3
+            java: '25'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Build
+        working-directory: ${{ matrix.directory }}
+        run: ./gradlew build
