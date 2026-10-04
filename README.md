@@ -1,4 +1,4 @@
-# CutClean Reborn
+# Cut Clean Reborn
 
 CutClean Reborn is a Minecraft UHC/gameplay-rules project maintained per platform and game version.
 
