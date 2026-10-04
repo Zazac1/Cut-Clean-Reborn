@@ -1,0 +1,11 @@
+.gradle/
+build/
+dev-server/
+logs/
+*.log
+.idea/
+.vscode/
+*.iml
+eula.txt
+usercache.json
+session.lock
