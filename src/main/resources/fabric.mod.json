@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "cutcleanreborn",
+	"version": "${version}",
+	"name": "CutCleanReborn",
+	"description": "Mod UHC CutClean orienté server-side, compatible solo et multijoueur.",
+	"authors": [
+		"Isaac"
+	],
+	"contact": {
+		"homepage": "https://github.com/isaac/CutCleanReborn",
+		"sources": "https://github.com/isaac/CutCleanReborn"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/cutcleanreborn/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"fr.isaac.cutcleanreborn.CutCleanRebornMod"
+		],
+		"modmenu": [
+			"fr.isaac.cutcleanreborn.client.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"cutcleanreborn.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}
