@@ -2,7 +2,8 @@
 param(
     [ValidateSet('Plan', 'Local', 'Publish')]
     [string]$Mode = 'Plan',
-    [string[]]$Project
+    [Alias('Project')]
+    [string[]]$OnlyProject
 )
 
 Set-StrictMode -Version Latest
@@ -43,9 +44,9 @@ try {
     $specs=@{}
     foreach ($property in $manifest.projects.PSObject.Properties) { $specs[$property.Name]=$property.Value }
     $projects=@($specs.Keys | Where-Object { $specs[$_].enabled } | Sort-Object)
-    if ($Project) {
-        foreach ($requested in $Project) { if ($requested -notin $projects) { throw "Projet non valide/exportable : $requested" } }
-        $projects=@($projects | Where-Object { $_ -in $Project })
+    if ($OnlyProject) {
+        foreach ($requested in $OnlyProject) { if ($requested -notin $projects) { throw "Projet non valide/exportable : $requested" } }
+        $projects=@($projects | Where-Object { $_ -in $OnlyProject })
     }
     if ($projects.Count -eq 0) { throw 'Aucun projet valide/exportable enregistre dans main' }
 
@@ -61,7 +62,8 @@ try {
     foreach ($project in $projects) {
         $spec=$specs[$project]
         $branch=[string]$spec.branch
-        if ($project -notmatch '^(Paper|Purpur|Spigot|Bukkit|Fabric)_(\d[\w.]*)$' -or $branch -ne "$($Matches[1].ToLowerInvariant())/$($Matches[2])") { throw 'Nom de branche incoherent avec le projet' }
+        $nameMatch=[regex]::Match($project, '^(Paper|Purpur|Spigot|Bukkit|Fabric)_(\d[\w.]*)$')
+        if (-not $nameMatch.Success -or $branch -ne "$($nameMatch.Groups[1].Value.ToLowerInvariant())/$($nameMatch.Groups[2].Value)") { throw 'Nom de branche incoherent avec le projet' }
         Invoke-Git @('check-ref-format',"refs/heads/$branch") | Out-Null
         if ($branch -in $checkedOut) { throw "La branche $branch est ouverte dans un checkout ; terminer ce travail avant de la synchroniser." }
         Invoke-Git @('cat-file','-e',"${source}:${project}/build.gradle") | Out-Null
