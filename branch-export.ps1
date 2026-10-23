@@ -13,9 +13,26 @@ function Write-ExportTree([hashtable]$Entries) {
         $entry=$Entries[$_]
         "$($entry.Mode) $($entry.Type) $($entry.Object)`t$($entry.Name)"
     })
-    $result = $records | & git mktree
-    if ($LASTEXITCODE -ne 0) { throw 'Failed to compose a standalone export tree' }
-    return ($result -join '')
+    # Windows PowerShell's native pipeline writes CRLF; mktree treats CR as part
+    # of the filename. Send explicitly LF-terminated UTF-8 records instead.
+    $start=[System.Diagnostics.ProcessStartInfo]::new('git','mktree')
+    $start.WorkingDirectory=$PSScriptRoot
+    $start.UseShellExecute=$false
+    $start.CreateNoWindow=$true
+    $start.RedirectStandardInput=$true
+    $start.RedirectStandardOutput=$true
+    $start.RedirectStandardError=$true
+    $start.StandardInputEncoding=[Text.UTF8Encoding]::new($false)
+    $process=[System.Diagnostics.Process]::Start($start)
+    try {
+        if ($records.Count -gt 0) { $process.StandardInput.Write(($records -join "`n") + "`n") }
+        $process.StandardInput.Close()
+        $result=$process.StandardOutput.ReadToEnd().Trim()
+        $failure=$process.StandardError.ReadToEnd()
+        $process.WaitForExit()
+        if ($process.ExitCode -ne 0 -or $result -notmatch '^[0-9a-f]{40,64}$') { throw "Failed to compose a standalone export tree: $failure" }
+        return $result
+    } finally { $process.Dispose() }
 }
 
 function Set-ExportEntry([hashtable]$Entries, [string[]]$Parts, [object]$Entry) {
