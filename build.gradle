@@ -1,0 +1,208 @@
+plugins {
+    id 'fabric-loom' version '1.17.13'
+}
+version = project.mod_version
+group = project.maven_group
+base { archivesName = 'cutcleanreborn' }
+repositories { mavenCentral() }
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation include('org.yaml:snakeyaml:2.5')
+    testImplementation platform('org.junit:junit-bom:5.14.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach { options.release = 21; options.encoding = 'UTF-8' }
+processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand version: project.version } }
+tasks.named('jar') { archiveVersion = "${project.version}+${project.minecraft_version}"; from('LICENSE') }
+tasks.named('remapJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
+tasks.named('sourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
+tasks.named('remapSourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
+test { useJUnitPlatform() }
+
+def requireQaEula = {
+    def agreement = file('src/qa/fixtures/eula.txt')
+    if (!agreement.isFile() || !agreement.readLines('UTF-8').any { it.trim().equalsIgnoreCase('eula=true') }) {
+        throw new GradleException('QA EULA not accepted locally. Read https://www.minecraft.net/eula then, only if you agree, create src/qa/fixtures/eula.txt with eula=true. This local file is intentionally not committed.')
+    }
+}
+sourceSets {
+    qa {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+loom {
+    mods {
+        cutcleanreborn { sourceSet sourceSets.main }
+        ccrverification { sourceSet sourceSets.qa }
+    }
+    runs {
+        server { source sourceSets.main; runDir = 'run-server'; programArg 'nogui' }
+        smokeServer { server(); source sourceSets.qa; runDir = 'build/smoke-server/development'; programArg 'nogui'; vmArg '-Dccr.qa=true' }
+        client { runDir = 'build/dev-client' }
+    }
+}
+tasks.register('prepareSmokeServer', Copy) {
+    from('src/qa/fixtures')
+    from('src/main/resources/config.yml') { into 'config/cutcleanreborn' }
+    into layout.buildDirectory.dir('smoke-server/development')
+    outputs.upToDateWhen { false }
+    doFirst { requireQaEula(); delete layout.buildDirectory.file('smoke-server/development/ccr-qa-result.json') }
+}
+tasks.named('runSmokeServer') { dependsOn tasks.named('qaClasses'), tasks.named('prepareSmokeServer'); timeout = java.time.Duration.ofMinutes(5) }
+tasks.register('smokeTest') {
+    group = 'verification'
+    dependsOn tasks.named('runSmokeServer')
+    doLast {
+        def reportFile = layout.buildDirectory.file('smoke-server/development/ccr-qa-result.json').get().asFile
+        if (!reportFile.isFile()) throw new GradleException('Fabric native verification did not produce a report')
+        def report = new groovy.json.JsonSlurper().parse(reportFile)
+        if (report.counts.failed != 0) throw new GradleException("Fabric native verification failed: ${report.failed}")
+        logger.lifecycle("Fabric native verification: ${report.counts.passed} checks passed")
+    }
+}
+tasks.register('qaJar', Jar) {
+    dependsOn tasks.named('qaClasses')
+    from sourceSets.qa.output
+    archiveBaseName = 'ccrverification'
+    archiveVersion = "1.0.0+${project.minecraft_version}"
+    archiveClassifier = 'dev'
+}
+tasks.register('remapQaJar', net.fabricmc.loom.task.RemapJarTask) {
+    dependsOn tasks.named('qaJar')
+    inputFile = tasks.named('qaJar', Jar).flatMap { it.archiveFile }
+    archiveBaseName = 'ccrverification'
+    archiveVersion = "1.0.0+${project.minecraft_version}"
+    archiveClassifier = ''
+}
+def productionDirectory = layout.buildDirectory.dir('smoke-server/production')
+def serverLauncher = productionDirectory.map { it.file('fabric-server-launch.jar') }
+tasks.register('downloadProductionServer') {
+    outputs.file serverLauncher
+    doLast {
+        def target = serverLauncher.get().asFile
+        target.parentFile.mkdirs()
+        def url = "https://meta.fabricmc.net/v2/versions/loader/${project.minecraft_version}/${project.loader_version}/1.1.2/server/jar"
+        new URI(url).toURL().withInputStream { source -> target.withOutputStream { output -> output << source } }
+    }
+}
+tasks.register('prepareProductionServer', Copy) {
+    dependsOn tasks.named('remapJar'), tasks.named('remapQaJar'), tasks.named('downloadProductionServer')
+    from('src/qa/fixtures')
+    from('src/main/resources/config.yml') { into 'config/cutcleanreborn' }
+    into productionDirectory
+    outputs.upToDateWhen { false }
+    doFirst { requireQaEula(); delete productionDirectory.get().file('ccr-qa-result.json') }
+    doLast {
+        copy {
+            from tasks.named('remapJar').flatMap { it.archiveFile }
+            from tasks.named('remapQaJar').flatMap { it.archiveFile }
+            from configurations.modImplementation.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.group == 'net.fabricmc.fabric-api' && it.name == 'fabric-api' }.file
+            into productionDirectory.get().dir('mods')
+        }
+    }
+}
+tasks.register('productionSmokeTest', Exec) {
+    group = 'verification'
+    dependsOn tasks.named('prepareProductionServer')
+    workingDir productionDirectory
+    timeout = java.time.Duration.ofMinutes(5)
+    doFirst {
+        executable = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }.get().executablePath.asFile.absolutePath
+        args '-Xms256M', '-Xmx1536M', '-Dccr.qa=true', '-jar', 'fabric-server-launch.jar', 'nogui'
+    }
+    doLast {
+        def reportFile = productionDirectory.get().file('ccr-qa-result.json').asFile
+        if (!reportFile.isFile()) throw new GradleException('Remapped Fabric JAR produced no native report')
+        def report = new groovy.json.JsonSlurper().parse(reportFile)
+        if (report.counts.failed != 0) throw new GradleException("Production Fabric verification failed: ${report.failed}")
+        logger.lifecycle("Production Fabric JAR: ${report.counts.passed} checks passed")
+    }
+}
+
+def persistenceDirectory = layout.buildDirectory.dir('smoke-server/persistence')
+
+tasks.register('prepareColdPersistenceServer', Copy) {
+    dependsOn tasks.named('prepareProductionServer')
+    from('src/qa/fixtures')
+    from('src/main/resources/config.yml') { into 'config/cutcleanreborn' }
+    from(serverLauncher)
+    from(productionDirectory) { include 'libraries/**', 'versions/**', 'server.jar', 'fabric-server-launcher.properties' }
+    into persistenceDirectory
+    filesMatching('server.properties') { filter { line -> line == 'server-port=25594' ? 'server-port=25595' : line } }
+    outputs.upToDateWhen { false }
+    doFirst {
+        ['write','read','reread'].each { stage -> delete persistenceDirectory.get().file("cold-${stage}.json") }
+        delete persistenceDirectory.get().file('ccr-persistence-expect.json')
+        delete persistenceDirectory.get().file('ccr-persistence-result.json')
+    }
+    doLast {
+        copy {
+            from tasks.named('remapJar').flatMap { it.archiveFile }
+            from tasks.named('remapQaJar').flatMap { it.archiveFile }
+            from configurations.modImplementation.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.group == 'net.fabricmc.fabric-api' && it.name == 'fabric-api' }.file
+            into persistenceDirectory.get().dir('mods')
+        }
+    }
+}
+
+(1..3).each { phase ->
+    def stage = phase == 1 ? 'write' : phase == 2 ? 'read' : 'reread'
+    tasks.register("coldPersistencePhase${phase}", Exec) {
+        group = 'verification'
+        dependsOn tasks.named(phase == 1 ? 'prepareColdPersistenceServer' : "coldPersistencePhase${phase - 1}")
+        workingDir persistenceDirectory
+        timeout = java.time.Duration.ofMinutes(5)
+        doFirst {
+            executable = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }.get().executablePath.asFile.absolutePath
+            args '-Xms256M', '-Xmx1024M', "-Dccr.persistence.phase=${phase}", '-jar', 'fabric-server-launch.jar', 'nogui'
+            def logFile = persistenceDirectory.get().file("phase-${stage}.log").asFile
+            logFile.parentFile.mkdirs()
+            standardOutput = new FileOutputStream(logFile)
+            errorOutput = standardOutput
+        }
+        doLast {
+            standardOutput.close()
+            def reportFile = persistenceDirectory.get().file("cold-${stage}.json").asFile
+            if (!reportFile.isFile()) throw new GradleException("Cold persistence phase ${phase}: missing report")
+            def report = new groovy.json.JsonSlurper().parse(reportFile)
+            def logFile = persistenceDirectory.get().file("phase-${stage}.log").asFile
+            def logText = logFile.getText('UTF-8')
+            if (!['Stopping server', 'Saving worlds', 'Saving chunks'].every { logText.contains(it) }) throw new GradleException("Cold persistence ${stage}: missing clean save/shutdown evidence")
+            report.cleanShutdown = true
+            report.logFile = logFile.name
+            reportFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(report))
+            if (report.counts.failed != 0) throw new GradleException("Cold persistence phase ${phase} failed: ${report.failed}")
+            logger.lifecycle("Fabric cold persistence ${stage}: ${report.counts.passed} checks passed (PID ${report.processId})")
+        }
+    }
+}
+
+tasks.register('coldPersistenceTest') {
+    group = 'verification'
+    dependsOn tasks.named('coldPersistencePhase3')
+    doLast {
+        def reports = ['write','read','reread'].collect { stage -> new groovy.json.JsonSlurper().parse(persistenceDirectory.get().file("cold-${stage}.json").asFile) }
+        if (reports.collect { it.processId }.toSet().size() != 3) throw new GradleException('Cold persistence needs three distinct production JVMs')
+        if (reports.collect { it.worldNonce }.toSet().size() != 1 || !reports.first().worldNonce) throw new GradleException('Cold persistence world nonce changed across processes')
+        def result = [schemaVersion: 1, platform: 'Fabric', minecraft: project.minecraft_version,
+            processIds: reports.collect { it.processId }, worldNonce: reports.first().worldNonce,
+            counts: [passed: reports.sum { it.counts.passed }, failed: reports.sum { it.counts.failed }],
+            stages: reports, realPlayerVisual: false]
+        persistenceDirectory.get().file('ccr-persistence-result.json').asFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result))
+        logger.lifecycle("Fabric cold persistence: ${reports.sum { it.counts.passed }} checks passed across three cold JVMs")
+    }
+}
+
+tasks.register('productionPersistenceTest') {
+    group = 'verification'
+    dependsOn tasks.named('coldPersistenceTest')
+}

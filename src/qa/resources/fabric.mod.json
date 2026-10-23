@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"ccrverification","version":"1.0.0","name":"CCR native verification (development only)","environment":"server","entrypoints":{"main":["fr.isaac.cutcleanreborn.fabric.NativeChecks","fr.isaac.cutcleanreborn.fabric.ColdPersistenceChecks"]},"depends":{"cutcleanreborn":"*","fabric-api":"*"}}
