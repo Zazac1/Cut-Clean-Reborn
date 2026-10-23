@@ -9,6 +9,8 @@
 build/
 **/build/
 validation/results/
+dist/
+tools/buildtools/
 
 # Local Minecraft/Paper development data, worlds and logs
 dev-server/
@@ -26,3 +28,4 @@ logs/
 eula.txt
 usercache.json
 session.lock
+validation/client-server/player.local.json

@@ -1,7 +1,7 @@
 # CutClean Reborn
 
-Server-side UHC and quality-of-life rules for Paper 26.2 and 26.3, using Java 25.
-Players connect with a normal Minecraft client.
+UHC and quality-of-life rules for Minecraft. The multiplatform port is in progress: Paper and Purpur are automatically verified on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
+Spigot, CraftBukkit and Fabric (including single-player) are being adapted; a source folder alone is not a compatibility claim. See [the porting status](porting/README.md) for actual evidence and remaining checks. Paper/Purpur players connect with a normal matching Minecraft client.
 
 ## Features
 
@@ -62,7 +62,7 @@ Existing `config.yml` paths and item UUID markers remain supported. No existing 
 
 ## Repository layout and development
 
-The repository follows the same layout as CustomRecipies: one self-contained project per loader and Minecraft version.
+The repository follows the same layout as CustomRecipies: one module per loader and Minecraft version. Version branches materialize shared source dependencies and remain independently buildable.
 
 ```text
 CutCleanReborn/
@@ -79,30 +79,34 @@ CutCleanReborn/
 │   ├── LICENSE
 │   └── README.md
 ├── Paper_26.3/             # Same structure, independently buildable
+├── Paper_1.21.1/, Paper_1.21.11/, Paper_26.1.x/
+├── Purpur_<Minecraft>/    # Shares the matching Paper sources in main
+├── Spigot_<Minecraft>/, Bukkit_<Minecraft>/, Fabric_<Minecraft>/ # Ports in progress
+├── build-logic/           # Shared platform-specific builds
+├── porting/               # Status, platform notes and verified artifact collector
 ├── validation/            # Cross-version runner and manual test checklist
-├── test-all.ps1            # Default: complete validation of both Paper projects
+├── test-all.ps1            # Default: full native validation of Paper and Purpur
 ├── Modrinth/               # Existing artwork and model files
 └── README.md
 ```
 
-Each Paper directory can be built on its own without a sibling source folder. Both currently contain the same gameplay implementation; the common validation runner checks for unintended differences in sources, defaults and tests.
+Each Paper directory can be built on its own without a sibling source folder. The five variants contain the same gameplay implementation apart from documented equivalent API calls; the common validation runner checks for unintended differences in sources, defaults and tests. Purpur reuses those exact sources and tests against the actual Purpur runtime, not a renamed Paper server.
 `gradle.properties` and `src/main/resources/plugin.yml` identify the target Minecraft/Paper version.
-The existing Git history remains at the repository root. No nested repositories or new loader ports were created.
-The former Fabric implementation is currently removed from the working tree; it remains in Git history and its historical version branch.
+The Git repository remains at the workspace root. Existing worlds, configurations and Modrinth assets are preserved. The former Fabric implementation remains in history; the new native Fabric ports are developed from the current feature requirements.
 
 ## Git branches
 
 Like [CustomRecipe](https://github.com/Zazac1/CustomRecipe), version branches use `<loader>/<Minecraft>` and contain a buildable project directly at their root:
 
 - `main`: complete workspace, documentation and cross-version validation (default branch).
-- `paper/26.2` and `paper/26.3`: the current standalone Paper variants.
-- `fabric/1.21.11`: historical Fabric sources, currently paused and not synchronized.
+- `<paper|purpur|spigot|bukkit|fabric>/<Minecraft>`: standalone projects, enabled for export only once validated.
+- The historical `fabric/1.21.11` branch is preserved until the current Fabric port is ready to extend its history.
 
-See [BRANCHES.md](BRANCHES.md) for the workflow. After validating and committing changes on `main`, `sync-branches.ps1` previews the updates; `-Mode Publish` synchronizes the Paper branches and publishes them with `main`, without forced updates or branch deletion.
+See [BRANCHES.md](BRANCHES.md) and `branch-exports.json` for the workflow. After validating and committing changes on `main`, `sync-branches.ps1` previews the updates; `-Mode Publish` synchronizes enabled branches and publishes them with `main`, without forced updates or branch deletion. GitHub publication was explicitly authorized; Modrinth publication was not.
 
 ## Build and verification
 
-From the repository root, validate every current Paper variant:
+From the repository root, validate every current Paper and Purpur variant:
 
 ```powershell
 .\test-all.ps1
@@ -122,7 +126,7 @@ Install the JAR matching your server version, replacing the previous CCR JAR.
 `runServer` downloads the latest Paper build for that game version and starts `run-server/`.
 Stop the server before replacing its plugin. Local worlds, logs, caches and generated files are ignored by Git.
 
-`build` runs that project's regression tests against its chosen Paper API. CI builds both independent projects.
+`build` runs that project's regression tests against its chosen API. CI builds the five Paper and five Purpur projects. It does not claim native-server or real-client validation.
 A native suite is also available once `run-server/` already contains a Paper JAR and an accepted `eula.txt`:
 
 ```powershell
@@ -132,3 +136,7 @@ A native suite is also available once `run-server/` already contains a Paper JAR
 It starts a separate local server under `build/smoke-server/`, checks native items, menus, loot previews and configuration reload, writes `smoke-result.txt`, then shuts down. Menu navigation checks simulate player inventory events on the native server, including Escape, cancelled confirmations, text-field cancellation, pagination and explicit closure; they do not replace a visual check in a Minecraft client.
 It never opens an existing development world, and its test plugin is not included in release JARs.
 For hands-on verification, also test inventory navigation and cancellation, protected Timber blocks, tool breakage, Silk Touch/Fortune, sugar-cane support loss, and crafting/destroying the unique mace with real players.
+
+The separate [client QA environment](validation/client-server/README.md) is detected by Run Launcher and starts only fresh worlds under `build/client-test-server/`. It is never included in distributed JARs.
+
+After native validation, run `./porting/collect-artifacts.ps1`. It gathers only binaries whose hashes and source fingerprints still match their test evidence, under `dist/<Platform>/<Minecraft>/`, and writes the full 25-combination matrix. `-RequireComplete` refuses completion until all 25 also have valid real-player evidence.

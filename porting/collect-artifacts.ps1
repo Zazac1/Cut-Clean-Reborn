@@ -1,0 +1,94 @@
+[CmdletBinding()]
+param([switch]$RequireComplete)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$workspace = Split-Path -Parent $PSScriptRoot
+. (Join-Path $workspace 'validation/evidence.ps1')
+$output = Join-Path $workspace 'dist'
+$null = New-Item -ItemType Directory -Path $output -Force
+$rows = [System.Collections.Generic.List[object]]::new()
+
+foreach ($platform in 'Paper','Purpur','Spigot','Bukkit','Fabric') {
+    foreach ($family in '26.3','26.2','26.1.x','1.21.11','1.21.1') {
+        $project = "${platform}_$family"
+        $module = Join-Path $workspace $project
+        $row = [ordered]@{
+            project=$project; platform=$platform; family=$family; minecraft=''
+            state='A faire'; build='Non verifiee'; startup='Non verifie'; unit_tests=0
+            native_checks='Non verifiees'; real_player='A faire'; artifact=''; sha256=''; detail=''
+        }
+        try {
+            if (-not (Test-Path -LiteralPath (Join-Path $module 'gradle.properties'))) {
+                $row.detail='Module non cree'; $rows.Add([pscustomobject]$row); continue
+            }
+            $row.state='En cours'
+            $properties=@{}
+            foreach ($line in Get-Content -LiteralPath (Join-Path $module 'gradle.properties')) {
+                if ($line -match '^\s*([^#=\s]+)\s*=\s*(.*?)\s*$') { $properties[$Matches[1]]=$Matches[2] }
+            }
+            $row.minecraft=$properties['minecraft_version']
+            if ($platform -eq 'Fabric') { $properties['version']=$properties['mod_version'] }
+            $receiptPath=Join-Path $workspace "validation/results/evidence/$project.json"
+            if (-not (Test-Path -LiteralPath $receiptPath)) { throw 'Validation native complete et signee par empreinte encore absente' }
+            $receipt=Get-Content -LiteralPath $receiptPath -Raw | ConvertFrom-Json
+            if ($receipt.schema -ne 1 -or $receipt.project -ne $project -or $receipt.platform -ne $platform -or $receipt.minecraft -ne $row.minecraft) { throw 'Preuve incompatible avec ce module' }
+            $expectedName="cutcleanreborn-$($properties['version'])+$family.jar"
+            if ($receipt.artifact -ne $expectedName) { throw 'Nom du JAR valide inattendu' }
+            $artifact=Join-Path $module "build/libs/$expectedName"
+            $hash=(Get-FileHash -LiteralPath $artifact -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($receipt.artifact_sha256 -ne $hash) { throw 'Le JAR a change depuis les tests : relancer la validation' }
+            if ($receipt.source_fingerprint -ne (Get-ProjectFingerprint $workspace $project)) { throw 'Les sources ont change depuis les tests : relancer la validation' }
+            if ($receipt.unit_tests -lt 1 -or $receipt.native_result -notmatch '^PASS: [1-9]\d* native checks$') { throw 'Tests unitaires ou natifs incomplets' }
+            $row.build='PASS'; $row.startup='PASS'; $row.unit_tests=$receipt.unit_tests
+            $row.native_checks=$receipt.native_result; $row.state='Valide automatiquement'
+            $row.detail="Validation $($receipt.verified_at) ; interactions natives simulees, pas un joueur reel"
+            $manualPath=Join-Path $workspace "validation/manual/$project.json"
+            if (Test-Path -LiteralPath $manualPath) {
+                $manual=Get-Content -LiteralPath $manualPath -Raw | ConvertFrom-Json
+                if ($manual.artifact_sha256 -eq $hash -and $manual.result -eq 'PASS' -and @($manual.scenarios).Count -gt 0) {
+                    $row.real_player='PASS'; $row.state='Valide avec joueur'
+                    $row.detail += '; en jeu : ' + ($manual.scenarios -join ', ')
+                } else { $row.real_player='A revalider' }
+            }
+            $relative="$platform/$family/$expectedName"
+            $destination=Join-Path $output $relative
+            $null=New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force
+            # Preserve older builds instead of silently overwriting a different binary.
+            if ((Test-Path -LiteralPath $destination) -and (Get-FileHash -LiteralPath $destination).Hash.ToLowerInvariant() -ne $hash) {
+                $oldHash=(Get-FileHash -LiteralPath $destination).Hash.ToLowerInvariant()
+                $archive=Join-Path $output "archive/$platform/$family/$oldHash"
+                $null=New-Item -ItemType Directory -Path $archive -Force
+                Move-Item -LiteralPath $destination -Destination (Join-Path $archive $expectedName)
+            }
+            Copy-Item -LiteralPath $artifact -Destination $destination -Force
+            $row.artifact=$relative; $row.sha256=$hash
+        } catch { $row.detail=$_.Exception.Message }
+        $rows.Add([pscustomobject]$row)
+    }
+}
+
+$summary=[pscustomobject]@{ generated_at=[DateTimeOffset]::Now.ToString('o'); rows=$rows.ToArray() }
+$summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'compatibility.json') -Encoding UTF8
+$report=[System.Collections.Generic.List[string]]::new()
+$report.Add('# CutCleanReborn — livrables et compatibilite')
+$report.Add('')
+$report.Add('Seuls les JAR dont les empreintes correspondent aux tests natifs sont copies. PASS serveur ne signifie pas PASS avec joueur. Les anciennes copies eventuelles ne font pas foi : consulter ce manifeste.')
+$report.Add('')
+$report.Add('| Plateforme | Famille / revision testee | Etat | Build | Demarrage | Tests natifs | Joueur reel | JAR |')
+$report.Add('| --- | --- | --- | --- | --- | --- | --- | --- |')
+foreach ($row in $rows) {
+    $link=if ($row.artifact) { "[$(Split-Path -Leaf $row.artifact)]($($row.artifact))" } else { 'Pas de livrable valide' }
+    $report.Add("| $($row.platform) | $($row.family) / $($row.minecraft) | $($row.state) | $($row.build) | $($row.startup) | $($row.native_checks) | $($row.real_player) | $link |")
+}
+$report.Add('')
+$report.Add('## Details')
+$report.Add('')
+foreach ($row in $rows) { $report.Add("- $($row.project) : $($row.detail)") }
+$report.Add('')
+$report.Add('Aucune publication Modrinth. Les binaires des serveurs Minecraft et les profils de test personnels ne sont pas redistribues.')
+$report | Set-Content -LiteralPath (Join-Path $output 'README.md') -Encoding UTF8
+$complete=@($rows | Where-Object { $_.state -eq 'Valide avec joueur' }).Count
+Write-Host "Livrables : $output ; $(@($rows | Where-Object artifact -NE '').Count)/25 JAR verifies, $complete/25 tests joueur complets."
+if ($RequireComplete -and $complete -ne 25) { exit 1 }
+exit 0

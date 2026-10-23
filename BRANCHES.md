@@ -4,12 +4,13 @@ Le modèle suit [CustomRecipe](https://github.com/Zazac1/CustomRecipe) : une bra
 
 | Branche | Rôle | Contenu à la racine |
 | --- | --- | --- |
-| `main` | Vue globale et développement coordonné | `Paper_26.2/`, `Paper_26.3/`, validation et documentation |
-| `paper/26.2` | Variante Paper 26.2 active | Contenu autonome de `Paper_26.2/` |
-| `paper/26.3` | Variante Paper 26.3 active | Contenu autonome de `Paper_26.3/` |
-| `fabric/1.21.11` | Historique Fabric, en pause | Ancienne implémentation conservée, non synchronisée |
+| `main` | Vue globale et développement coordonné | 25 modules ciblés, code partagé, validation et documentation |
+| `paper/<Minecraft>` | Cinq variantes Paper vérifiées automatiquement | Contenu autonome du module Paper |
+| `purpur/<Minecraft>` | Cinq variantes Purpur vérifiées automatiquement | Module + copie exacte des sources Paper correspondantes + compilation partagée matérialisée |
+| `spigot/<Minecraft>`, `bukkit/<Minecraft>` | Portages en cours | Activation uniquement après validation ; code partagé matérialisé à l'export |
+| `fabric/<Minecraft>` | Portages solo/serveur en cours | Activation uniquement après validation |
 
-`main` reste la branche par défaut. La branche Fabric n'est ni supprimée ni présentée comme un portage actuel. Aucun nouveau loader n'est créé tant que son portage n'est pas demandé.
+`main` reste la branche par défaut. Les familles sont `26.3`, `26.2`, `26.1.x` (révision concrète testée : `26.1.2`), `1.21.11` et `1.21.1`. `branch-exports.json` définit les noms, dépendances à embarquer et activations. Un dossier présent mais non validé ne justifie pas une branche annoncée comme supportée. L'ancien historique Fabric est conservé jusqu'à la synchronisation de son portage actuel.
 
 ## Mettre à jour les branches de version
 
@@ -20,15 +21,18 @@ Le modèle suit [CustomRecipe](https://github.com/Zazac1/CustomRecipe) : une bra
 ```powershell
 .\sync-branches.ps1                  # Affiche le plan sans modifier les branches
 .\sync-branches.ps1 -Mode Local      # Met à jour les branches locales uniquement
-.\sync-branches.ps1 -Mode Publish    # Vérifie GitHub, puis publie main et les branches Paper ensemble
+.\sync-branches.ps1 -Mode Publish    # Vérifie GitHub, puis publie main et les branches activées ensemble
+.\sync-branches.ps1 -Project Purpur_26.3 # Plan limité à une variante déjà activée
 ```
 
 Le script conserve l'historique de chaque branche existante et ajoute un commit si son contenu change. Il refuse un historique divergent ou une branche de version ouverte dans un autre checkout. La publication utilise une mise à jour atomique normale : aucun force-push, aucune suppression de branche et aucun changement de branche dans le dossier de travail.
 
-Pour une nouvelle variante sans historique, son premier commit contient uniquement son projet. Les variantes existantes conservent leurs propres commits antérieurs. La branche Fabric historique n'est jamais modifiée par ce script.
+Pour une nouvelle variante sans historique, son premier commit contient uniquement son projet. Les variantes existantes conservent leurs propres commits antérieurs. Une branche Fabric existante ne sera mise à jour que lorsque son portage actuel sera activé explicitement.
+
+`branch-export.ps1` compose les arbres depuis le commit de `main` et les dépendances déclarées. Dans `main`, les sources communes restent uniques ; dans une branche Purpur/Spigot/Bukkit, elles sont réellement présentes sous `src/`, avec la logique de compilation sous `build-logic/`. Le mode Plan n'écrit même pas d'objets Git. Les exports doivent être recompilés séparément avant publication pour prouver leur autonomie.
 
 ## Travailler depuis une branche de version
 
-Un clone de `paper/26.2` ou `paper/26.3` se compile directement avec `gradlew build`, comme les branches Fabric/NeoForge/Forge de CustomRecipe. Le contrôle global `test-all.ps1` appartient à `main` ; les tests natifs propres à une variante restent disponibles via `gradlew smokeTest`.
+Un clone d'une branche activée se compile directement avec `gradlew build`, comme les branches Fabric/NeoForge/Forge de CustomRecipe. Le contrôle global `test-all.ps1` appartient à `main` ; les tests natifs propres à une variante restent disponibles via `gradlew smokeTest` quand le vrai serveur et l'EULA sont préparés.
 
 Comme leurs arborescences diffèrent, ne pas fusionner directement une branche de version dans `main`. Reporter le correctif dans le dossier correspondant de `main`, valider, puis resynchroniser. Les fichiers locaux non suivis, les caches et les mondes ne sont jamais inclus dans les branches générées.

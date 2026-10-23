@@ -1,12 +1,14 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Plan', 'Local', 'Publish')]
-    [string]$Mode = 'Plan'
+    [string]$Mode = 'Plan',
+    [string[]]$Project
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
+. (Join-Path $PSScriptRoot 'branch-export.ps1')
 
 function Invoke-Git([string[]]$Arguments) {
     $result = @(& git @Arguments)
@@ -35,8 +37,17 @@ try {
     $changes = @(Invoke-Git @('status','--porcelain=v1','--untracked-files=no'))
     if ($changes.Count -ne 0) { throw 'Enregistrer les modifications suivies et indexees avant de synchroniser les branches.' }
     $source = (Invoke-Git @('rev-parse','HEAD')) -join ''
-    $projects = @(Invoke-Git @('ls-tree','-d','--name-only',$source) | Where-Object { $_ -match '^Paper_\d[\w.]*$' } | Sort-Object)
-    if ($projects.Count -eq 0) { throw 'Aucun projet Paper enregistre dans main' }
+    $manifestText=(Invoke-Git @('show', "${source}:branch-exports.json")) -join "`n"
+    $manifest=$manifestText | ConvertFrom-Json
+    if ($manifest.schema -ne 1) { throw 'Version de manifeste export inconnue' }
+    $specs=@{}
+    foreach ($property in $manifest.projects.PSObject.Properties) { $specs[$property.Name]=$property.Value }
+    $projects=@($specs.Keys | Where-Object { $specs[$_].enabled } | Sort-Object)
+    if ($Project) {
+        foreach ($requested in $Project) { if ($requested -notin $projects) { throw "Projet non valide/exportable : $requested" } }
+        $projects=@($projects | Where-Object { $_ -in $Project })
+    }
+    if ($projects.Count -eq 0) { throw 'Aucun projet valide/exportable enregistre dans main' }
 
     if ($Mode -eq 'Publish') {
         # Fetch only updates remote-tracking refs; never prune historical branches.
@@ -48,13 +59,20 @@ try {
     $plan = [System.Collections.Generic.List[object]]::new()
 
     foreach ($project in $projects) {
-        $minecraft = $project.Substring('Paper_'.Length)
-        $branch = "paper/$minecraft"
+        $spec=$specs[$project]
+        $branch=[string]$spec.branch
+        if ($project -notmatch '^(Paper|Purpur|Spigot|Bukkit|Fabric)_(\d[\w.]*)$' -or $branch -ne "$($Matches[1].ToLowerInvariant())/$($Matches[2])") { throw 'Nom de branche incoherent avec le projet' }
         Invoke-Git @('check-ref-format',"refs/heads/$branch") | Out-Null
         if ($branch -in $checkedOut) { throw "La branche $branch est ouverte dans un checkout ; terminer ce travail avant de la synchroniser." }
-        $tree = (Invoke-Git @('rev-parse',"${source}:$project")) -join ''
-        Invoke-Git @('cat-file','-e',"${tree}:build.gradle") | Out-Null
-        Invoke-Git @('cat-file','-e',"${tree}:src/main/resources/plugin.yml") | Out-Null
+        Invoke-Git @('cat-file','-e',"${source}:${project}/build.gradle") | Out-Null
+        foreach ($dependency in $spec.dependencies) { Invoke-Git @('cat-file','-e',"${source}:$($dependency.source)") | Out-Null }
+        # Plan must remain genuinely read-only, including Git's object database.
+        $composed=@($spec.dependencies).Count -gt 0
+        $tree=if ($Mode -eq 'Plan' -and $composed) { '' } else { Get-StandaloneExportTree $source $project $spec }
+        if ($tree) {
+            $metadata=if ($project.StartsWith('Fabric_')) { 'fabric.mod.json' } else { 'plugin.yml' }
+            Invoke-Git @('cat-file','-e',"${tree}:src/main/resources/$metadata") | Out-Null
+        }
         $local = Find-Commit "refs/heads/$branch"
         $remote = Find-Commit "refs/remotes/origin/$branch"
         $parent = $local
@@ -63,11 +81,11 @@ try {
             elseif (-not (Test-Ancestor $remote $parent)) { throw "La branche distante $branch contient des commits absents de la branche locale ; les examiner avant de synchroniser." }
         }
         $oldTree = if ($parent) { (Invoke-Git @('rev-parse',"${parent}^{tree}")) -join '' } else { '' }
-        $action = if ($oldTree -eq $tree) { 'a jour' } elseif ($parent) { 'nouveau commit, historique conserve' } else { 'nouvelle branche autonome' }
+        $action = if ($Mode -eq 'Plan' -and $composed) { 'export autonome avec sources partagees materialisees (comparaison en mode Local)' } elseif ($oldTree -eq $tree) { 'a jour' } elseif ($parent) { 'nouveau commit, historique conserve' } else { 'nouvelle branche autonome' }
         $plan.Add([pscustomobject]@{ Project=$project; Branch=$branch; Tree=$tree; Parent=$parent; Local=$local; Action=$action; NeedsCommit=($oldTree -ne $tree) })
         Write-Host "$project -> $branch : $action"
     }
-    Write-Host 'fabric/1.21.11 : historique conserve, aucun changement'
+    foreach ($pending in $specs.Keys | Where-Object { -not $specs[$_].enabled } | Sort-Object) { Write-Host "$pending : portage/validation en cours, non publie comme branche actuelle" }
     if ($Mode -eq 'Plan') { Write-Host 'Plan uniquement. Utiliser -Mode Local ou -Mode Publish pour appliquer.'; exit 0 }
 
     foreach ($entry in $plan) {
@@ -91,7 +109,7 @@ try {
         foreach ($entry in $plan) {
             Invoke-Git @('branch',"--set-upstream-to=origin/$($entry.Branch)",$entry.Branch) | Out-Host
         }
-        Write-Host 'main et branches Paper publiees ensemble, sans suppression ni force-push.'
+        Write-Host 'main et branches validees publiees ensemble, sans suppression ni force-push.'
     }
 } catch {
     Write-Error $_.Exception.Message -ErrorAction Continue

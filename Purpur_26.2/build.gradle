@@ -1,0 +1,6 @@
+plugins {
+    id 'java'
+}
+
+apply from: file('build-logic/purpur.gradle').exists()
+        ? 'build-logic/purpur.gradle' : '../build-logic/purpur.gradle'

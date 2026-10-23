@@ -3,6 +3,8 @@ param(
     [ValidateSet('Quick', 'Compile', 'Full')]
     [string]$Mode = 'Full',
     [string[]]$Version,
+    [ValidateSet('Paper', 'Purpur', 'Spigot', 'Bukkit')]
+    [string[]]$Platform = @('Paper', 'Purpur', 'Spigot', 'Bukkit'),
     [switch]$RerunTasks
 )
 
@@ -13,6 +15,7 @@ $workspaceRoot = Split-Path -Parent $PSScriptRoot
 $resultsDirectory = Join-Path $PSScriptRoot 'results'
 $null = New-Item -ItemType Directory -Path $resultsDirectory -Force
 $checks = [System.Collections.Generic.List[object]]::new()
+. (Join-Path $PSScriptRoot 'evidence.ps1')
 
 function Add-Check([string]$Project, [string]$Name, [bool]$Passed, [string]$Detail) {
     $status = if ($Passed) { 'PASS' } else { 'FAIL' }
@@ -33,17 +36,25 @@ function Get-SourceMap([string]$ProjectDirectory) {
     $sourceRoot = Join-Path $ProjectDirectory 'src'
     foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Recurse -File) {
         $relative = $file.FullName.Substring($sourceRoot.Length + 1).Replace('\', '/')
-        if ($relative -eq 'main/resources/plugin.yml') { continue }
-        $sources[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        if ($relative -in 'main/resources/plugin.yml','smoke/resources/plugin.yml') { continue }
+        if ($relative -eq 'main/java/fr/isaac/cutcleanreborn/paper/AnvilTextInput.java') {
+            # The old API opens a view through the player; newer Paper also exposes view.open().
+            # Normalize only this documented equivalent operation, not the rest of the file.
+            $text = [System.IO.File]::ReadAllText($file.FullName).Replace("`r`n", "`n").Replace('view.open();', 'player.openInventory(view);')
+            $hasher = [System.Security.Cryptography.SHA256]::Create()
+            try { $sources[$relative] = [BitConverter]::ToString($hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($text))) }
+            finally { $hasher.Dispose() }
+        } else { $sources[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash }
     }
-    foreach ($name in 'build.gradle','LICENSE') {
+    foreach ($name in 'LICENSE') {
         $sources[$name] = (Get-FileHash -LiteralPath (Join-Path $ProjectDirectory $name) -Algorithm SHA256).Hash
     }
     return $sources
 }
 
 function Test-Artifact([System.IO.DirectoryInfo]$Project, [hashtable]$Properties) {
-    $artifactName = "cutcleanreborn-$($Properties['version'])+$($Properties['minecraft_version']).jar"
+    $family = if ($Properties.ContainsKey('minecraft_family')) { $Properties['minecraft_family'] } else { $Properties['minecraft_version'] }
+    $artifactName = "cutcleanreborn-$($Properties['version'])+$family.jar"
     $artifact = Join-Path $Project.FullName "build/libs/$artifactName"
     if (-not (Test-Path -LiteralPath $artifact)) { throw "JAR absent : $artifactName" }
     $archive = [System.IO.Compression.ZipFile]::OpenRead($artifact)
@@ -57,44 +68,72 @@ function Test-Artifact([System.IO.DirectoryInfo]$Project, [hashtable]$Properties
         if ($metadata -notmatch ('(?m)^api-version:\s*[''\"]?' + [regex]::Escape($Properties['minecraft_version']) + '[''\"]?\s*$')) { throw 'Version Minecraft incorrecte' }
         if ($null -eq $archive.GetEntry('config.yml')) { throw 'Configuration par defaut absente' }
         if (@($archive.Entries | Where-Object FullName -Match '^fr/isaac/cutcleanreborn/verification/').Count -ne 0) { throw 'Code de test present dans le JAR distribue' }
-        if ($null -eq $archive.GetEntry('fr/isaac/cutcleanreborn/paper/CutCleanRebornPlugin.class')) { throw 'Classe principale absente' }
+        $package = if ($Project.Name -match '^(Spigot|Bukkit)_') { 'bukkit' } else { 'paper' }
+        if ($null -eq $archive.GetEntry("fr/isaac/cutcleanreborn/$package/CutCleanRebornPlugin.class")) { throw 'Classe principale absente' }
         Add-Check $Project.Name 'JAR' $true $artifactName
     } finally { $archive.Dispose() }
 }
 
 try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $projects = @(Get-ChildItem -LiteralPath $workspaceRoot -Directory | Where-Object Name -Match '^Paper_\d' | Sort-Object Name)
+    $projects = @(Get-ChildItem -LiteralPath $workspaceRoot -Directory | Where-Object {
+        $_.Name -match '^(Paper|Purpur|Spigot|Bukkit)_\d' -and ($_.Name.Split('_')[0] -in $Platform)
+    } | Sort-Object Name)
     if ($Version) {
         foreach ($requested in $Version) {
             if ($requested -notin $projects.Name) { throw "Projet inconnu : $requested" }
         }
         $projects = @($projects | Where-Object { $_.Name -in $Version })
     }
-    if ($projects.Count -eq 0) { throw 'Aucun projet Paper trouve' }
+    if ($projects.Count -eq 0) { throw 'Aucun projet trouve pour les plateformes demandees' }
 
     $reference = $null
     $referenceName = ''
     foreach ($project in $projects) {
         try {
+            $loader = $project.Name.Split('_')[0]
+            $isPurpur = $loader -eq 'Purpur'
+            $isPortable = $loader -in 'Spigot','Bukkit'
+            $sourcePackage = if ($isPortable) { 'bukkit' } else { 'paper' }
             $required = 'build.gradle','gradle.properties','settings.gradle','gradlew','gradlew.bat','gradle/wrapper/gradle-wrapper.jar',
-                'LICENSE','README.md','src/main/resources/plugin.yml','src/main/resources/config.yml',
-                'src/main/java/fr/isaac/cutcleanreborn/paper/CutCleanRebornPlugin.java',
-                'src/test/java/fr/isaac/cutcleanreborn/paper/GameplayRegressionTest.java',
+                'LICENSE','README.md'
+            $sourceRequired = 'src/main/resources/plugin.yml','src/main/resources/config.yml',
+                "src/main/java/fr/isaac/cutcleanreborn/$sourcePackage/CutCleanRebornPlugin.java",
+                "src/test/java/fr/isaac/cutcleanreborn/$sourcePackage/GameplayRegressionTest.java",
                 'src/smoke/java/fr/isaac/cutcleanreborn/verification/CCRSmoke.java','src/smoke/server.properties'
             foreach ($relative in $required) {
                 if (-not (Test-Path -LiteralPath (Join-Path $project.FullName $relative))) { throw "Fichier requis absent : $relative" }
             }
             $buildScript = Get-Content -LiteralPath (Join-Path $project.FullName 'build.gradle') -Raw
-            if ($buildScript -match 'paper-common|\.\./Paper_') { throw 'Dependance a un dossier source voisin' }
+            if (-not $isPurpur -and $buildScript -match 'paper-common|\.\./Paper_') { throw 'Dependance a un dossier source voisin' }
             $properties = Read-Properties (Join-Path $project.FullName 'gradle.properties')
-            if ($project.Name -ne "Paper_$($properties['minecraft_version'])") { throw 'Nom de dossier incompatible avec minecraft_version' }
-            if (-not $properties['version'] -or -not $properties['paper_version']) { throw 'Versions de compilation manquantes' }
-            Add-Check $project.Name 'Structure autonome' $true 'Sources, configuration, tests et compilation locaux'
+            $family = if ($properties.ContainsKey('minecraft_family')) { $properties['minecraft_family'] } else { $properties['minecraft_version'] }
+            if ($project.Name -ne "${loader}_$family") { throw 'Nom de dossier incompatible avec la famille Minecraft' }
+            $apiKey = if ($isPortable) { 'bukkit_version' } else { 'paper_version' }
+            if (-not $properties['version'] -or -not $properties[$apiKey]) { throw 'Versions de compilation manquantes' }
+            $sourceDirectory = $project.FullName
+            if ($isPurpur) {
+                $expectedSource = "Paper_$family"
+                if ($properties['source_module'] -ne $expectedSource) { throw 'Module Paper partage inattendu' }
+                $sourceDirectory = Join-Path $workspaceRoot $expectedSource
+                if (-not (Test-Path -LiteralPath (Join-Path $workspaceRoot 'build-logic/purpur.gradle'))) { throw 'Compilation partagee Purpur absente' }
+                if ($buildScript -notmatch 'build-logic/purpur.gradle') { throw 'Compilation Purpur non configuree' }
+            } elseif ($isPortable) {
+                $expectedSource = 'platform-bukkit'
+                $sourceDirectory = Join-Path $workspaceRoot $expectedSource
+                $sharedBuild = Join-Path $workspaceRoot 'build-logic/bukkit.gradle'
+                if (-not (Test-Path -LiteralPath $sharedBuild) -or $buildScript -notmatch 'build-logic/bukkit.gradle') { throw 'Compilation Bukkit partagee absente' }
+                if ((Get-Content -LiteralPath $sharedBuild -Raw) -match 'io.papermc.paper:paper-api') { throw 'Le port portable depend de Paper' }
+                if ($properties['server_platform'] -ne $loader.ToLowerInvariant()) { throw 'Plateforme serveur incoherente' }
+            }
+            foreach ($relative in $sourceRequired) {
+                if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectory $relative))) { throw "Source requise absente : $relative" }
+            }
+            Add-Check $project.Name 'Structure' $true $(if ($isPurpur -or $isPortable) { "Sources partagees explicitement avec $expectedSource" } else { 'Sources, configuration, tests et compilation locaux' })
 
-            $sources = Get-SourceMap $project.FullName
-            if ($null -eq $reference) { $reference = $sources; $referenceName = $project.Name }
-            else {
+            if (-not $isPortable) { $sources = Get-SourceMap $sourceDirectory }
+            if ($loader -eq 'Paper' -and $null -eq $reference) { $reference = $sources; $referenceName = $project.Name }
+            elseif ($loader -eq 'Paper') {
                 $differences = @(@($reference.Keys) + @($sources.Keys) | Sort-Object -Unique | Where-Object {
                     -not $reference.ContainsKey($_) -or -not $sources.ContainsKey($_) -or $reference[$_] -ne $sources[$_]
                 })
@@ -104,12 +143,13 @@ try {
             if ($Mode -eq 'Quick') { continue }
             $tasks = if ($Mode -eq 'Full') { @('build','smokeTest') } else { @('compileJava','compileTestJava','compileSmokeJava') }
             if ($Mode -eq 'Full') {
-                foreach ($relative in "run-server/paper-$($properties['minecraft_version']).jar",'run-server/eula.txt') {
+                foreach ($relative in "run-server/$($loader.ToLowerInvariant())-$($properties['minecraft_version']).jar",'run-server/eula.txt') {
                     if (-not (Test-Path -LiteralPath (Join-Path $project.FullName $relative))) { throw "Prerequis serveur absent : $relative (voir validation/README.md)" }
                 }
             }
             if ($RerunTasks) { $tasks += '--rerun-tasks' }
             $logPath = Join-Path $resultsDirectory "$($project.Name)-$Mode.log"
+            $initialFingerprint = Get-ProjectFingerprint $workspaceRoot $project.Name
             Push-Location -LiteralPath $project.FullName
             try {
                 & (Join-Path $project.FullName 'gradlew.bat') @tasks 2>&1 | Tee-Object -FilePath $logPath
@@ -131,7 +171,18 @@ try {
                 $native = (Get-Content -LiteralPath (Join-Path $project.FullName 'build/smoke-server/smoke-result.txt') -Raw).Trim()
                 if ($native -notmatch '^PASS: [1-9]\d* native checks$') { throw "Echec des tests serveur : $native" }
                 Add-Check $project.Name 'Serveur natif' $true $native
+                $serverLog = Get-Content -LiteralPath (Join-Path $project.FullName 'build/smoke-server/logs/latest.log') -Raw
+                $expectedRuntime = if ($isPortable) {
+                    $serverBrand = if ($loader -eq 'Spigot') { '(?:CraftBukkit|Spigot)' } else { 'CraftBukkit' }
+                    $revisionBrand = if ($loader -eq 'Spigot') { 'Spigot' } else { 'Bukkit' }
+                    'This server is running ' + $serverBrand + ' version \S*-' + $revisionBrand + '-[^\r\n]*MC: ' + [regex]::Escape($properties['minecraft_version']) + '(?:[ )]| Unobfuscated)'
+                } else { 'This server is running ' + $loader + ' version ' + [regex]::Escape($properties['minecraft_version']) + '[- ]' }
+                if ($serverLog -notmatch $expectedRuntime) { throw "Le journal ne prouve pas l'execution du serveur $loader demande" }
+                Add-Check $project.Name 'Plateforme native' $true "$loader $($properties['minecraft_version']) confirme dans le journal"
                 Test-Artifact $project $properties
+                $artifact = Join-Path $project.FullName "build/libs/cutcleanreborn-$($properties['version'])+$family.jar"
+                if ($initialFingerprint -ne (Get-ProjectFingerprint $workspaceRoot $project.Name)) { throw 'Sources modifiees pendant la validation : relancer les tests' }
+                Write-ValidationEvidence $workspaceRoot $project.Name $loader $properties['minecraft_version'] $artifact $total $native
             }
         } catch { Add-Check $project.Name 'Validation' $false $_.Exception.Message }
     }

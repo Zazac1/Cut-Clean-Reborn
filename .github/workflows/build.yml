@@ -12,11 +12,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - platform: Paper 1.21.1
+            directory: Paper_1.21.1
+            java: '21'
+          - platform: Paper 1.21.11
+            directory: Paper_1.21.11
+            java: '21'
+          - platform: Paper 26.1.2
+            directory: Paper_26.1.x
+            java: '25'
           - platform: Paper 26.2
             directory: Paper_26.2
             java: '25'
           - platform: Paper 26.3
             directory: Paper_26.3
+            java: '25'
+          - platform: Purpur 1.21.1
+            directory: Purpur_1.21.1
+            java: '21'
+          - platform: Purpur 1.21.11
+            directory: Purpur_1.21.11
+            java: '21'
+          - platform: Purpur 26.1.2
+            directory: Purpur_26.1.x
+            java: '25'
+          - platform: Purpur 26.2
+            directory: Purpur_26.2
+            java: '25'
+          - platform: Purpur 26.3
+            directory: Purpur_26.3
             java: '25'
     steps:
       - uses: actions/checkout@v6

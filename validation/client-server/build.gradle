@@ -1,0 +1,69 @@
+plugins { id 'java' }
+
+// The launcher recognizes this Paper-api-compatible QA environment, never a release module.
+group = 'fr.isaac.cutcleanreborn.verification'
+version = '1.0'
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+dependencies { compileOnly 'org.bukkit:bukkit:1.21.1-R0.1-SNAPSHOT' }
+tasks.withType(JavaCompile).configureEach { options.release = 21; options.encoding = 'UTF-8' }
+tasks.named('jar', Jar) { archiveFileName = 'CCRClientQA.jar' }
+
+def workspace = file('../..')
+def targetName = project.findProperty('target_project') ?: 'Paper_26.3'
+if (!(targetName ==~ /(Paper|Purpur|Spigot|Bukkit)_(26\.3|26\.2|26\.1\.x|1\.21\.11|1\.21\.1)/))
+    throw new GradleException('QA target is not an authorized plugin/version module.')
+def targetDir = new File(workspace, targetName)
+def targetProps = new Properties()
+new File(targetDir, 'gradle.properties').withInputStream { targetProps.load(it) }
+def mc = targetProps.getProperty('minecraft_version')
+def family = targetProps.getProperty('minecraft_family', mc)
+def loader = targetName.split('_')[0].toLowerCase(Locale.ROOT)
+def serverFile = new File(targetDir, "run-server/${loader}-${mc}.jar")
+def runtimeDir = new File(targetDir, 'build/client-test-server')
+def pluginFile = new File(targetDir, "build/libs/cutcleanreborn-${targetProps.getProperty('version')}+${family}.jar")
+
+tasks.register('buildTarget', GradleBuild) { dir = targetDir; tasks = ['build'] }
+tasks.register('prepareClientServer') {
+    dependsOn tasks.named('buildTarget'), tasks.named('jar')
+    doLast {
+        if (!serverFile.isFile()) throw new GradleException("Download the actual ${loader} server first: ${serverFile}")
+        def accepted = new File(targetDir, 'run-server/eula.txt')
+        if (!accepted.isFile() || !accepted.text.contains('eula=true')) throw new GradleException('An accepted Minecraft EULA is required.')
+        runtimeDir.mkdirs()
+        copy { from file('server.properties'); from accepted; into runtimeDir }
+        copy { from pluginFile; from tasks.named('jar'); into new File(runtimeDir, 'plugins') }
+        // Optional local-only identity, never committed or applied to a user server.
+        def identityFile = file('player.local.json')
+        if (identityFile.isFile()) {
+            def identity = new groovy.json.JsonSlurper().parse(identityFile)
+            UUID.fromString(identity.uuid.toString())
+            if (!(identity.name ==~ /[A-Za-z0-9_]{1,16}/)) throw new GradleException('Invalid local QA player name')
+            new File(runtimeDir, 'whitelist.json').text = groovy.json.JsonOutput.toJson([[uuid:identity.uuid,name:identity.name]])
+            new File(runtimeDir, 'ops.json').text = groovy.json.JsonOutput.toJson([[uuid:identity.uuid,name:identity.name,level:4,bypassesPlayerLimit:true]])
+        }
+        def config = new File(runtimeDir, 'plugins/CutCleanReborn/config.yml')
+        if (!config.isFile()) {
+            def configRoot = loader == 'purpur' ? new File(workspace, "Paper_${family}")
+                    : (loader in ['spigot','bukkit'] ? new File(workspace, 'platform-bukkit') : targetDir)
+            copy { from new File(configRoot, 'src/main/resources/config.yml'); into config.parentFile }
+        }
+        logger.lifecycle("CCR QA target: ${targetName}, Minecraft ${mc}, local-only world ${runtimeDir}")
+    }
+}
+tasks.register('runServer', JavaExec) {
+    group = 'application'
+    description = 'Starts the selected native server in build/client-test-server, not a user world.'
+    dependsOn tasks.named('prepareClientServer')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of((targetProps.getProperty('java_version') ?: (mc.startsWith('26.') ? '25' : '21')).toInteger()) }
+    workingDir runtimeDir
+    classpath files(serverFile)
+    mainClass = loader in ['paper','purpur'] ? 'io.papermc.paperclip.Main' : 'org.bukkit.craftbukkit.bootstrap.Main'
+    jvmArgs '-Xms256M', '-Xmx1536M'
+    args '--nogui', '--port', '25591'
+    standardInput = System.in
+}

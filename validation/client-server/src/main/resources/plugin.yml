@@ -1,0 +1,12 @@
+name: CCRClientQA
+version: 1.0
+main: fr.isaac.cutcleanreborn.verification.CCRClientQA
+api-version: '1.21'
+depend: [CutCleanReborn]
+commands:
+  ccrqa:
+    description: Set up isolated real-player verification scenes.
+    permission: ccr.qa
+permissions:
+  ccr.qa:
+    default: op
