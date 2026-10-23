@@ -59,33 +59,50 @@ Ordre de travail :
 
 Les commandes, journaux de compilation et résultats restent dans les dossiers `build/` des modules et `validation/results/`. Ce document sera enrichi au fur et à mesure ; il ne constitue pas une déclaration de portage terminé.
 
-## Avancement vérifié
+## Avancement vérifié — validation finale en cours
 
-| Variante ajoutée | Java | Compilation/tests unitaires | Serveur officiel isolé | Vérifications natives | Tests visuels/en jeu |
-| --- | --- | --- | --- | --- | --- |
-| Paper 1.21.1 | 21 | Réussis, 9 tests | Chargement et arrêt réussis | 237 réussies | Pas encore réalisés |
-| Paper 1.21.11 | 21 | Réussis, 9 tests | Chargement et arrêt réussis | 245 réussies | Pas encore réalisés |
-| Paper 26.1.x / 26.1.2 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 245 réussies | Pas encore réalisés |
-| Paper 26.2 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 246 réussies | Pas encore réalisés |
-| Paper 26.3 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 246 réussies | Client QA en préparation |
-| Purpur 1.21.1 | 21 | Réussis, 9 tests | Chargement et arrêt réussis | 237 réussies | Pas encore réalisés |
-| Purpur 1.21.11 | 21 | Réussis, 9 tests | Chargement et arrêt réussis | 245 réussies | Pas encore réalisés |
-| Purpur 26.1.x / 26.1.2 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 245 réussies | Pas encore réalisés |
-| Purpur 26.2 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 246 réussies | Pas encore réalisés |
-| Purpur 26.3 | 25 | Réussis, 9 tests | Chargement et arrêt réussis | 246 réussies | Pas encore réalisés |
+Un passage complet des vingt variantes plugins a réussi après la correction du retour Échap en créatif. Chaque variante a réussi ses neuf tests unitaires, son démarrage sur le véritable serveur annoncé et ses vérifications natives :
 
-Les nombres de vérifications varient avec les registres de créatures de chaque Minecraft. Les parcours de menus, validations d'objets, corrections de caps, sauvegarde d'origine et cycle de masse unique testés sont les mêmes. La casse réelle d'un arbre avec un joueur, les interactions visuelles et les remboursements payés en jeu restent à vérifier.
+| Minecraft réellement testé | Java | Paper et Purpur, par variante | Spigot et CraftBukkit, par variante |
+| --- | --- | --- | --- |
+| 1.21.1 | 21 | 248 vérifications | 259 vérifications |
+| 1.21.11 | 21 | 256 vérifications | 267 vérifications |
+| 26.1.2 (famille 26.1.x) | 25 | 256 vérifications | 267 vérifications |
+| 26.2 | 25 | 257 vérifications | 268 vérifications |
+| 26.3 | 25 | 257 vérifications | 268 vérifications |
 
-Adaptations effectuées : ouverture de l'AnvilView par le joueur sur les nouvelles variantes, API minimale correcte du plugin de vérification, compilation Java adaptée, délai maximal de la tâche native. La première tentative 1.21.1 avait un vérificateur mal étiqueté 26.2 ; après correction et arrêt du seul processus de test concerné, la suite complète a réussi.
+Ces nombres décrivent ce passage historique, pas une certification permanente des fichiers courants : le raccourcissement ultérieur d'un titre de menu exige une nouvelle preuve. La commande finale sans filtre doit revalider les 25 variantes. Les cinq variantes Fabric sont implémentées et en revalidation native après les dernières corrections de parité ; voir leurs notes détaillées ci-dessous.
 
-Avertissement spécifique 1.21.1 : Paper signale l'écoute de `EntityRemoveEvent` comme obsolète et susceptible d'affecter les performances. La fonctionnalité de libération de la masse unique reste testée et fonctionnelle ; cet adaptateur devra être affiné avec les événements disponibles sur Spigot/CraftBukkit.
+Les tests froids plugins, indépendants des tests natifs en un seul processus, relancent trois vraies JVM sur le même nouveau monde. La première matrice a conservé ses échecs de garde d'intégrité et de fixture ; une nouvelle matrice homogène est en cours. Ne pas mélanger ses résultats avec ceux d'anciens essais. Fabric vérifie également trois arrêts/redémarrages sur son JAR de distribution, en dehors de Loom.
 
-## Preuves et livrables
+Les nombres de vérifications varient avec les registres Minecraft et les adaptateurs de plateforme. Les essais automatisés couvrent notamment les menus, caps, enchantements, origines placées, objets persistants et masse unique. Ils ne prouvent ni le ressenti de minage standard ni une interaction réalisée à la souris dans un client.
 
-Le contrôle global `test-all.ps1` couvre maintenant les dix variantes Paper/Purpur. Il vérifie explicitement l'identité du serveur dans le journal. Les reçus sous `validation/results/evidence/` associent résultat natif, tests unitaires, empreinte du JAR et empreinte des sources ; toute modification des sources pendant ou après les tests exige une revalidation.
+### Essais réellement effectués dans Minecraft
 
-`porting/collect-artifacts.ps1` génère le tableau complet des 25 combinaisons et ne copie que les JAR correspondant aux preuves à jour, dans `dist/<Plateforme>/<Famille>/`. Une observation native simulée ne devient jamais un résultat joueur réel par simple copie.
+Sur Paper 26.3, dans un profil « CCR QA » et un monde neufs : ouverture de `/ccr`, navigation Timber, retour Échap d'un niveau en créatif, annulation de saisie et de confirmation dans Stuff Rules, fermeture explicite, conservation d'une règle après redémarrage, récolte réelle de quatre rondins avec durabilité de la hache, activation d'Auto Smelt et récolte de lingots avec Fortune. Les empreintes des JAR, conditions et limites de chaque essai figurent dans [le journal client](client-tests.md).
 
-Les tests visuels utilisent les profils Modrinth « CCR QA » séparés et le projet Run Launcher `validation/client-server/`. Son serveur Paper 26.3 a effectivement démarré dans un monde neuf sous `Paper_26.3/build/client-test-server/`, lié à `127.0.0.1:25591` avec authentification Minecraft normale. Aucun ancien monde n'a été lancé.
+Le helper applique Haste uniquement dans cette scène QA ; le temps de minage normal n'est donc pas validé par cet essai. Les autres plateformes/versions, les remboursements d'XP réellement payés et le solo Fabric restent à vérifier avec un véritable client. Aucun reçu « joueur réel : PASS » global n'est déduit de ces essais partiels.
 
-Notes détaillées des autres portages : [Spigot/CraftBukkit](spigot-bukkit.md), [Fabric moderne](fabric-modern.md) et `fabric-1.21.1.md` lorsqu'il est disponible. Ces étapes restent en cours et ne sont pas couvertes par les dix validations Paper/Purpur.
+Adaptations principales : ouverture des enclumes selon l'API de la version, API Bukkit minimale, ponts d'événements Spigot/CraftBukkit, menus et services Fabric natifs, Java 21 ou 25, et correction du retour Échap lorsque l'inventaire personnel est de type `CREATIVE` plutôt que `CRAFTING`.
+
+Avertissement spécifique 1.21.1 : Paper signale l'écoute de `EntityRemoveEvent` comme obsolète et susceptible d'affecter les performances. La libération de la masse unique reste testée ; l'adaptateur Spigot/CraftBukkit emploie les événements réellement disponibles. Les avertissements Windows OSHI/Perflib connus ne justifient pas de modifier le registre du PC.
+
+## Reproduire les contrôles et retrouver les preuves
+
+Depuis la racine :
+
+```powershell
+.\test-all.ps1                        # Full : 25 variantes, vrais runtimes, tests et JAR
+.\validation\run-persistence-tests.ps1 # Triplets froids des 20 variantes plugins
+.\porting\collect-artifacts.ps1       # Tableau et JAR dont les preuves sont à jour
+.\sync-branches.ps1                   # Plan des branches autonomes, sans écriture
+.\validation\validate-exports.ps1     # Recompilation isolée des branches activées
+```
+
+Le contrôle global vérifie l'identité du serveur dans le journal. Les reçus sous `validation/results/evidence/` associent résultat natif, tests unitaires, empreinte du JAR et empreinte des sources ; toute modification de fichiers couverts exige une revalidation. Les preuves froides restent distinctes, avec trois identifiants de processus, un nonce de monde et des journaux d'arrêt.
+
+`collect-artifacts.ps1` génère le tableau complet des 25 combinaisons et ne copie que les JAR correspondant aux preuves à jour, dans `dist/<Plateforme>/<Famille>/`. Le tableau distingue compilation, démarrage, vérifications natives, redémarrages froids et joueur réel. `-RequireComplete` refuse une livraison déclarée complète si des essais client ou des preuves froides manquent.
+
+Les essais visuels utilisent uniquement les profils Modrinth « CCR QA » séparés et le projet Run Launcher `validation/client-server/`. Le serveur client QA écoute sur `127.0.0.1:25591`, avec authentification Minecraft normale. Les mondes et configurations d'origine ne sont jamais réutilisés.
+
+Notes détaillées : [Spigot/CraftBukkit](spigot-bukkit.md), [Fabric moderne](fabric-modern.md), [Fabric 1.21.1](fabric-1.21.1.md) et [audit de parité Fabric](fabric-parity-audit.md). Les rapports conservés attestent un état précis ; seul le tableau associé aux sources et JAR courants fait foi pour une livraison.
