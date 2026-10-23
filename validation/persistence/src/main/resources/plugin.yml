@@ -1,0 +1,6 @@
+name: CCRPersistence
+version: 1.0
+main: fr.isaac.cutcleanreborn.verification.CCRPersistence
+api-version: '1.21.1'
+depend: [CutCleanReborn]
+description: Isolated cold-restart storage verifier, never a distribution plugin.

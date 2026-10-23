@@ -1,0 +1,12 @@
+plugins { id 'java' }
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+// Deliberately compile against the oldest, smallest supported API, not Paper.
+dependencies { compileOnly 'org.bukkit:bukkit:1.21.1-R0.1-SNAPSHOT' }
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+tasks.withType(JavaCompile).configureEach { options.release = 21; options.encoding = 'UTF-8' }
+tasks.named('jar', Jar) { archiveFileName = 'CCRPersistence.jar' }

@@ -2,6 +2,14 @@
 
 Ces observations ne remplacent ni la matrice complète ni les tests de toutes les plateformes. Un test natif automatique ne doit jamais être présenté comme un essai visuel.
 
+## Profils de test séparés
+
+Cinq nouveaux profils Modrinth sont réservés aux essais : `CCR QA 26.3 - FO`, puis `CCR QA 26.2 - préparation`, `CCR QA 26.1.2 - préparation`, `CCR QA 1.21.11 - préparation` et `CCR QA 1.21.1 - préparation`. Le suffixe « préparation » est important : ces quatre copies utilisent encore Minecraft26.3/FO15.0.0-beta.2 tant que leur installation exacte n'est pas confirmée et effectuée. Leur nom n'est pas une preuve de la version installée.
+
+La duplication Modrinth conservait la synchronisation globale de certains fichiers. Les quatre options par instance `Unsync game settings`, `Unsync multiplayer servers`, `Unsync command history` et `Unsync saved creative hotbars` ont été activées et vérifiées visuellement dans les cinq profils QA avant les prochains lancements. Les réglages globaux et les options des anciennes instances n'ont pas été modifiés par cette séparation. Les packs de ressources restent gérés par le modpack ; leur interrupteur est désactivé dans cette interface, et aucun réglage global de packs n'a été changé.
+
+Le nom affiché d'une instance peut différer de son dossier physique : vérifier le profil et son dossier avant toute copie de JAR. Les mondes solo de test doivent être créés neufs dans le bon profil QA ; ne jamais reprendre une sauvegarde existante.
+
 ## Paper26.3 — 24octobre2026, en cours
 
 Client Minecraft26.3 avec Fabulously Optimized, nouveau profil « CCR QA », serveur Paper26.3-218 authentifié dans un nouveau monde `build/client-test-server`. JAR réellement installé : SHA-256 `d0694dbbcb3a6bd51c2e380572df466afb6478bb820cb5cfe183d71077224bfb`.
