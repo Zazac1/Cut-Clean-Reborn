@@ -338,7 +338,7 @@
     },
     "Fabric_1.21.1": {
       "branch": "fabric/1.21.1",
-      "enabled": false,
+      "enabled": true,
       "dependencies": []
     }
   }
