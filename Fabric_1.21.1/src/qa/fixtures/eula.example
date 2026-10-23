@@ -1,0 +1,5 @@
+# Exemple uniquement : Minecraft ne lit pas ce fichier.
+# Lire https://www.minecraft.net/eula puis, seulement si vous acceptez,
+# copier vers eula.txt et y modifier la valeur vous-même.
+# eula.txt reste un fichier local ignoré par Git.
+eula=false

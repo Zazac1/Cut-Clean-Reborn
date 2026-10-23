@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -37,7 +38,7 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
 
     @Override public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("REAL CLIENT QA READY: /ccrqa setup, /ccrqa scene <timber|ore|cane|mob|stacks>, /ccrqa observe");
+        getLogger().info("REAL CLIENT QA READY: /ccrqa setup, /ccrqa scene <timber|ore|cane|mob|stacks|equipment>, /ccrqa observe");
     }
 
     @EventHandler public void join(PlayerJoinEvent event) {
@@ -74,11 +75,11 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
         String action = args.length == 0 ? "help" : args[0].toLowerCase(Locale.ROOT);
         switch (action) {
             case "setup" -> setup(player);
-            case "scene" -> { if (args.length < 2) player.sendMessage("timber / ore / cane / mob / stacks"); else prepare(player, args[1]); }
+            case "scene" -> { if (args.length < 2) player.sendMessage("timber / ore / cane / mob / stacks / equipment"); else prepare(player, args[1]); }
             case "observe" -> observe(player);
             case "creative" -> player.setGameMode(GameMode.CREATIVE);
             case "survival" -> player.setGameMode(GameMode.SURVIVAL);
-            default -> player.sendMessage("/ccrqa setup | scene <timber|ore|cane|mob|stacks> | observe | creative | survival");
+            default -> player.sendMessage("/ccrqa setup | scene <timber|ore|cane|mob|stacks|equipment> | observe | creative | survival");
         }
         return true;
     }
@@ -152,6 +153,27 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
             }
             case "stacks" -> {
                 player.getInventory().addItem(new ItemStack(Material.OAK_LOG, 17), new ItemStack(Material.COBBLESTONE, 23));
+            }
+            case "equipment" -> {
+                world.getBlockAt(0, y, 0).setType(Material.STONE, false);
+                world.getBlockAt(0, y + 1, 0).setType(Material.ANVIL, false);
+                world.getBlockAt(2, y, 0).setType(Material.STONE, false);
+                world.getBlockAt(2, y + 1, 0).setType(Material.CRAFTING_TABLE, false);
+                player.setLevel(50);
+                player.setExp(0);
+                player.getInventory().setItem(0, new ItemStack(Material.DIAMOND_SWORD));
+                ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+                EnchantmentStorageMeta bookMeta = (EnchantmentStorageMeta) book.getItemMeta();
+                bookMeta.addStoredEnchant(Enchantment.SHARPNESS, 5, true);
+                book.setItemMeta(bookMeta);
+                player.getInventory().setItem(1, book);
+                player.getInventory().setItem(2, new ItemStack(Material.DIAMOND_HELMET));
+                player.getInventory().setItem(3, new ItemStack(Material.DIAMOND_CHESTPLATE));
+                player.getInventory().setItem(4, new ItemStack(Material.DIAMOND_LEGGINGS));
+                player.getInventory().setItem(5, new ItemStack(Material.DIAMOND_BOOTS));
+                player.getInventory().setItem(6, new ItemStack(Material.HEAVY_CORE, 2));
+                player.getInventory().setItem(7, new ItemStack(Material.BREEZE_ROD, 2));
+                player.sendMessage("Equipment fixture only: configure CCR rules yourself, then use the real anvil/crafting table. No transaction or assertion was simulated.");
             }
             default -> player.sendMessage("Unknown QA scene.");
         }

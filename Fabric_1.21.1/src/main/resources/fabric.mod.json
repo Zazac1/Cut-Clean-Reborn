@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "cutcleanreborn",
+  "version": "${version}",
+  "name": "CutCleanReborn",
+  "description": "CutClean gameplay, native server-authoritative configuration menus, timber and equipment rules.",
+  "authors": ["Zazac1"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": { "main": ["fr.isaac.cutcleanreborn.fabric.CutCleanReborn"] },
+  "mixins": ["cutcleanreborn.mixins.json"],
+  "depends": { "fabricloader": ">=0.20.1", "minecraft": "1.21.1", "java": ">=21", "fabric-api": "*" }
+}
