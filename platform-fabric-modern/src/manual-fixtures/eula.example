@@ -1,0 +1,4 @@
+# Read https://www.minecraft.net/eula before accepting locally.
+# Copy this file to eula.txt and change false to true only if you accept the EULA.
+# eula.txt is intentionally ignored by Git; no acceptance is distributed.
+eula=false
