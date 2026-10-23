@@ -104,8 +104,16 @@ abstract class MenuSupport implements InventoryHolder, Listener {
         if (!plugin.isEnabled() || !player.isOnline()) return;
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (plugin.isEnabled() && player.isOnline() && player.hasPermission("cutcleanreborn.config")
-                    && player.getOpenInventory().getType() == org.bukkit.event.inventory.InventoryType.CRAFTING) back.run();
+                    && isPersonalInventory(player)) back.run();
         });
+    }
+
+    private static boolean isPersonalInventory(Player player) {
+        InventoryView current = player.getOpenInventory();
+        org.bukkit.event.inventory.InventoryType type = current.getType();
+        return (type == org.bukkit.event.inventory.InventoryType.CRAFTING
+                || type == org.bukkit.event.inventory.InventoryType.CREATIVE)
+                && current.getTopInventory().getHolder() == player;
     }
 
     protected MenuSupport parentMenu() { return null; }
