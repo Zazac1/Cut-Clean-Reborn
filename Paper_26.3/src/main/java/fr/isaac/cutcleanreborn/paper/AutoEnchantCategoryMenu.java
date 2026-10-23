@@ -7,6 +7,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Category split mandated for automatic enchantments. */
 final class AutoEnchantCategoryMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new ConfigMainMenu(plugin); }
+
     private static final int REFRESH_SLOT = 4;
     private static final int ARMOR_SLOT = 11;
     private static final int ENABLE_SLOT = 13;

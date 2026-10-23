@@ -8,6 +8,7 @@
 # Build products
 build/
 **/build/
+validation/results/
 
 # Local Minecraft/Paper development data, worlds and logs
 dev-server/

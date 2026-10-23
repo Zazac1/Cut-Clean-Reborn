@@ -21,6 +21,10 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.Sound;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -29,45 +33,143 @@ import org.bukkit.inventory.meta.ItemMeta;
 abstract class MenuSupport implements InventoryHolder, Listener {
     protected final CutCleanRebornPlugin plugin;
     protected final Inventory inventory;
+    private int lastClickTick = -1;
+    private final java.util.Set<Integer> informationSlots = new java.util.HashSet<>();
 
     MenuSupport(CutCleanRebornPlugin plugin, int rows, String title) {
         this.plugin = plugin;
-        inventory = Bukkit.createInventory(this, rows * 9, title);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        inventory = Bukkit.createInventory(this, rows * 9, MenuItems.component(title));
     }
 
-    final void open(Player player) { player.openInventory(inventory); }
+    final void open(Player player) {
+        Inventory previous = player.getOpenInventory().getTopInventory();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline() || !plugin.isEnabled() || player.getOpenInventory().getTopInventory() != previous) return;
+            if (!player.hasPermission("cutcleanreborn.config")) return;
+            refresh();
+            decorate();
+            HandlerList.unregisterAll(this);
+            plugin.getServer().getPluginManager().registerEvents(this, plugin);
+            player.openInventory(inventory);
+            if (player.getOpenInventory().getTopInventory() != inventory) HandlerList.unregisterAll(this);
+        });
+    }
+
+    static boolean isPluginView(InventoryView view) {
+        return view.getTopInventory().getHolder() instanceof MenuSupport || AnvilTextInput.isInput(view.getTopInventory());
+    }
+
+    private void decorate() {
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            if (inventory.getItem(slot) != null) continue;
+            if (slot < 9 || slot >= inventory.getSize() - 9 || slot % 9 == 0 || slot % 9 == 8)
+                inventory.setItem(slot, MenuItems.item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of()));
+        }
+    }
+
     @Override public final Inventory getInventory() { return inventory; }
 
     @EventHandler public final void onInventoryClick(InventoryClickEvent event) {
         if (event.getView().getTopInventory().getHolder() != this) return;
-        // This covers shift, double clicks, hotbar/number keys and offhand swaps too.
         event.setCancelled(true);
-        if (event.getRawSlot() >= inventory.getSize() || !(event.getWhoClicked() instanceof Player player)) return;
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= inventory.getSize() || !(event.getWhoClicked() instanceof Player player)) return;
+        if (!event.getClick().isLeftClick() && !event.getClick().isRightClick()) return;
+        ItemStack item = inventory.getItem(slot);
+        if (item == null || item.getType() == Material.GRAY_STAINED_GLASS_PANE || informationSlots.contains(slot)) return;
+        int tick = Bukkit.getCurrentTick();
+        if (lastClickTick == tick) return;
+        lastClickTick = tick;
         if (!player.hasPermission("cutcleanreborn.config")) {
-            player.sendMessage("§cYou do not have permission to change the configuration.");
-            player.closeInventory();
+            player.sendMessage(CutCleanCommands.PREFIX + "§cYou do not have permission to change the configuration.");
+            plugin.getServer().getScheduler().runTask(plugin, () -> player.closeInventory());
             return;
         }
-        handleClick(player, event.getRawSlot(), event.getClick());
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.25f, 1.2f);
+        handleClick(player, slot, event.getClick());
+        decorate();
     }
     @EventHandler public final void onInventoryDrag(InventoryDragEvent event) {
         if (event.getView().getTopInventory().getHolder() == this) event.setCancelled(true);
     }
     @EventHandler public final void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getInventory().getHolder() == this) HandlerList.unregisterAll(this);
+        if (event.getInventory().getHolder() != this) return;
+        HandlerList.unregisterAll(this);
+        if (event.getReason() == InventoryCloseEvent.Reason.PLAYER && event.getPlayer() instanceof Player player)
+            returnAfterEscape(plugin, player, () -> goBack(player));
     }
+
+    /** Closing through Escape goes up one semantic level, never through the browsing history. */
+    static void returnAfterEscape(CutCleanRebornPlugin plugin, Player player, Runnable back) {
+        if (!plugin.isEnabled() || !player.isOnline()) return;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (plugin.isEnabled() && player.isOnline() && player.hasPermission("cutcleanreborn.config")
+                    && player.getOpenInventory().getType() == org.bukkit.event.inventory.InventoryType.CRAFTING) back.run();
+        });
+    }
+
+    protected MenuSupport parentMenu() { return null; }
+    protected void refresh() { }
+
+    protected final void clearMenu() {
+        informationSlots.clear();
+        inventory.clear();
+    }
+
+    protected void goBack(Player player) {
+        MenuSupport parent = parentMenu();
+        if (parent != null) parent.open(player);
+    }
+
+    protected final void information(int slot, ItemStack item) {
+        informationSlots.add(slot);
+        inventory.setItem(slot, item);
+    }
+
+    protected final void header(Material icon, String title, String... description) {
+        information(4, MenuItems.item(icon, title, List.of(description)));
+    }
+
+    protected final void footer(String destination) {
+        int start = inventory.getSize() - 9;
+        inventory.setItem(start, MenuItems.item(Material.ARROW, "§eBack • " + destination,
+                List.of("§7Go up one menu.", "§7Shortcut: Escape")));
+        information(start + 4, MenuItems.item(Material.PAPER, "§7Navigation & Saving",
+                List.of("§7Escape: previous menu.", "§7Changes are saved automatically.", "§7Use Close to leave CCR at any time.")));
+        inventory.setItem(start + 8, MenuItems.item(Material.BARRIER, "§cClose CCR",
+                List.of("§7Leave all configuration menus.")));
+    }
+
+    protected final boolean handleNavigation(Player player, int slot) {
+        if (slot == inventory.getSize() - 9) { goBack(player); return true; }
+        if (slot == inventory.getSize() - 1) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> player.closeInventory());
+            return true;
+        }
+        return false;
+    }
+
+    final void confirm(Player player, String title, Runnable action, java.util.function.Consumer<Player> back) {
+        new ConfirmationMenu(plugin, title, target -> { action.run(); back.accept(target); }, back).open(player);
+    }
+
     abstract void handleClick(Player player, int slot, ClickType click);
 }
 
 final class MenuItems {
     private MenuItems() { }
+    static Component component(String text) {
+        return LegacyComponentSerializer.legacySection().deserialize(text).decoration(TextDecoration.ITALIC, false);
+    }
+    static ItemStack pageInfo(int page, int pages) {
+        return item(Material.BOOK, "§6Page " + (page + 1) + " / " + pages, List.of("§7Changes are saved automatically.", "§7Use the arrows to browse."));
+    }
     static ItemStack item(Material material, String name, List<String> lore) {
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
-        meta.setDisplayName(name);
-        meta.setLore(lore);
-        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
+        meta.displayName(component(name));
+        meta.lore(lore.stream().map(MenuItems::component).toList());
+        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
         stack.setItemMeta(meta);
         return stack;
     }
@@ -76,11 +178,22 @@ final class MenuItems {
         ItemStack stack = item(material, name, lore);
         if (enabled) {
             ItemMeta meta = stack.getItemMeta();
-            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            meta.setEnchantmentGlintOverride(true);
             stack.setItemMeta(meta);
         }
         return stack;
+    }
+    static ItemStack toggle(String title, boolean enabled, boolean available, String requirement, String... description) {
+        List<String> lore = new ArrayList<>(List.of(description));
+        lore.add("");
+        lore.add("§7Saved setting: " + CutCleanCommands.state(enabled));
+        if (enabled && !available) lore.add("§ePaused • enable " + requirement + " first.");
+        lore.add(enabled ? "§eClick to disable." : "§eClick to enable.");
+        Material icon = !enabled ? Material.GRAY_DYE : available ? Material.LIME_DYE : Material.ORANGE_DYE;
+        return item(icon, "§6" + title + " §8• " + effectiveState(enabled, available), lore);
+    }
+    static String effectiveState(boolean enabled, boolean available) {
+        return !enabled ? "§cOFF" : available ? "§aON" : "§ePAUSED";
     }
     static ItemStack mobItem(EntityType type, List<String> lore) {
         ItemStack stack = item(mobIcon(type), "§6" + pretty(type), lore);
@@ -133,6 +246,14 @@ final class MenuItems {
         }
         result.sort(Comparator.comparing(type -> type.getKey().toString()));
         return result;
+    }
+    static EntityType findMob(String input) {
+        if (input == null) return null;
+        String query = input.trim().toLowerCase(Locale.ROOT).replace("minecraft:", "").replace(' ', '_');
+        List<EntityType> choices = configurableMobs();
+        for (EntityType type : choices) if (type.getKey().getKey().equals(query)) return type;
+        List<EntityType> matches = choices.stream().filter(type -> type.getKey().getKey().contains(query)).toList();
+        return matches.size() == 1 ? matches.getFirst() : null;
     }
     /** Natural UHC mobs first; technical or non-natural entities deliberately go at the end. */
     static int mobPriority(EntityType type) {

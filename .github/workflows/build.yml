@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: Fabric 1.21.11
-            directory: Fabric_1.21.11
-            java: '21'
+          - platform: Paper 26.2
+            directory: Paper_26.2
+            java: '25'
           - platform: Paper 26.3
             directory: Paper_26.3
             java: '25'

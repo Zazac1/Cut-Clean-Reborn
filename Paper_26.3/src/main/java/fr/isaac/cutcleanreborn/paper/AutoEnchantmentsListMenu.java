@@ -10,6 +10,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Paginated catalogue of vanilla-compatible enchantments for one item. */
 final class AutoEnchantmentsListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new AutoEnchantItemMenu(plugin, category, material, itemPage); }
+
     private final AutoEnchantCategory category;
     private final Material material;
     private final int itemPage;
@@ -27,6 +29,7 @@ final class AutoEnchantmentsListMenu extends MenuSupport {
         render(count);
     }
     private void render(int pageCount) {
+        inventory.setItem(4, MenuItems.pageInfo(page, pageCount));
         int start = page * MobListMenu.PAGE_SIZE;
         for (int index = 0; index < MobListMenu.PAGE_SIZE && start + index < enchantments.size(); index++) {
             Map.Entry<Enchantment, Integer> entry = enchantments.get(start + index);
@@ -57,7 +60,7 @@ final class AutoEnchantmentsListMenu extends MenuSupport {
         }
     }
     private void openSearch(Player player) {
-        new AnvilTextInput<Enchantment>(plugin, "§8CCR • Search Enchantment", "enchantment", "minecraft:sharpness",
+        new AnvilTextInput<Enchantment>(plugin, "§8CCR • Search Enchantment", "enchantment", category == AutoEnchantCategory.ARMOR ? "minecraft:protection" : "minecraft:efficiency",
                 AutoEnchantService::findEnchantment, (target, enchantment) -> {
                     if (!canEnchantMaterial(enchantment)) {
                         target.sendMessage("§cCCR §8» §7This enchantment cannot be applied to " + MenuItems.prettyName(material) + ".");

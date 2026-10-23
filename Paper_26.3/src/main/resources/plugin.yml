@@ -6,12 +6,12 @@ description: CutCleanReborn Paper plugin.
 authors: [Isaac]
 commands:
   ccr:
-    description: Configure CutCleanReborn or test its loading state.
-    usage: /ccr <config|ping>
+    description: Open the configuration, view gameplay rules or reload settings.
+    usage: /ccr [config|status|reload|help|ping]
     aliases: [cutclean, crr]
   cleanstacks:
     description: Toggle your personal Clean Stacks conversion.
-    usage: /cleanstacks <true|false>
+    usage: /cleanstacks [on|off|status|true|false|toggle]
 permissions:
   cutcleanreborn.config:
     description: Allows opening and changing the CutCleanReborn configuration menu.

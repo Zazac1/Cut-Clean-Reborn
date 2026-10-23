@@ -24,7 +24,10 @@ final class OreCatalog {
     }
     static List<CutCleanRebornPlugin.MobDrop> vanillaDrops(Material block) {
         OreDefinition ore = find(block);
-        return ore == null ? List.of() : List.of(new CutCleanRebornPlugin.MobDrop(ore.normalDrop(), 1, 1, 100.0D));
+        if (ore == null) return List.of();
+        int minimum = switch (ore.normalDrop()) { case RAW_COPPER, GOLD_NUGGET -> 2; case REDSTONE, LAPIS_LAZULI -> 4; default -> 1; };
+        int maximum = switch (ore.normalDrop()) { case RAW_COPPER, REDSTONE -> 5; case LAPIS_LAZULI -> 9; case GOLD_NUGGET -> 6; default -> 1; };
+        return List.of(new CutCleanRebornPlugin.MobDrop(ore.normalDrop(), minimum, maximum, 100.0D));
     }
     /** Exact possible quantity range produced by vanilla Fortune III for this ore's regular drop. */
     static CutCleanRebornPlugin.MobDrop fortuneThreeDrop(Material block) {
@@ -33,7 +36,7 @@ final class OreCatalog {
         int baseMinimum = 1, baseMaximum = 1;
         switch (ore.normalDrop()) {
             case RAW_COPPER -> { baseMinimum = 2; baseMaximum = 5; }
-            case REDSTONE -> { baseMinimum = 4; baseMaximum = 5; }
+            case REDSTONE -> { return new CutCleanRebornPlugin.MobDrop(ore.normalDrop(), 4, 8, 100.0D); }
             case LAPIS_LAZULI -> { baseMinimum = 4; baseMaximum = 9; }
             case GOLD_NUGGET -> { baseMinimum = 2; baseMaximum = 6; }
             case ANCIENT_DEBRIS -> { return new CutCleanRebornPlugin.MobDrop(ore.normalDrop(), 1, 1, 100.0D); }

@@ -10,6 +10,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Drop collection for a mob, with independent pagination from the mob list. */
 final class DropListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new MobConfigurationMenu(plugin, context); }
+
     static final int CENTER_SLOT = 22;
     static final int ADD_DROP_SLOT = 40;
     static final int LOOTING_VANILLA_SLOT = 41;
@@ -34,6 +36,7 @@ final class DropListMenu extends MenuSupport {
     }
     private void render(int pageCount) {
         inventory.clear();
+        inventory.setItem(4, MenuItems.pageInfo(page, pageCount));
         inventory.setItem(CENTER_SLOT, MenuItems.item(MenuItems.mobIcon(context.mob()), "§6" + MenuItems.pretty(context.mob()),
                 List.of("§7Configured drops surround this mob.")));
         int start = page * DROP_SLOTS.length;
@@ -42,17 +45,17 @@ final class DropListMenu extends MenuSupport {
             CutCleanRebornPlugin.MobDrop drop = entry.drop();
             List<String> lore = new ArrayList<>(List.of(entry.vanilla() ? "§9Vanilla drop" : "§aCustom drop", "§7Amount: §e" + drop.minimum() + "-" + drop.maximum(),
                     "§7Drop chance: §e" + MenuItems.number(drop.chance()) + "%"));
-            if (entry.lootingThree() != null) lore.add("§bLooting III vanilla: §e" + entry.lootingThree().minimum() + "-" + entry.lootingThree().maximum()
+            if (entry.lootingThree() != null) lore.add("§bEstimated Looting III: §e" + entry.lootingThree().minimum() + "-" + entry.lootingThree().maximum()
                     + " §7(" + MenuItems.number(entry.lootingThree().chance()) + "%)");
-            lore.add(""); lore.add("§eLeft click: Edit"); lore.add("§cRight click: Remove");
+            lore.add(""); lore.add("§eLeft click: Edit"); lore.add(entry.vanilla() ? "§cRight click: Disable / restore vanilla" : "§cRight click: Remove");
             inventory.setItem(DROP_SLOTS[index], MenuItems.item(drop.material(), "§6" + MenuItems.prettyName(drop.material()), lore));
         }
         inventory.setItem(ADD_DROP_SLOT, MenuItems.item(Material.PAPER, "§aAdd Drop", List.of("§7Add a new item drop.")));
         lootingToggle(LOOTING_VANILLA_SLOT, plugin.mobLootingVanillaEnabled(), "Looting on edited vanilla drops");
         lootingToggle(LOOTING_CUSTOM_SLOT, plugin.mobLootingCustomEnabled(), "Looting on custom drops");
         inventory.setItem(BACK_SLOT, MenuItems.item(Material.BARRIER, "§cBack", List.of("§7Return to " + MenuItems.pretty(context.mob()) + ".")));
-        inventory.setItem(RESET_TO_VANILLA_SLOT, MenuItems.item(Material.CLOCK, "§eReset to Vanilla Values",
-                List.of("§7Remove overrides and added drops for", "§7this mob and restore Minecraft values.")));
+        inventory.setItem(RESET_TO_VANILLA_SLOT, MenuItems.item(Material.CLOCK, "§eReset Drop Overrides",
+                List.of("§7Remove overrides and added drops for", "§7this mob. Global cooking still applies.")));
         if (page > 0) inventory.setItem(PREVIOUS_PAGE_SLOT, MenuItems.item(Material.ARROW, "§ePrevious page",
                 List.of("§7Page " + (page + 1) + " / " + pageCount)));
         if (page + 1 < pageCount) inventory.setItem(NEXT_PAGE_SLOT, MenuItems.item(Material.ARROW, "§eNext page",
@@ -61,9 +64,10 @@ final class DropListMenu extends MenuSupport {
     @Override void handleClick(Player player, int slot, ClickType click) {
         if (slot == BACK_SLOT || slot == CENTER_SLOT) { new MobConfigurationMenu(plugin, context).open(player); return; }
         if (slot == RESET_TO_VANILLA_SLOT) {
-            plugin.saveVanillaDropOverrides(context.mob(), List.of());
-            plugin.saveMobDrops(context.mob(), List.of());
-            new DropListMenu(plugin, context, page).open(player);
+            confirm(player, "Reset all drops for " + MenuItems.pretty(context.mob()) + "?", () -> {
+                plugin.saveVanillaDropOverrides(context.mob(), List.of());
+                plugin.saveMobDrops(context.mob(), List.of());
+            }, target -> new DropListMenu(plugin, context, page).open(target));
             return;
         }
         if (slot == PREVIOUS_PAGE_SLOT && page > 0) { new DropListMenu(plugin, context, page - 1).open(player); return; }
@@ -127,13 +131,13 @@ final class DropListMenu extends MenuSupport {
     private void disableVanillaDrop(CutCleanRebornPlugin.MobDrop drop) {
         List<CutCleanRebornPlugin.MobDrop> overrides = new ArrayList<>(plugin.getVanillaDropOverrides(context.mob()));
         overrides.removeIf(existing -> existing.material() == drop.material());
-        overrides.add(new CutCleanRebornPlugin.MobDrop(drop.material(), 0, 0, 0.0D));
+        if (drop.chance() > 0) overrides.add(new CutCleanRebornPlugin.MobDrop(drop.material(), drop.minimum(), drop.maximum(), 0.0D));
         plugin.saveVanillaDropOverrides(context.mob(), overrides);
     }
     private void lootingToggle(int slot, boolean enabled, String label) {
         inventory.setItem(slot, MenuItems.stateItem(Material.BOOK,
                 (enabled ? "§a" : "§c") + label + ": " + (enabled ? "ON" : "OFF"),
-                List.of("§7Applies the killer's Looting", "§7to this configured drop type.", "", enabled ? "§eClick to disable" : "§eClick to enable"), enabled));
+                List.of("§7Global setting for every mob.", "§7Adds 0 to the killer's Looting level.", "", enabled ? "§eClick to disable" : "§eClick to enable"), enabled));
     }
 }
 

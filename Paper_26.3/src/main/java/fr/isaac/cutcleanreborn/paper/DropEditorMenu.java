@@ -8,6 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Focused editor for the amount range and probability of a single custom drop. */
 final class DropEditorMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new DropListMenu(plugin, context, dropPage); }
+
     private static final int ITEM_SLOT = 13;
     private static final int AMOUNT_SLOT = 11;
     private static final int CHANCE_SLOT = 15;
@@ -30,7 +32,8 @@ final class DropEditorMenu extends MenuSupport {
     }
     private void render() {
         inventory.setItem(ITEM_SLOT, MenuItems.item(drop.material(), "§6" + MenuItems.prettyName(drop.material()),
-                List.of(vanilla ? "§9Vanilla drop" : "§aCustom drop", "§7Amount: §e" + drop.minimum() + "-" + drop.maximum(), "§7Drop chance: §e" + MenuItems.number(drop.chance()) + "%")));
+                List.of(vanilla ? "§9Vanilla drop" : "§aCustom drop", "§7Amount: §e" + drop.minimum() + "-" + drop.maximum(), "§7Drop chance: §e" + MenuItems.number(drop.chance()) + "%",
+                        vanilla ? "§7Vanilla item identity." : "§eClick to change the item.")));
         inventory.setItem(AMOUNT_SLOT, MenuItems.item(Material.COMPARATOR, "§6Amount",
                 List.of("§7Current range: §e" + drop.minimum() + "-" + drop.maximum(), "", "§eClick to edit")));
         inventory.setItem(CHANCE_SLOT, MenuItems.item(Material.GOLD_NUGGET, "§6Drop chance",
@@ -43,7 +46,9 @@ final class DropEditorMenu extends MenuSupport {
         if (drop == null) { new DropListMenu(plugin, context, dropPage).open(player); return; }
         if (slot == BACK_SLOT) { new DropListMenu(plugin, context, dropPage).open(player); return; }
         if (slot == REMOVE_SLOT) { remove(player); return; }
-        if (slot == AMOUNT_SLOT) new AnvilTextInput<AmountRange>(plugin, "§8CCR • Drop Amount", "amount", drop.minimum() + "-" + drop.maximum(),
+        if (slot == ITEM_SLOT && !vanilla) new AnvilTextInput<Material>(plugin, "§8CCR • Drop Item", "item", drop.material().getKey().toString(), MenuItems::findItem,
+                (target, item) -> update(target, new CutCleanRebornPlugin.MobDrop(item, drop.minimum(), drop.maximum(), drop.chance()))).open(player);
+        else if (slot == AMOUNT_SLOT) new AnvilTextInput<AmountRange>(plugin, "§8CCR • Drop Amount", "amount", drop.minimum() + "-" + drop.maximum(),
                 input -> parseAmount(input, 64), (target, range) -> update(target,
                         new CutCleanRebornPlugin.MobDrop(drop.material(), range.minimum(), range.maximum(), drop.chance()))).open(player);
         else if (slot == CHANCE_SLOT) new AnvilTextInput<Double>(plugin, "§8CCR • Drop Chance", "chance", MenuItems.number(drop.chance()),
@@ -62,11 +67,11 @@ final class DropEditorMenu extends MenuSupport {
             updated.set(sourceIndex, value);
             plugin.saveMobDrops(context.mob(), updated);
         }
-        new DropListMenu(plugin, context, dropPage).open(player);
+        new DropEditorMenu(plugin, context, dropPage, new EditableDrop(value, vanilla, null), sourceIndex).open(player);
     }
     private void remove(Player player) {
         if (vanilla) {
-            update(player, new CutCleanRebornPlugin.MobDrop(drop.material(), 0, 0, 0.0D));
+            update(player, new CutCleanRebornPlugin.MobDrop(drop.material(), drop.minimum(), drop.maximum(), 0.0D));
             return;
         }
         List<CutCleanRebornPlugin.MobDrop> updated = new ArrayList<>(plugin.getMobDrops(context.mob()));
@@ -75,20 +80,11 @@ final class DropEditorMenu extends MenuSupport {
         new DropListMenu(plugin, context, dropPage).open(player);
     }
     private static AmountRange parseAmount(String input, int maximumStack) {
-        String[] parts = input.trim().split("-", -1);
-        if (parts.length > 2 || parts.length == 0) return null;
-        try {
-            int minimum = Integer.parseInt(parts[0].trim());
-            int maximum = parts.length == 1 ? minimum : Integer.parseInt(parts[1].trim());
-            return minimum >= 0 && maximum >= minimum && maximum <= maximumStack ? new AmountRange(minimum, maximum) : null;
-        } catch (NumberFormatException ignored) { return null; }
+        var range = GameplayMath.range(input, 0, maximumStack);
+        return range == null ? null : new AmountRange(range.minimum(), range.maximum());
     }
     private static Double parseChance(String input) {
-        String number = input.trim().replace("%", "").trim();
-        try {
-            double chance = Double.parseDouble(number);
-            return Double.isFinite(chance) && chance >= 0.0D && chance <= 100.0D ? chance : null;
-        } catch (NumberFormatException ignored) { return null; }
+        return GameplayMath.percentage(input);
     }
     private record AmountRange(int minimum, int maximum) { }
 }

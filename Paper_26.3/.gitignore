@@ -1,6 +1,7 @@
 .gradle/
 build/
 dev-server/
+run-server/
 logs/
 *.log
 .idea/

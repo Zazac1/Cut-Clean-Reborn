@@ -7,6 +7,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Chooses a block variant and copies its full drop configuration to its pair. */
 final class OreConfigurationMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new OreListMenu(plugin, listPage); }
+
     private static final int STONE_SLOT = 11, COPY_SLOT = 13, DEEPSLATE_SLOT = 15, BACK_SLOT = 22;
     private final OreDefinition ore;
     private final int listPage;
@@ -30,9 +32,10 @@ final class OreConfigurationMenu extends MenuSupport {
         else if (slot == STONE_SLOT) new OreDropListMenu(plugin, ore.stone(), ore, listPage).open(player);
         else if (slot == DEEPSLATE_SLOT) new OreDropListMenu(plugin, ore.deepslate(), ore, listPage).open(player);
         else if (slot == COPY_SLOT) {
-            if (click.isRightClick()) plugin.copyOreSettings(ore.deepslate(), ore.stone());
-            else plugin.copyOreSettings(ore.stone(), ore.deepslate());
-            player.sendMessage("§aCCR §8» §7Ore drop settings copied.");
+            Material source = click.isRightClick() ? ore.deepslate() : ore.stone();
+            Material target = click.isRightClick() ? ore.stone() : ore.deepslate();
+            confirm(player, "Overwrite " + MenuItems.prettyName(target) + " settings?",
+                    () -> plugin.copyOreSettings(source, target), p -> new OreConfigurationMenu(plugin, ore, listPage).open(p));
         }
     }
 }
