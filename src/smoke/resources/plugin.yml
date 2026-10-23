@@ -1,0 +1,5 @@
+name: CCRSmoke
+version: '1.0'
+main: fr.isaac.cutcleanreborn.verification.CCRSmoke
+api-version: '1.21.1'
+depend: [CutCleanReborn]
