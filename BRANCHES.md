@@ -8,8 +8,7 @@ Le modèle suit [CustomRecipe](https://github.com/Zazac1/CustomRecipe) : une bra
 | `paper/<Minecraft>` | Cinq variantes Paper vérifiées automatiquement | Contenu autonome du module Paper |
 | `purpur/<Minecraft>` | Cinq variantes Purpur vérifiées automatiquement | Module + copie exacte des sources Paper correspondantes + compilation partagée matérialisée |
 | `spigot/<Minecraft>`, `bukkit/<Minecraft>` | Portages en cours | Activation uniquement après validation ; code partagé matérialisé à l'export |
-| `fabric/1.21.1` | Port natif validé automatiquement, essais client/solo restant à réaliser | Projet Fabric autonome, avec ses tests séparés |
-| Autres `fabric/<Minecraft>` | Revalidation finale des portages en cours | Activation uniquement après validation |
+| `fabric/<Minecraft>` | Cinq ports natifs testés automatiquement ; validation globale finale et essais client/solo distincts | Projet Fabric autonome ; sources communes modernes et compilation partagée intégrées localement |
 
 `main` reste la branche par défaut. Les familles sont `26.3`, `26.2`, `26.1.x` (révision concrète testée : `26.1.2`), `1.21.11` et `1.21.1`. `branch-exports.json` définit les noms, dépendances à embarquer et activations. Un dossier présent mais non validé ne justifie pas une branche annoncée comme supportée. L'ancien historique Fabric est conservé jusqu'à la synchronisation de son portage actuel.
 

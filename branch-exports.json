@@ -278,7 +278,7 @@
     },
     "Fabric_26.3": {
       "branch": "fabric/26.3",
-      "enabled": false,
+      "enabled": true,
       "metadata_path": "platform-fabric-modern/src/main/resources/fabric.mod.json",
       "dependencies": [
         {
@@ -293,7 +293,7 @@
     },
     "Fabric_26.2": {
       "branch": "fabric/26.2",
-      "enabled": false,
+      "enabled": true,
       "metadata_path": "platform-fabric-modern/src/main/resources/fabric.mod.json",
       "dependencies": [
         {
@@ -308,7 +308,7 @@
     },
     "Fabric_26.1.x": {
       "branch": "fabric/26.1.x",
-      "enabled": false,
+      "enabled": true,
       "metadata_path": "platform-fabric-modern/src/main/resources/fabric.mod.json",
       "dependencies": [
         {
@@ -323,7 +323,7 @@
     },
     "Fabric_1.21.11": {
       "branch": "fabric/1.21.11",
-      "enabled": false,
+      "enabled": true,
       "metadata_path": "platform-fabric-modern/src/main/resources/fabric.mod.json",
       "dependencies": [
         {
