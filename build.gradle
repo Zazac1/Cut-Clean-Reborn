@@ -1,96 +1,104 @@
 plugins {
-	id 'fabric-loom' version "${loom_version}"
-	id 'maven-publish'
+    id 'net.fabricmc.fabric-loom-remap' version '1.17.21'
 }
-
+ext.nativeSourceRoot = file('platform-fabric-modern').exists() ? file('platform-fabric-modern') : file('../platform-fabric-modern')
 version = project.mod_version
-group = project.maven_group
-
-base {
-	archivesName = "CutCleanReborn"
-}
-
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-	maven {
-		name = 'TerraformersMC'
-		url = 'https://maven.terraformersmc.com/releases/'
-	}
-}
-
-loom {
-	mods {
-		"${project.mod_id}" {
-			sourceSet sourceSets.main
-		}
-	}
-
-	runs {
-		client {
-			runDir = "run-client"
-		}
-		server {
-			runDir = "run-server"
-		}
-	}
-}
-
+group = 'fr.isaac.cutcleanreborn'
+base { archivesName = 'cutcleanreborn' }
+repositories { mavenCentral() }
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	modImplementation "com.terraformersmc:modmenu:17.0.0"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation include('org.yaml:snakeyaml:2.5')
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+sourceSets {
+    main { java.srcDir layout.buildDirectory.dir('generated/ccrSources'); resources.srcDir new File(nativeSourceRoot, 'src/main/resources') }
+    test { java.srcDir new File(nativeSourceRoot, 'src/test/java') }
+}
+loom { runs { server { runDir = 'build/manual-server'; programArg 'nogui' }; client { runDir = 'build/qa-client' } } }
+java { toolchain.languageVersion = JavaLanguageVersion.of(21); withSourcesJar() }
+tasks.withType(JavaCompile).configureEach { options.release = 21 }
+processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand(version: project.version, minecraft_version: project.minecraft_version, java_version: '21') } }
+jar { archiveFileName = "cutcleanreborn-${project.version}+${project.minecraft_family}.jar"; from('LICENSE') }
+remapJar { archiveFileName = "cutcleanreborn-${project.version}+${project.minecraft_family}.jar" }
+test { useJUnitPlatform() }
+apply from: file('build-logic/fabric-modern-production.gradle').exists() ? file('build-logic/fabric-modern-production.gradle') : file('../build-logic/fabric-modern-production.gradle')
+
+
+
+tasks.register('generateCommonSources', Sync) {
+    from(new File(nativeSourceRoot, 'src/main/java'))
+    into(layout.buildDirectory.dir('generated/ccrSources'))
+    filteringCharset = 'UTF-8'
+
+}
+tasks.named('compileJava') { dependsOn('generateCommonSources') }
+tasks.named('sourcesJar') { dependsOn('generateCommonSources') }
+
+
+
+sourceSets {
+    qa {
+        java.srcDir layout.buildDirectory.dir('generated/ccrQaSources')
+        resources.srcDir new File(nativeSourceRoot, 'src/qa/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+tasks.register('generateQaSources',Sync) {
+    from(new File(nativeSourceRoot, 'src/qa/java'))
+    into(layout.buildDirectory.dir('generated/ccrQaSources'))
+    filteringCharset='UTF-8'
+    filter { line -> line.replace('getCurrentVersion().name()', 'getCurrentVersion().name()') }
+}
+tasks.named('compileQaJava'){ dependsOn('generateQaSources') }
+loom {
+    mods {
+        cutcleanreborn { sourceSet sourceSets.main }
+        ccrverification { sourceSet sourceSets.qa }
+    }
+    runs {
+        smokeServer { server(); source sourceSets.qa; runDir='build/smoke-server'; programArg 'nogui'; vmArg '-Dccr.qa=true' }
+    }
+}
+tasks.register('prepareSmokeServer',Copy){
+    from(new File(nativeSourceRoot, 'src/qa/fixtures'))
+    into(layout.buildDirectory.dir('smoke-server'))
+    outputs.upToDateWhen { false }
+    doFirst { delete layout.buildDirectory.file('smoke-server/ccr-qa-result.json') }
+}
+tasks.named('runSmokeServer') {
+    dependsOn('qaClasses','prepareSmokeServer')
+    maxHeapSize='768m'
+    minHeapSize='128m'
+    timeout=java.time.Duration.ofMinutes(5)
+}
+tasks.register('smokeTest'){
+    group='verification'
+    dependsOn('runSmokeServer')
+    doLast {
+        def result=layout.buildDirectory.file('smoke-server/ccr-qa-result.json').get().asFile
+        if(!result.isFile())throw new GradleException('No Fabric native verification result')
+        def report=new groovy.json.JsonSlurper().parse(result)
+        if(report.counts.failed!=0)throw new GradleException("Native checks failed: ${report.failed}")
+        logger.lifecycle("Fabric native verification: ${report.counts.passed} checks passed")
+    }
 }
 
-processResources {
-	def version = project.version
-	inputs.property "version", version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
+
+tasks.register('prepareManualServer') {
+    doLast {
+        def destination=layout.buildDirectory.dir('manual-server').get().asFile
+        destination.mkdirs()
+        ['eula.txt','server.properties'].each { name ->
+            if(!new File(destination,name).exists())copy { from(new File(nativeSourceRoot,'src/manual-fixtures/'+name)); into destination }
+        }
+    }
 }
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
-}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${project.mod_id}" }
-	}
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.mod_id
-			from components.java
-		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
-}
+tasks.named('runServer') { dependsOn('prepareManualServer'); standardInput=System.in; maxHeapSize='1536m'; minHeapSize='128m' }

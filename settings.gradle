@@ -1,13 +1,2 @@
-pluginManagement {
-	repositories {
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-		mavenCentral()
-		gradlePluginPortal()
-	}
-}
-
-// Nom du projet Gradle
-rootProject.name = 'CutCleanReborn'
+pluginManagement { repositories { maven { url = 'https://maven.fabricmc.net/' }; gradlePluginPortal(); mavenCentral() } }
+rootProject.name = 'CutCleanReborn-Fabric-1.21.11'
