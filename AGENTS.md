@@ -9,7 +9,7 @@
 - Conserver les fonctionnalités et les chemins de configuration existants. Ne pas commencer de nouveau portage sans demande de l'utilisateur.
 - Le dépôt Git reste à la racine. Ne pas créer ou supprimer de dépôts imbriqués pour une simple réorganisation.
 - Les branches `<loader>/<Minecraft>` contiennent directement un projet de version compilable ; `main` garde le workspace complet. Voir `BRANCHES.md` et `sync-branches.ps1`. Le portage Fabric actuel peut faire évoluer sa branche historique en conservant son ascendance ; la permission de supprimer l'ancien historique n'oblige pas à le détruire.
-- Les mondes, configurations locales et serveurs dans `run-server/` appartiennent à l'utilisateur ; les tests automatiques utilisent exclusivement `build/smoke-server/`.
+- Les mondes, configurations locales et serveurs dans `run-server/` appartiennent à l'utilisateur. Les tests fonctionnels utilisent exclusivement `build/smoke-server/`, les triplets froids plugins `build/persistence-server/<essai>/`, et les clients le nouveau monde `build/client-test-server/`. Ne jamais réutiliser un monde utilisateur pour ces vérifications.
 - Conserver le nommage `cutcleanreborn-<version>+<Minecraft>.jar`. Une modification du nom de fichier ne constitue pas une nouvelle version du plugin.
 
 ## Validation
