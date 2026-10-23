@@ -13,42 +13,44 @@ import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
-import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 
 /** Reads the server's own entity loot table, without maintaining a hard-coded mob/drop list. */
 final class VanillaDropCatalog {
-    private static final int SAMPLES = 64;
+    private static final int SAMPLES = 256;
     private static final Map<EntityType, List<CutCleanRebornPlugin.MobDrop>> CACHE = new HashMap<>();
     private VanillaDropCatalog() { }
+    static void clear() { CACHE.clear(); }
 
     static List<CutCleanRebornPlugin.MobDrop> preview(EntityType mob) {
         if (CACHE.containsKey(mob)) return CACHE.get(mob);
-        if (Bukkit.getWorlds().isEmpty() || !LivingEntity.class.isAssignableFrom(mob.getEntityClass())) return List.of();
+        if (Bukkit.getWorlds().isEmpty() || mob.getEntityClass() == null || !LivingEntity.class.isAssignableFrom(mob.getEntityClass())) return List.of();
         World world = Bukkit.getWorlds().getFirst();
-        Location origin = world.getSpawnLocation().clone().add(0.5D, world.getMinHeight() + 1.0D, 0.5D);
+        Location origin = world.getSpawnLocation().clone().add(0.5D, 0.0D, 0.5D);
         Map<Material, Sample> samples = new HashMap<>();
         LivingEntity entity = null;
         try {
             @SuppressWarnings("unchecked")
             Class<? extends LivingEntity> entityClass = (Class<? extends LivingEntity>) mob.getEntityClass();
-            entity = world.spawn(origin, entityClass, SpawnReason.CUSTOM, false, spawned -> {
-                spawned.setAI(false);
-                spawned.setSilent(true);
-            });
+            // A preview must never spawn a real mob, fire spawn events or announce a boss.
+            entity = world.createEntity(origin, entityClass);
             if (!(entity instanceof Mob lootable) || lootable.getLootTable() == null) return List.of();
             LootTable table = lootable.getLootTable();
             for (int seed = 0; seed < SAMPLES; seed++) {
-                LootContext context = new LootContext.Builder(origin).lootedEntity(entity).build();
+                LootContext.Builder builder = new LootContext.Builder(origin).lootedEntity(entity);
+                Bukkit.getOnlinePlayers().stream().findFirst().ifPresent(builder::killer);
+                LootContext context = builder.build();
                 // Small consecutive java.util.Random seeds share their first high bits, which
                 // made variable loot (e.g. sheep mutton) appear as a fixed 2-2 range.
                 long mixedSeed = 0x9E3779B97F4A7C15L * (seed + 1L);
+                Map<Material, Integer> quantities = new HashMap<>();
                 for (ItemStack stack : table.populateLoot(new Random(mixedSeed), context)) {
                     if (stack.getType().isItem() && stack.getAmount() > 0)
-                        samples.computeIfAbsent(stack.getType(), ignored -> new Sample()).observe(stack.getAmount());
+                        quantities.merge(stack.getType(), stack.getAmount(), Integer::sum);
                 }
+                quantities.forEach((material, amount) -> samples.computeIfAbsent(material, ignored -> new Sample()).observe(amount));
             }
         } catch (RuntimeException ignored) {
             // An unsupported entity simply has no discoverable base drops; custom drops still work.

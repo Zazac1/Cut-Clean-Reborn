@@ -30,13 +30,42 @@ final class CleanStackService implements Listener {
         Material result = configured == null ? defaultTarget(category, source) : MenuItems.findItem(configured);
         return result == null ? defaultTarget(category, source) : result;
     }
-    void setTarget(Category category, Material source, Material target) { plugin.setConfigValue(path(category, source), target.getKey().toString()); }
+    void setTarget(Category category, Material source, Material target) {
+        java.util.Map<String, String> values = new java.util.LinkedHashMap<>();
+        values.put(path(category, source), target.getKey().toString());
+        Category outputCategory = categoryOf(target);
+        if (outputCategory != null) values.put(path(outputCategory, target), target.getKey().toString());
+        plugin.setConfigValues(values);
+    }
+    void setTargets(Category category, java.util.function.Predicate<Material> matches, Material target) {
+        java.util.Map<String, String> values = new java.util.LinkedHashMap<>();
+        sources(category).stream().filter(matches).forEach(source -> values.put(path(category, source), target.getKey().toString()));
+        Category outputCategory = categoryOf(target);
+        if (outputCategory != null) values.put(path(outputCategory, target), target.getKey().toString());
+        plugin.setConfigValues(values);
+    }
     void resetTarget(Category category, Material source) { plugin.setConfigValue(path(category, source), null); }
     ItemStack normalise(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) return stack;
         Category category = categoryOf(stack.getType());
         if (category == null) return stack;
-        ItemStack output = stack.clone(); output.setType(target(category, stack.getType())); return output;
+        // Preserve named, enchanted and plugin-owned blocks instead of stripping their identity.
+        if (stack.hasItemMeta()) return stack;
+        Material material = stack.getType();
+        java.util.LinkedHashSet<Material> seen = new java.util.LinkedHashSet<>();
+        while (category != null && seen.add(material)) {
+            Material next = target(category, material);
+            if (next == material) break;
+            if (seen.contains(next)) {
+                // A cyclic mapping always resolves to the same output, regardless of pickup count.
+                material = seen.stream().dropWhile(value -> value != next).min(java.util.Comparator.comparing(Material::name)).orElse(next);
+                break;
+            }
+            material = next;
+            category = categoryOf(material);
+        }
+        if (material == stack.getType()) return stack;
+        ItemStack output = stack.clone(); output.setType(material); return output;
     }
     @EventHandler(ignoreCancelled = true)
     public void onBlockDrops(BlockDropItemEvent event) {
@@ -49,7 +78,7 @@ final class CleanStackService implements Listener {
     }
     @EventHandler
     public void onCraftPreview(PrepareItemCraftEvent event) {
-        if (!(event.getView().getPlayer() instanceof Player player) || !enabled(player)) return;
+        if (!(event.getView().getPlayer() instanceof Player player) || !enabled(player) || event.isRepair()) return;
         ItemStack result = event.getInventory().getResult();
         if (result != null && categoryOf(result.getType()) == Category.WOOD && result.getType().name().endsWith("_PLANKS"))
             event.getInventory().setResult(normalise(result));

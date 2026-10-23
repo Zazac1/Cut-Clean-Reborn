@@ -8,6 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Per-source output picker for Clean Stacks. */
 final class CleanStackMaterialMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new CleanStackMenu(plugin); }
+
     private static final int ALL_LOGS_SLOT = 46;
     private static final int ALL_STRIPPED_SLOT = 47;
     private static final int ALL_PLANKS_SLOT = 48;
@@ -22,6 +24,7 @@ final class CleanStackMaterialMenu extends MenuSupport {
         page = Math.clamp(requestedPage, 0, pages - 1); render(pages);
     }
     private void render(int pages) {
+        inventory.setItem(4, MenuItems.pageInfo(page, pages));
         int start = page * MobListMenu.PAGE_SIZE;
         for (int i = 0; i < MobListMenu.PAGE_SIZE && start + i < materials.size(); i++) {
             Material source = materials.get(start + i), target = plugin.cleanStacks().target(category, source);
@@ -69,7 +72,7 @@ final class CleanStackMaterialMenu extends MenuSupport {
     private void chooseBulkOutput(Player player, String label, Material initial, Predicate<Material> matches) {
         new AnvilTextInput<Material>(plugin, "§8CCR • Clean Stack Output", "item", initial.getKey().toString(), MenuItems::findItem,
                 (target, item) -> {
-                    materials.stream().filter(matches).forEach(source -> plugin.cleanStacks().setTarget(category, source, item));
+                    plugin.cleanStacks().setTargets(category, matches, item);
                     new CleanStackMaterialMenu(plugin, category, page).open(target);
                 }).open(player);
     }

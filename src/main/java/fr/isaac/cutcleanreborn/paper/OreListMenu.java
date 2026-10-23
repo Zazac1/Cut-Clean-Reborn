@@ -7,6 +7,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Ore family selection. */
 final class OreListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new ConfigMainMenu(plugin); }
+
     private static final int AUTO_SMELT_SLOT = 40;
     private static final int FORTUNE_VANILLA_SLOT = 41;
     private static final int FORTUNE_CUSTOM_SLOT = 42;

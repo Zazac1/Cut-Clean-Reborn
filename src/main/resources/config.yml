@@ -43,6 +43,10 @@ mob-drops:
 
 tree-cutter:
   enabled: true
+  # Natural logs are harvested through normal player breaks, respecting protection plugins and tool durability.
+  # Player-placed logs are excluded. Large trees are processed over several ticks.
+  max-logs: 256
+  blocks-per-tick: 12
   hand: false
   axes: {}
   break-leaves: false
@@ -65,6 +69,11 @@ better-sugar-cane:
     chance: 100.0
     minimum: 1
     maximum: 3
+  support:
+    enabled: true
+    chance: 100.0
+    minimum: 1
+    maximum: 3
 
 game-rules:
   stuff-rules:
@@ -76,7 +85,8 @@ game-rules:
     enchantment-caps: []
 
 # Automatic enchantments are configured in-game. Each processed ItemStack gets
-# a persistent CCR UUID marker, so it is never automatically changed again.
+# a persistent CCR UUID marker. Refresh updates unchanged CCR items only and
+# preserves the item's enchantments from before CCR first processed it.
 automatic-enchantments:
   enabled: true
   refresh-version: 0

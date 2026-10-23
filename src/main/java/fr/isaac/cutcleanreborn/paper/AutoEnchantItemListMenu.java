@@ -8,6 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Paginated catalogue of every armor or tool available on this Paper server. */
 final class AutoEnchantItemListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new AutoEnchantCategoryMenu(plugin); }
+
     private final AutoEnchantCategory category;
     private final List<Material> items;
     private final int page;
@@ -20,6 +22,7 @@ final class AutoEnchantItemListMenu extends MenuSupport {
         render(count);
     }
     private void render(int pageCount) {
+        inventory.setItem(4, MenuItems.pageInfo(page, pageCount));
         int start = page * MobListMenu.PAGE_SIZE;
         for (int index = 0; index < MobListMenu.PAGE_SIZE && start + index < items.size(); index++) {
             Material material = items.get(start + index);
@@ -37,7 +40,7 @@ final class AutoEnchantItemListMenu extends MenuSupport {
         if (slot == MobListMenu.PREVIOUS_PAGE_SLOT && page > 0) { new AutoEnchantItemListMenu(plugin, category, page - 1).open(player); return; }
         if (slot == MobListMenu.NEXT_PAGE_SLOT && (page + 1) * MobListMenu.PAGE_SIZE < items.size()) { new AutoEnchantItemListMenu(plugin, category, page + 1).open(player); return; }
         if (slot == 40) {
-            new AnvilTextInput<Material>(plugin, "§8CCR • Add " + category.title(), "item", "minecraft:diamond_sword", MenuItems::findItem, (target, material) -> {
+            new AnvilTextInput<Material>(plugin, "§8CCR • Add " + category.title(), "item", category == AutoEnchantCategory.ARMOR ? "minecraft:diamond_chestplate" : "minecraft:diamond_sword", MenuItems::findItem, (target, material) -> {
                 if (!category.matches(material)) { target.sendMessage("§cThis item does not belong to " + category.title() + "."); new AutoEnchantItemListMenu(plugin, category, page).open(target); return; }
                 plugin.autoEnchantments().addItem(category, material);
                 new AutoEnchantItemMenu(plugin, category, material, page).open(target);

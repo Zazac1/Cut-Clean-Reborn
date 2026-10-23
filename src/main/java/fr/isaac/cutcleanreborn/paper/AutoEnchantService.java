@@ -28,6 +28,7 @@ final class AutoEnchantService implements Listener {
     private final NamespacedKey appliedIdKey;
     private final NamespacedKey enchantmentStateKey;
     private final NamespacedKey refreshVersionKey;
+    private final NamespacedKey originalEnchantmentsKey;
     private final Map<Material, Map<Enchantment, Integer>> configured = new EnumMap<>(Material.class);
 
     AutoEnchantService(CutCleanRebornPlugin plugin) {
@@ -35,6 +36,7 @@ final class AutoEnchantService implements Listener {
         this.appliedIdKey = new NamespacedKey(plugin, "auto_enchant_id");
         this.enchantmentStateKey = new NamespacedKey(plugin, "auto_enchant_state");
         this.refreshVersionKey = new NamespacedKey(plugin, "auto_enchant_refresh_version");
+        this.originalEnchantmentsKey = new NamespacedKey(plugin, "auto_enchant_original");
         reloadCache();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         // Covers commands, crafting, chests and trades without scanning every server tick.
@@ -51,7 +53,10 @@ final class AutoEnchantService implements Listener {
     }
     boolean isConfigured(Material material) { return configured.containsKey(material); }
     boolean enabled() { return plugin.getConfig().getBoolean(ROOT + ".enabled", true); }
-    void setEnabled(boolean enabled) { plugin.setConfigValue(ROOT + ".enabled", enabled); }
+    void setEnabled(boolean enabled) {
+        plugin.setConfigValue(ROOT + ".enabled", enabled);
+        if (enabled) plugin.getServer().getOnlinePlayers().forEach(this::applyToInventory);
+    }
     void requestRefresh() {
         plugin.setConfigValue(ROOT + ".refresh-version", refreshVersion() + 1);
         plugin.getServer().getOnlinePlayers().forEach(this::applyToInventory);
@@ -67,7 +72,7 @@ final class AutoEnchantService implements Listener {
         configured.remove(material);
     }
     void setEnchantment(AutoEnchantCategory category, Material material, Enchantment enchantment, int level) {
-        if (!category.matches(material) || !enchantment.canEnchantItem(new ItemStack(material)) || level <= 0) return;
+        if (!category.matches(material) || !enchantment.canEnchantItem(new ItemStack(material)) || level <= 0 || level > 255) return;
         configured.computeIfAbsent(material, ignored -> new LinkedHashMap<>()).put(enchantment, level);
         saveMaterial(category, material);
     }
@@ -105,7 +110,8 @@ final class AutoEnchantService implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> applyToInventory(event.getPlayer()));
     }
 
-    private void applyToInventory(Player player) {
+    void applyToInventory(Player player) {
+        if (!enabled() || !player.isOnline()) return;
         ItemStack[] contents = player.getInventory().getContents();
         for (int slot = 0; slot < contents.length; slot++) {
             ItemStack stack = contents[slot];
@@ -116,7 +122,7 @@ final class AutoEnchantService implements Listener {
     boolean apply(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) return false;
         Map<Enchantment, Integer> enchants = configured.get(stack.getType());
-        if (enchants == null || !enabled()) return false;
+        if (enchants == null || enchants.isEmpty() || !enabled()) return false;
         ItemMeta meta = stack.getItemMeta();
         var data = meta.getPersistentDataContainer();
         if (data.has(appliedIdKey, PersistentDataType.STRING)) {
@@ -124,13 +130,16 @@ final class AutoEnchantService implements Listener {
             String expectedState = data.get(enchantmentStateKey, PersistentDataType.STRING);
             // A player-enchanted item no longer matches the exact CCR snapshot and is deliberately left alone.
             if (itemVersion == null || itemVersion >= refreshVersion() || expectedState == null || !expectedState.equals(enchantmentState(meta))) return false;
-            applyEnchantments(meta, enchants);
+            String original = data.get(originalEnchantmentsKey, PersistentDataType.STRING);
+            if (original != null) restoreEnchantments(meta, original);
+            applyEnchantments(stack.getType(), meta, enchants);
             data.set(enchantmentStateKey, PersistentDataType.STRING, enchantmentState(meta));
             data.set(refreshVersionKey, PersistentDataType.INTEGER, refreshVersion());
             stack.setItemMeta(meta);
             return true;
         }
-        applyEnchantments(meta, enchants);
+        data.set(originalEnchantmentsKey, PersistentDataType.STRING, enchantmentState(meta));
+        applyEnchantments(stack.getType(), meta, enchants);
         // One UUID per processed ItemStack: the marker survives inventories, chests, exchanges and restarts.
         data.set(appliedIdKey, PersistentDataType.STRING, UUID.randomUUID().toString());
         data.set(enchantmentStateKey, PersistentDataType.STRING, enchantmentState(meta));
@@ -139,16 +148,34 @@ final class AutoEnchantService implements Listener {
         return true;
     }
 
-    private static void applyEnchantments(ItemMeta meta, Map<Enchantment, Integer> enchants) {
-        for (Map.Entry<Enchantment, Integer> entry : enchants.entrySet()) meta.addEnchant(entry.getKey(), entry.getValue(), true);
+    private void applyEnchantments(Material material, ItemMeta meta, Map<Enchantment, Integer> enchants) {
+        for (Map.Entry<Enchantment, Integer> entry : enchants.entrySet()) {
+            boolean conflict = meta.getEnchants().keySet().stream().anyMatch(existing -> !existing.equals(entry.getKey()) && existing.conflictsWith(entry.getKey()));
+            if (conflict) continue;
+            int level = Math.max(meta.getEnchantLevel(entry.getKey()), entry.getValue());
+            int maximum = plugin.stuffRules().enabled() ? plugin.stuffRules().matchingMaximum(material, entry.getKey()) : -1;
+            if (maximum >= 0) level = Math.min(level, maximum);
+            meta.addEnchant(entry.getKey(), level, true);
+        }
+    }
+
+    private static void restoreEnchantments(ItemMeta meta, String snapshot) {
+        for (Enchantment enchantment : new ArrayList<>(meta.getEnchants().keySet())) meta.removeEnchant(enchantment);
+        for (String part : snapshot.split(";")) {
+            String[] fields = part.split("=", 2);
+            if (fields.length != 2) continue;
+            Enchantment enchantment = findEnchantment(fields[0]);
+            Integer level = GameplayMath.integer(fields[1], 1, 255);
+            if (enchantment != null && level != null) meta.addEnchant(enchantment, level, true);
+        }
     }
     private int refreshVersion() { return Math.max(0, plugin.getConfig().getInt(ROOT + ".refresh-version", 0)); }
     private static String enchantmentState(ItemMeta meta) {
         return meta.getEnchants().entrySet().stream().sorted(Map.Entry.comparingByKey(java.util.Comparator.comparing(enchantment -> enchantment.getKey().toString())))
-                .map(entry -> entry.getKey().getKey() + "=" + entry.getValue()).collect(java.util.stream.Collectors.joining(";"));
+                .map(entry -> entry.getKey().getKey().toString() + "=" + entry.getValue()).collect(java.util.stream.Collectors.joining(";"));
     }
 
-    private void reloadCache() {
+    void reloadCache() {
         configured.clear();
         for (AutoEnchantCategory category : AutoEnchantCategory.values()) {
             ConfigurationSection items = plugin.getConfig().getConfigurationSection(ROOT + "." + category.configKey());
@@ -162,7 +189,7 @@ final class AutoEnchantService implements Listener {
                 for (String key : enchantments.getKeys(false)) {
                     Enchantment enchantment = findEnchantment(key);
                     int level = enchantments.getInt(key);
-                    if (enchantment != null && level > 0 && enchantment.canEnchantItem(new ItemStack(material))) result.put(enchantment, level);
+                    if (enchantment != null && level > 0 && level <= 255 && enchantment.canEnchantItem(new ItemStack(material))) result.put(enchantment, level);
                 }
                 configured.put(material, result);
             }
@@ -179,7 +206,8 @@ final class AutoEnchantService implements Listener {
     }
     static Enchantment findEnchantment(String text) {
         try {
-            String value = text.trim().toLowerCase();
+            if (text == null) return null;
+            String value = text.trim().toLowerCase(java.util.Locale.ROOT);
             NamespacedKey key = value.contains(":") ? NamespacedKey.fromString(value) : NamespacedKey.minecraft(value);
             return key == null ? null : Registry.ENCHANTMENT.get(key);
         } catch (IllegalArgumentException ignored) { return null; }
@@ -203,7 +231,7 @@ enum AutoEnchantCategory {
     private final String key, title; private final Material icon; private final String[] suffixes;
     AutoEnchantCategory(String key, String title, Material icon, String[] suffixes) { this.key = key; this.title = title; this.icon = icon; this.suffixes = suffixes; }
     String configKey() { return key; } String title() { return title; } Material icon() { return icon; }
-    boolean matches(Material material) { for (String suffix : suffixes) if (material.name().endsWith(suffix)) return material.isItem(); return false; }
+    boolean matches(Material material) { for (String suffix : suffixes) if (material.name().endsWith(suffix) || material.name().equals(suffix.substring(1))) return !material.name().startsWith("LEGACY_"); return false; }
     String materialPrefix(Material material) { for (String suffix : suffixes) if (material.name().endsWith(suffix)) return material.name().substring(0, material.name().length() - suffix.length()); return material.name(); }
     Comparator<Material> comparator() {
         return Comparator.comparingInt((Material material) -> powerRank(materialPrefix(material)))

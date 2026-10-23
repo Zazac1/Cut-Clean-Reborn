@@ -9,6 +9,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Paginated 7 × 3 grid of every configurable living entity. */
 final class MobListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new ConfigMainMenu(plugin); }
+
     static final int PAGE_SIZE = 21;
     static final int[] MOB_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
     static final int PREVIOUS_PAGE_SLOT = 45;
@@ -32,6 +34,9 @@ final class MobListMenu extends MenuSupport {
     }
     private void render(int pageCount) {
         inventory.clear();
+        inventory.setItem(4, MenuItems.pageInfo(page, pageCount));
+        inventory.setItem(40, MenuItems.item(Material.COMPASS, "§bFind a Mob", List.of("§7Enter a mob name or identifier.")));
+        inventory.setItem(41, MenuItems.item(Material.COMPARATOR, "§6Global Mob Settings", List.of("§7Animal defaults, XP and collection.", "§7Looting options apply to every mob.")));
         int start = page * PAGE_SIZE;
         for (int index = 0; index < PAGE_SIZE && start + index < mobs.size(); index++) {
             EntityType mob = mobs.get(start + index);
@@ -47,7 +52,10 @@ final class MobListMenu extends MenuSupport {
         inventory.setItem(BACK_SLOT, MenuItems.item(Material.BARRIER, "§cBack", List.of("§7Return to CCR Config.")));
     }
     @Override void handleClick(Player player, int slot, ClickType click) {
-        if (slot == PREVIOUS_PAGE_SLOT && page > 0) new MobListMenu(plugin, page - 1).open(player);
+        if (slot == 40) new AnvilTextInput<EntityType>(plugin, "§8CCR • Find Mob", "mob identifier", "minecraft:cow", MenuItems::findMob,
+                (target, mob) -> new MobConfigurationMenu(plugin, new MobMenuContext(mob, page)).open(target)).open(player);
+        else if (slot == 41) new MobGlobalSettingsMenu(plugin, page).open(player);
+        else if (slot == PREVIOUS_PAGE_SLOT && page > 0) new MobListMenu(plugin, page - 1).open(player);
         else if (slot == NEXT_PAGE_SLOT && (page + 1) * PAGE_SIZE < mobs.size()) new MobListMenu(plugin, page + 1).open(player);
         else if (slot == BACK_SLOT) new ConfigMainMenu(plugin).open(player);
         else for (int index = 0; index < MOB_SLOTS.length; index++) {

@@ -7,6 +7,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** The focused configuration menu for one mob. */
 final class MobConfigurationMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new MobListMenu(plugin, context.page()); }
+
     static final int CENTER_SLOT = 22;
     static final int DROPS_SLOT = 20;
     static final int XP_SLOT = 24;

@@ -8,6 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Editor for a single ore loot-table or extra-drop entry. */
 final class OreDropEditorMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new OreDropListMenu(plugin, oreBlock, family, familyPage, dropPage); }
+
     private static final int AMOUNT_SLOT = 11, ITEM_SLOT = 13, CHANCE_SLOT = 15, BACK_SLOT = 18, REMOVE_SLOT = 22;
     private final Material oreBlock;
     private final OreDefinition family;
@@ -30,7 +32,7 @@ final class OreDropEditorMenu extends MenuSupport {
     }
     @Override void handleClick(Player player, int slot, ClickType click) {
         if (slot == BACK_SLOT) { back(player); return; }
-        if (slot == REMOVE_SLOT) { update(new CutCleanRebornPlugin.MobDrop(drop.material(), 0, 0, 0.0D), player, !vanilla); return; }
+        if (slot == REMOVE_SLOT) { update(new CutCleanRebornPlugin.MobDrop(drop.material(), drop.minimum(), drop.maximum(), 0.0D), player, !vanilla); return; }
         if (slot == ITEM_SLOT) new AnvilTextInput<Material>(plugin, "§8CCR • Drop Item", "item", drop.material().getKey().toString(), MenuItems::findItem,
                 (target, item) -> update(new CutCleanRebornPlugin.MobDrop(item, drop.minimum(), drop.maximum(), drop.chance()), target, false)).open(player);
         else if (slot == AMOUNT_SLOT) new AnvilTextInput<Range>(plugin, "§8CCR • Drop Amount", "amount", drop.minimum() + "-" + drop.maximum(),
@@ -46,14 +48,17 @@ final class OreDropEditorMenu extends MenuSupport {
             if (sourceIndex < drops.size()) { if (removeCustom) drops.remove(sourceIndex); else drops.set(sourceIndex, value); }
             plugin.saveOreDrops(oreBlock, drops);
         }
-        back(player);
+        if (removeCustom) back(player);
+        else new OreDropEditorMenu(plugin, oreBlock, family, familyPage, dropPage,
+                new OreEditableDrop(value, vanilla, null), sourceIndex).open(player);
     }
     private void back(Player player) { new OreDropListMenu(plugin, oreBlock, family, familyPage, dropPage).open(player); }
     private static Range parseRange(String input) {
-        String[] values = input.trim().split("-", -1); if (values.length == 0 || values.length > 2) return null;
-        try { int min = Integer.parseInt(values[0].trim()), max = values.length == 1 ? min : Integer.parseInt(values[1].trim()); return min >= 0 && max >= min && max <= 64 ? new Range(min, max) : null; }
-        catch (NumberFormatException ignored) { return null; }
+        var range = GameplayMath.range(input, 0, 64);
+        return range == null ? null : new Range(range.minimum(), range.maximum());
     }
-    private static Double parseChance(String input) { try { double chance = Double.parseDouble(input.replace("%", "").trim()); return Double.isFinite(chance) && chance >= 0 && chance <= 100 ? chance : null; } catch (NumberFormatException ignored) { return null; } }
+    private static Double parseChance(String input) {
+        return GameplayMath.percentage(input);
+    }
     private record Range(int minimum, int maximum) { }
 }

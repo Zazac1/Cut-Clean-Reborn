@@ -7,6 +7,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Focused configuration menu for one automatically enchanted item type. */
 final class AutoEnchantItemMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new AutoEnchantItemListMenu(plugin, category, itemPage); }
+
     private static final int ENCHANTMENTS_SLOT = 11;
     private static final int ITEM_SLOT = 13;
     private static final int COPY_SLOT = 15;

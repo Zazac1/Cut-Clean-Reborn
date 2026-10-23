@@ -8,6 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
 /** Editable vanilla loot-table outputs and extra drops for one exact ore block. */
 final class OreDropListMenu extends MenuSupport {
+    @Override protected MenuSupport parentMenu() { return new OreConfigurationMenu(plugin, family, familyPage); }
+
     private static final int[] DROP_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
     private static final int ADD_SLOT = 40, XP_SLOT = 41, PREVIOUS_SLOT = 45, BACK_SLOT = 49, RESET_SLOT = 50, NEXT_SLOT = 53;
     private final Material oreBlock;
@@ -24,6 +26,7 @@ final class OreDropListMenu extends MenuSupport {
         page = Math.clamp(requestedPage, 0, pages - 1); render(pages);
     }
     private void render(int pages) {
+        inventory.setItem(4, MenuItems.pageInfo(page, pages));
         int start = page * DROP_SLOTS.length;
         for (int i = 0; i < DROP_SLOTS.length && start + i < drops.size(); i++) {
             OreEditableDrop entry = drops.get(start + i); CutCleanRebornPlugin.MobDrop drop = entry.drop();
@@ -32,7 +35,7 @@ final class OreDropListMenu extends MenuSupport {
             if (entry.fortuneThree() != null) lore.add("§bFortune III vanilla: §e" + entry.fortuneThree().minimum() + "-" + entry.fortuneThree().maximum());
             if (!entry.vanilla() && plugin.oreFortuneCustomEnabled())
                 lore.add("§bFortune III: §e" + drop.minimum() + "-" + (drop.maximum() * 4));
-            lore.add(""); lore.add("§eLeft click: Edit"); lore.add("§cRight click: Remove");
+            lore.add(""); lore.add("§eLeft click: Edit"); lore.add(entry.vanilla() ? "§cRight click: Disable / restore vanilla" : "§cRight click: Remove");
             inventory.setItem(DROP_SLOTS[i], MenuItems.item(drop.material(), "§6" + MenuItems.prettyName(drop.material()), lore));
         }
         inventory.setItem(ADD_SLOT, MenuItems.item(Material.PAPER, "§aAdd Drop", List.of("§7Add an extra item drop.")));
@@ -46,10 +49,11 @@ final class OreDropListMenu extends MenuSupport {
     @Override void handleClick(Player player, int slot, ClickType click) {
         if (slot == BACK_SLOT) { new OreConfigurationMenu(plugin, family, familyPage).open(player); return; }
         if (slot == RESET_SLOT) {
-            plugin.saveOreVanillaDropOverrides(oreBlock, List.of());
-            plugin.saveOreDrops(oreBlock, List.of());
-            plugin.setOreXpBonus(oreBlock, 0);
-            reopen(player); return;
+            confirm(player, "Reset all settings for " + MenuItems.prettyName(oreBlock) + "?", () -> {
+                plugin.saveOreVanillaDropOverrides(oreBlock, List.of());
+                plugin.saveOreDrops(oreBlock, List.of());
+                plugin.setOreXpBonus(oreBlock, 0);
+            }, this::reopen); return;
         }
         if (slot == PREVIOUS_SLOT && page > 0) { new OreDropListMenu(plugin, oreBlock, family, familyPage, page - 1).open(player); return; }
         if (slot == NEXT_SLOT && (page + 1) * DROP_SLOTS.length < drops.size()) { new OreDropListMenu(plugin, oreBlock, family, familyPage, page + 1).open(player); return; }
@@ -79,7 +83,7 @@ final class OreDropListMenu extends MenuSupport {
     private void remove(OreEditableDrop entry, int index) {
         if (entry.vanilla()) {
             plugin.saveOreVanillaDropOverrides(oreBlock,
-                    List.of(new CutCleanRebornPlugin.MobDrop(entry.drop().material(), 0, 0, 0.0D)));
+                    entry.drop().chance() <= 0 ? List.of() : List.of(new CutCleanRebornPlugin.MobDrop(entry.drop().material(), entry.drop().minimum(), entry.drop().maximum(), 0.0D)));
         } else { List<CutCleanRebornPlugin.MobDrop> custom = new ArrayList<>(plugin.getOreDrops(oreBlock)); int customIndex = customIndex(index); if (customIndex < custom.size()) custom.remove(customIndex); plugin.saveOreDrops(oreBlock, custom); }
     }
     private void reopen(Player player) { new OreDropListMenu(plugin, oreBlock, family, familyPage, page).open(player); }
