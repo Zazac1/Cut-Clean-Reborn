@@ -137,7 +137,27 @@ final class MenuNavigationSmoke {
         steps.add(() -> { expect("TreeCutterMenu"); escape(); session.permission = false; });
         steps.add(() -> { closed("revoked permission prevents a delayed reopen"); session.permission = true; open("TreeCutterMenu"); });
         steps.add(() -> { expect("TreeCutterMenu"); session.close(InventoryCloseEvent.Reason.PLUGIN); });
-        steps.add(() -> closed("programmatic close never navigates back"));
+        steps.add(() -> {
+            closed("programmatic close never navigates back");
+            session.personalType = InventoryType.CREATIVE;
+            session.close(InventoryCloseEvent.Reason.PLUGIN);
+            open("TreeAxeMenu");
+        });
+        steps.add(() -> { expect("TreeAxeMenu"); escape(); });
+        steps.add(() -> { expect("TreeCutterMenu"); escape(); });
+        steps.add(() -> { expect("ConfigMainMenu"); escape(); });
+        steps.add(() -> {
+            closed("creative Escape at root closes CCR");
+            open("TreeCutterMenu");
+        });
+        steps.add(() -> { expect("TreeCutterMenu"); openTextInput(); });
+        steps.add(() -> { smoke.require(session.view.getType() == InventoryType.ANVIL, "creative text input prepared"); escape(); });
+        steps.add(() -> { expect("TreeCutterMenu"); click(35); });
+        steps.add(() -> closed("creative Close exits directly without reopening"));
+        steps.add(() -> open("TreeCutterMenu"));
+        steps.add(() -> { expect("TreeCutterMenu"); escape(); session.foreignCrafting(); });
+        steps.add(() -> smoke.require(session.view.getType() == InventoryType.CRAFTING && holder() == null,
+                "Escape does not replace a foreign crafting view"));
 
         new BukkitRunnable() {
             private int next;
@@ -168,7 +188,7 @@ final class MenuNavigationSmoke {
     private Inventory top() { return session.view.getTopInventory(); }
     private Object holder() { return top().getHolder(); }
     private void expect(String name) { smoke.require(holder() != null && holder().getClass().getSimpleName().equals(name), "navigation reaches " + name); }
-    private void closed(String label) { smoke.require(session.view.getType() == InventoryType.CRAFTING, label); }
+    private void closed(String label) { smoke.require(session.view.getType() == session.personalType, label); }
 
     private static Object field(Object value, String name) throws Exception {
         Field field = value.getClass().getDeclaredField(name); field.setAccessible(true); return field.get(value);
@@ -206,9 +226,10 @@ final class MenuNavigationSmoke {
 
     private static final class Session {
         private final UUID identity = UUID.randomUUID();
-        private final Inventory personal = Bukkit.createInventory(null, 9);
+        private final Inventory personal;
         private final Inventory bottom = Bukkit.createInventory(null, 9);
         private boolean permission = true;
+        private InventoryType personalType = InventoryType.CRAFTING;
         private final Player player;
         private InventoryView view;
 
@@ -230,15 +251,17 @@ final class MenuNavigationSmoke {
                 case "playSound", "sendMessage", "sendActionBar" -> null;
                 default -> throw new UnsupportedOperationException("Synthetic player: " + method.getName());
             });
-            view = view(personal, InventoryType.CRAFTING, InventoryView.class);
+            personal = Bukkit.createInventory(player, 9);
+            view = view(personal, personalType, InventoryView.class);
         }
 
         private void close(InventoryCloseEvent.Reason reason) {
             Bukkit.getPluginManager().callEvent(new InventoryCloseEvent(view, reason));
-            view = view(personal, InventoryType.CRAFTING, InventoryView.class);
+            view = view(personal, personalType, InventoryView.class);
         }
 
         private void foreign() { view = view(Bukkit.createInventory(null, 9), InventoryType.CHEST, InventoryView.class); }
+        private void foreignCrafting() { view = view(Bukkit.createInventory(null, 9), InventoryType.CRAFTING, InventoryView.class); }
 
         private InventoryView view(Inventory top, InventoryType type, Class<? extends InventoryView> api) {
             return (InventoryView) Proxy.newProxyInstance(api.getClassLoader(), new Class<?>[] {api}, (proxy, method, args) -> switch (method.getName()) {

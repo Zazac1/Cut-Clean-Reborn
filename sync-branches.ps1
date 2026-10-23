@@ -73,7 +73,8 @@ try {
         $tree=if ($Mode -eq 'Plan' -and $composed) { '' } else { Get-StandaloneExportTree $source $project $spec }
         if ($tree) {
             $metadata=if ($project.StartsWith('Fabric_')) { 'fabric.mod.json' } else { 'plugin.yml' }
-            Invoke-Git @('cat-file','-e',"${tree}:src/main/resources/$metadata") | Out-Null
+            $metadataPath=if ($spec.PSObject.Properties.Name -contains 'metadata_path') { [string]$spec.metadata_path } else { "src/main/resources/$metadata" }
+            Invoke-Git @('cat-file','-e',"${tree}:$metadataPath") | Out-Null
         }
         $local = Find-Commit "refs/heads/$branch"
         $remote = Find-Commit "refs/remotes/origin/$branch"

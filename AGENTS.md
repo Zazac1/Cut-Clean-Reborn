@@ -18,8 +18,8 @@ Pour une validation finale des variantes actuelles :
 
 1. Exécuter `.\test-all.ps1` depuis la racine, sans limiter les versions et en mode `Full` par défaut.
 2. Lire `validation/results/latest.md` et traiter tout `FAIL` comme bloquant.
-3. Le contrôle de parité couvre les cinq variantes Paper ; Purpur partage leurs sources par version et doit tourner sur son vrai serveur natif. Appliquer les correctifs équivalents aux références ; documenter toute divergence nécessaire et adapter explicitement les contrôles quand les API l'exigent.
+3. Le contrôle couvre les 25 projets des cinq plateformes. La parité stricte porte sur Paper ; Purpur partage ses sources par version, Spigot/Bukkit ont leur adaptateur commun, Fabric ses implémentations natives. Chaque plateforme doit tourner sur son vrai serveur, Fabric avec son JAR de distribution hors Loom. Appliquer les correctifs équivalents aux références ; documenter toute divergence nécessaire et adapter explicitement les contrôles quand les API l'exigent.
 4. Si les tests automatiques passent, sélectionner dans `validation/TESTS_CODEX.md` uniquement les scénarios manuels pertinents.
 5. Ne jamais présenter une compilation ou des interactions simulées comme une validation visuelle dans Minecraft.
 
-`-Mode Quick` et `-Mode Compile` sont destinés aux contrôles intermédiaires. Étendre la validation aux futurs loaders seulement lors de leur portage, selon leurs propres outils et métadonnées.
+`-Mode Quick` et `-Mode Compile` sont destinés aux contrôles intermédiaires. Les reçus de validation doivent correspondre aux sources courantes et au JAR réellement testé. Ne pas confondre une reconstruction de tracker dans le même processus avec un arrêt/redémarrage à froid, ni les tests natifs avec des interactions réalisées par un joueur.

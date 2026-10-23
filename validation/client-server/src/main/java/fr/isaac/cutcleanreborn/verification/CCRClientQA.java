@@ -7,14 +7,23 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.Locale;
 import org.bukkit.GameMode;
+import org.bukkit.Difficulty;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.type.Leaves;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,12 +31,41 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 /** Test-only scene preparation; never included in the production artifact. */
-public final class CCRClientQA extends JavaPlugin {
+public final class CCRClientQA extends JavaPlugin implements Listener {
     private Location scene;
     private String sceneName = "none";
 
     @Override public void onEnable() {
+        getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("REAL CLIENT QA READY: /ccrqa setup, /ccrqa scene <timber|ore|cane|mob|stacks>, /ccrqa observe");
+    }
+
+    @EventHandler public void join(PlayerJoinEvent event) {
+        // Protect only this isolated QA player while the UI test driver observes menus.
+        event.getPlayer().setInvulnerable(true);
+    }
+
+    @EventHandler public void respawn(PlayerRespawnEvent event) {
+        getServer().getScheduler().runTask(this, () -> event.getPlayer().setInvulnerable(true));
+    }
+
+    @EventHandler public void menuOpen(InventoryOpenEvent event) {
+        if (event.getPlayer() instanceof Player player && isCcr(event.getInventory().getHolder()))
+            log(player, "menu-open", event.getInventory().getHolder().getClass().getSimpleName() + ", mode=" + player.getGameMode());
+    }
+
+    @EventHandler public void menuClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player) || !isCcr(event.getInventory().getHolder())) return;
+        String reason = "Bukkit/no reason API";
+        try { reason = String.valueOf(event.getClass().getMethod("getReason").invoke(event)); }
+        catch (ReflectiveOperationException ignored) { }
+        log(player, "menu-close", event.getInventory().getHolder().getClass().getSimpleName() + ", reason=" + reason + ", mode=" + player.getGameMode());
+        getServer().getScheduler().runTaskLater(this, () -> log(player, "menu-after-close",
+                "type=" + player.getOpenInventory().getType() + ", holder=" + player.getOpenInventory().getTopInventory().getHolder()), 3L);
+    }
+
+    private boolean isCcr(Object holder) {
+        return holder != null && holder.getClass().getName().startsWith("fr.isaac.cutcleanreborn.");
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -49,6 +87,8 @@ public final class CCRClientQA extends JavaPlugin {
         World world = player.getWorld();
         world.setTime(6000);
         world.setStorm(false);
+        world.setDifficulty(Difficulty.PEACEFUL);
+        world.setGameRule(GameRule.DO_MOB_SPAWNING, false);
         int y = world.getHighestBlockYAt(0, 0) + 1;
         scene = new Location(world, 0, y, 0);
         for (int x = -7; x <= 7; x++) for (int z = -5; z <= 10; z++) {
@@ -56,6 +96,7 @@ public final class CCRClientQA extends JavaPlugin {
             for (int dy = 0; dy < 8; dy++) world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
         }
         player.setGameMode(GameMode.CREATIVE);
+        player.setInvulnerable(true);
         player.teleport(new Location(world, .5, y, 5.5, 180, 15));
         player.setFoodLevel(20); player.setHealth(20); player.setLevel(50);
         log(player, "setup", "Native player connected to " + getServer().getVersion());
@@ -71,15 +112,22 @@ public final class CCRClientQA extends JavaPlugin {
             for (int dy = 0; dy < 7; dy++) world.getBlockAt(x, y + dy, z).setType(Material.AIR, false);
         player.getInventory().clear();
         player.setGameMode(GameMode.SURVIVAL);
+        player.setInvulnerable(true);
         player.setHealth(20); player.setFoodLevel(20);
         player.teleport(new Location(world, .5, y, 4.5, 180, 20));
         // Instant normal mining makes isolated UI clicks usable, without invoking break events synthetically.
-        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 12000, 10, false, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 12000, 64, false, false));
         switch (sceneName) {
             case "timber" -> {
                 for (int dy = 0; dy < 4; dy++) world.getBlockAt(0, y + dy, 0).setType(Material.OAK_LOG, false);
-                for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++)
-                    world.getBlockAt(x, y + 4, z).setType(Material.OAK_LEAVES, false);
+                for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+                    var leaf=world.getBlockAt(x, y + 4, z);
+                    leaf.setType(Material.OAK_LEAVES, false);
+                    var data=(Leaves)leaf.getBlockData();
+                    data.setDistance(1);
+                    data.setPersistent(false);
+                    leaf.setBlockData(data, false);
+                }
                 player.getInventory().setItem(0, new ItemStack(Material.DIAMOND_AXE));
             }
             case "ore" -> {

@@ -3,8 +3,8 @@ param(
     [ValidateSet('Quick', 'Compile', 'Full')]
     [string]$Mode = 'Full',
     [string[]]$Version,
-    [ValidateSet('Paper', 'Purpur', 'Spigot', 'Bukkit')]
-    [string[]]$Platform = @('Paper', 'Purpur', 'Spigot', 'Bukkit'),
+    [ValidateSet('Paper', 'Purpur', 'Spigot', 'Bukkit', 'Fabric')]
+    [string[]]$Platform = @('Paper', 'Purpur', 'Spigot', 'Bukkit', 'Fabric'),
     [switch]$RerunTasks
 )
 
@@ -16,6 +16,7 @@ $resultsDirectory = Join-Path $PSScriptRoot 'results'
 $null = New-Item -ItemType Directory -Path $resultsDirectory -Force
 $checks = [System.Collections.Generic.List[object]]::new()
 . (Join-Path $PSScriptRoot 'evidence.ps1')
+. (Join-Path $PSScriptRoot 'fabric-validation.ps1')
 
 function Add-Check([string]$Project, [string]$Name, [bool]$Passed, [string]$Detail) {
     $status = if ($Passed) { 'PASS' } else { 'FAIL' }
@@ -77,7 +78,7 @@ function Test-Artifact([System.IO.DirectoryInfo]$Project, [hashtable]$Properties
 try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $projects = @(Get-ChildItem -LiteralPath $workspaceRoot -Directory | Where-Object {
-        $_.Name -match '^(Paper|Purpur|Spigot|Bukkit)_\d' -and ($_.Name.Split('_')[0] -in $Platform)
+        $_.Name -match '^(Paper|Purpur|Spigot|Bukkit|Fabric)_\d' -and ($_.Name.Split('_')[0] -in $Platform)
     } | Sort-Object Name)
     if ($Version) {
         foreach ($requested in $Version) {
@@ -91,6 +92,10 @@ try {
     $referenceName = ''
     foreach ($project in $projects) {
         try {
+            if ($project.Name.StartsWith('Fabric_')) {
+                Invoke-FabricProjectValidation $project $Mode ([bool]$RerunTasks)
+                continue
+            }
             $loader = $project.Name.Split('_')[0]
             $isPurpur = $loader -eq 'Purpur'
             $isPortable = $loader -in 'Spigot','Bukkit'

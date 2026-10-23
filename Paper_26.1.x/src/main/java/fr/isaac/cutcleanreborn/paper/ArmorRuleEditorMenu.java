@@ -39,7 +39,7 @@ final class ArmorRuleEditorMenu extends MenuSupport {
         if (slot == 10) save(player, new StuffRulesService.ArmorRule(rule.id(), !rule.enabled(), rule.target(), rule.maximum()));
         else if (slot == 12) new RuleTargetMenu(plugin, true, rule.target(), "Armor Target",
                 (target, value) -> save(target, new StuffRulesService.ArmorRule(rule.id(), rule.enabled(), value, rule.maximum())), this::self).open(player);
-        else if (slot == 14) new AnvilTextInput<Integer>(plugin, "§8Armor • Maximum Equipped", "maximum (0-4)",
+        else if (slot == 14) new AnvilTextInput<Integer>(plugin, "§8Armor • Max Equipped", "maximum (0-4)",
                 String.valueOf(rule.maximum()), text -> GameplayMath.integer(text, 0, 4),
                 (target, value) -> save(target, new StuffRulesService.ArmorRule(rule.id(), rule.enabled(), rule.target(), value))).open(player);
         else if (slot == 16) new RuleTargetMenu(plugin, true, rule.target(), "Copy Armor Rule",
