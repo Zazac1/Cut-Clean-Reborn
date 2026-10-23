@@ -1,0 +1,3 @@
+plugins { id 'java' }
+apply from: file('build-logic/bukkit.gradle').exists() ? file('build-logic/bukkit.gradle') : file('../build-logic/bukkit.gradle')
+
