@@ -14,3 +14,11 @@ Client Minecraft26.3 avec Fabulously Optimized, nouveau profil « CCR QA », ser
 - Premier essai Timber non concluant : la scène QA utilisait des feuilles sans distance naturelle initialisée et un effet Haste insuffisant pour une casse par clic bref. Le helper de test est corrigé ; aucun succès de gameplay n'est déduit de cet essai.
 
 Reste à réaliser : autres menus, annulation de saisie/confirmation, gameplay en survie, persistance après arrêt/redémarrage ; puis autres versions et plateformes, dont le solo Fabric.
+
+### Deuxième démarrage QA
+
+JAR après raccourcissement du titre : SHA-256 `18abaa746be28531cb71d202cbd40b8f7e14b08339aa1f75aef1ff3df1f3988d`. Le précédent serveur a sauvegardé et quitté proprement ; la règle d'armure désactivée créée dans l'interface est toujours présente dans la configuration rechargée.
+
+Timber en survie : vrai clic de minage du joueur sur le rondin initial, puis les quatre rondins récoltés par le pipeline normal du serveur. Vérification visuelle des objets au sol et observation serveur `logs=0`, hache en diamant endommagée de4points. Le helper utilise Haste64 uniquement pour rendre ce clic bref instantané : cet essai ne valide donc pas encore le ressenti du temps de minage standard, ni les protections d'un autre plugin.
+
+Minerai : activation d'Auto Smelt depuis `/ccr` → Ore Drops, puis casse réelle d'un bloc de fer avec une pioche FortuneIII. Résultat effectivement ramassé dans l'inventaire : 4lingots de fer, pioche endommagée de1point, deux blocs de diamant laissés intacts. La téléportation QA a seulement placé le joueur près du butin pour le ramassage natif. Cette observation confirme la fusion et le résultat de Fortune ; elle ne mesure pas précisément l'XP et ne valide pas encore le cas Silk Touch en jeu.

@@ -12,7 +12,7 @@ function Test-FabricArtifact([System.IO.DirectoryInfo]$Project, [hashtable]$Prop
         if ($metadata.id -ne 'cutcleanreborn' -or $metadata.version -ne $Properties['mod_version']) { throw 'Wrong Fabric mod identity/version' }
         if ($metadata.depends.minecraft -ne $Properties['minecraft_version']) { throw 'Wrong declared Minecraft version' }
         if ($metadata.environment -ne '*') { throw 'Fabric must support both dedicated and integrated servers' }
-        if (@($archive.Entries | Where-Object FullName -Match 'NativeChecks|/qamixin/|ccrverification').Count -gt 0) { throw 'QA code present in released Fabric mod' }
+        if (@($archive.Entries | Where-Object FullName -Match 'NativeChecks|ColdRestartChecks|ColdPersistenceChecks|/qamixin/|ccrverification').Count -gt 0) { throw 'QA code present in released Fabric mod' }
         if (@($archive.Entries | Where-Object FullName -Match '^META-INF/jars/snakeyaml-[^/]+\.jar$').Count -ne 1) { throw 'Standalone YAML dependency missing' }
         Add-Check $Project.Name 'JAR' $true $name
     } finally { $archive.Dispose() }
@@ -37,7 +37,7 @@ function Invoke-FabricProjectValidation([System.IO.DirectoryInfo]$Project, [stri
     }
     Add-Check $Project.Name 'Structure Fabric' $true $(if ($source -eq $Project.FullName) { 'Native autonomous Fabric source' } else { 'Shared native Fabric source with explicit version adapters' })
     if ($SelectedMode -eq 'Quick') { return }
-    $tasks=if ($SelectedMode -eq 'Full') { @('build','productionSmokeTest') } else { @('compileJava','compileTestJava','compileQaJava') }
+    $tasks=if ($SelectedMode -eq 'Full') { @('build','productionSmokeTest','productionPersistenceTest') } else { @('compileJava','compileTestJava','compileQaJava') }
     if ($ForceTasks) { $tasks += '--rerun-tasks' }
     $tasks += @('--console=plain','--max-workers=2')
     $initial=Get-ProjectFingerprint $workspaceRoot $Project.Name
@@ -59,8 +59,7 @@ function Invoke-FabricProjectValidation([System.IO.DirectoryInfo]$Project, [stri
     }
     if ($total -lt 1) { throw 'Empty Fabric unit suite' }
     Add-Check $Project.Name 'Tests unitaires' $true "$total tests"
-    $runtime=if ($Project.Name -eq 'Fabric_1.21.1') { 'build/production-server' } else { 'build/smoke-server/production' }
-    $server=Join-Path $Project.FullName $runtime
+    $server=Join-Path $Project.FullName 'build/smoke-server/production'
     $native=Get-Content -LiteralPath (Join-Path $server 'ccr-qa-result.json') -Raw | ConvertFrom-Json
     if ($native.counts.failed -ne 0 -or $native.counts.passed -lt 1 -or @($native.failed).Count -ne 0) { throw 'Fabric release-JAR native check failed' }
     $nativeText="PASS: $($native.counts.passed) native checks"
@@ -72,6 +71,31 @@ function Invoke-FabricProjectValidation([System.IO.DirectoryInfo]$Project, [stri
     $artifact=Test-FabricArtifact $Project $properties $family
     $installed=Join-Path $server "mods/$(Split-Path -Leaf $artifact)"
     if ((Get-FileHash -LiteralPath $artifact).Hash -ne (Get-FileHash -LiteralPath $installed).Hash) { throw 'The tested Fabric JAR differs from the release JAR' }
+    $coldServer=Join-Path $Project.FullName 'build/smoke-server/persistence'
+    $cold=Get-Content -LiteralPath (Join-Path $coldServer 'ccr-persistence-result.json') -Raw | ConvertFrom-Json
+    if ($cold.platform -ne 'Fabric' -or $cold.minecraft -ne $properties['minecraft_version'] -or
+        $cold.counts.failed -ne 0 -or $cold.counts.passed -lt 1 -or
+        @($cold.processIds | Sort-Object -Unique).Count -ne 3 -or @($cold.stages).Count -ne 3) { throw 'Three successful, distinct cold Fabric JVMs unproven' }
+    foreach ($stage in $cold.stages) {
+        if ($stage.counts.failed -ne 0 -or $stage.counts.passed -lt 1 -or -not $stage.cleanShutdown) { throw 'A Fabric cold restart stage failed or did not shut down cleanly' }
+    }
+    $nonces=@($cold.stages | ForEach-Object worldNonce | Where-Object {$_} | Sort-Object -Unique)
+    if ($nonces.Count -ne 1 -or @($cold.stages | Where-Object {-not $_.worldNonce}).Count -ne 0) { throw 'Cold Fabric stages do not prove the same persisted world' }
+    foreach ($stageName in 'write','read','reread') {
+        $phaseLog=Get-Content -LiteralPath (Join-Path $coldServer "phase-$stageName.log") -Raw
+        if ($phaseLog -notmatch 'Stopping server' -or $phaseLog -notmatch 'Saving players' -or
+            $phaseLog -notmatch 'Saving worlds') { throw "Incomplete cold Fabric shutdown: $stageName" }
+        foreach ($dimension in 'overworld','the_nether','the_end') {
+            if ($phaseLog -notmatch ("Saving chunks[^\r\n]*minecraft:"+[regex]::Escape($dimension))) { throw "Unsaved cold Fabric dimension: $stageName / $dimension" }
+        }
+    }
+    if ((Get-FileHash -LiteralPath $artifact).Hash -ne (Get-FileHash -LiteralPath (Join-Path $coldServer "mods/$(Split-Path -Leaf $artifact)")).Hash) { throw 'Cold-restart Fabric JAR differs from the release JAR' }
+    Add-Check $Project.Name 'Redemarrages a froid' $true "$($cold.counts.passed) checks, three distinct JVMs"
     if ($initial -ne (Get-ProjectFingerprint $workspaceRoot $Project.Name)) { throw 'Fabric source changed during validation: rerun required' }
+    $coldEvidence=[pscustomobject]@{status='PASS';checks=$cold.counts.passed;process_ids=@($cold.processIds);world_nonce=$nonces[0];stages=3}
     Write-ValidationEvidence $workspaceRoot $Project.Name 'Fabric' $properties['minecraft_version'] $artifact $total $nativeText
+    $receiptPath=Join-Path $workspaceRoot "validation/results/evidence/$($Project.Name).json"
+    $receipt=Get-Content -LiteralPath $receiptPath -Raw | ConvertFrom-Json
+    $receipt | Add-Member -NotePropertyName cold_restart -NotePropertyValue $coldEvidence
+    $receipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $receiptPath -Encoding UTF8
 }

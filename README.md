@@ -1,7 +1,7 @@
 # CutClean Reborn
 
-UHC and quality-of-life rules for Minecraft. The multiplatform port is in progress: Paper and Purpur are automatically verified on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
-Spigot, CraftBukkit and Fabric (including single-player) are being adapted; a source folder alone is not a compatibility claim. See [the porting status](porting/README.md) for actual evidence and remaining checks. Paper/Purpur players connect with a normal matching Minecraft client.
+UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
+The 20 plugin variants have passed native-server checks; the five Fabric variants are undergoing the final parity audit. Real-client and cold-restart validation remain separate from these automated checks. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. A source folder alone is not a compatibility claim. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
 
 ## Features
 
@@ -85,7 +85,7 @@ CutCleanReborn/
 ├── build-logic/           # Shared platform-specific builds
 ├── porting/               # Status, platform notes and verified artifact collector
 ├── validation/            # Cross-version runner and manual test checklist
-├── test-all.ps1            # Default: full native validation of Paper and Purpur
+├── test-all.ps1            # Default: full native validation of all 25 variants
 ├── Modrinth/               # Existing artwork and model files
 └── README.md
 ```
@@ -106,7 +106,7 @@ See [BRANCHES.md](BRANCHES.md) and `branch-exports.json` for the workflow. After
 
 ## Build and verification
 
-From the repository root, validate every current Paper and Purpur variant:
+From the repository root, validate all 25 variants, using each platform's real server:
 
 ```powershell
 .\test-all.ps1

@@ -47,6 +47,12 @@ Lire et accepter soi-même l'EULA Minecraft dans `run-server/eula.txt` avant d'e
 
 Spigot/CraftBukkit et leur API se construisent depuis les sources officielles avec [l'amorçage BuildTools](../platform-bukkit/tools/README.md), sans API précompilée redistribuée. Fabric prépare son serveur officiel avec `productionSmokeTest`.
 
-Chaque suite native travaille exclusivement sous `build/` (plugins : `build/smoke-server/` ; Fabric moderne : `build/smoke-server/production/` ; Fabric1.21.1 : `build/production-server/`), restaure ses données de test et s'arrête automatiquement. Aucun vérificateur n'entre dans le JAR distribué. Les exports matérialisent les dépendances partagées nécessaires à une compilation autonome ; `validate-exports.ps1` vérifie ces branches dans des copies sans modules voisins.
+Chaque suite native travaille exclusivement sous `build/` (plugins : `build/smoke-server/` ; tous les Fabric : `build/smoke-server/production/`), restaure ses données de test et s'arrête automatiquement. Aucun vérificateur n'entre dans le JAR distribué. Les exports matérialisent les dépendances partagées nécessaires à une compilation autonome ; `validate-exports.ps1` vérifie ces branches dans des copies sans modules voisins.
+
+## Arrêts et redémarrages à froid
+
+Pour les 20 plugins, `./validation/run-persistence-tests.ps1` lance trois vrais processus Java successifs par projet dans un nouvel essai `build/persistence-server/`. Le helper séparé vérifie coffre/objets avec données persistantes, marqueurs de chunks, préférences UUID et réservation/destruction de la masse. Les reçus conservent PID distincts, nonce, empreintes et preuve d'arrêt/sauvegarde propre ; les essais interrompus restent des échecs, sans faux résultat vert.
+
+Pour les cinq Fabric, `productionPersistenceTest` réalise le même principe en trois étapes dans `build/smoke-server/persistence/`, avec un nonce conservé dans le coffre natif et des journaux par étape. Le mode global `Full` inclut cette tâche. Les 20 plugins ont leur commande froide distincte pour conserver leurs reçus détaillés. Ces contrôles ne prouvent ni le rendu client, ni le paiement réel d'une transaction effectuée par un joueur connecté.
 
 Les reçus `validation/results/evidence/` lient un succès aux sources et au SHA-256 du JAR réellement testé. Ils ne prouvent pas une interaction visuelle ou un redémarrage à froid. Les reçus manuels ne doivent être ajoutés qu'après les scénarios réellement exécutés : voir [TESTS_CODEX.md](TESTS_CODEX.md). Le collecteur refuse une preuve périmée et distingue explicitement tests natifs et tests avec joueur.
