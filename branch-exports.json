@@ -98,7 +98,7 @@
     },
     "Spigot_26.3": {
       "branch": "spigot/26.3",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -116,7 +116,7 @@
     },
     "Spigot_26.2": {
       "branch": "spigot/26.2",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -134,7 +134,7 @@
     },
     "Spigot_26.1.x": {
       "branch": "spigot/26.1.x",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -152,7 +152,7 @@
     },
     "Spigot_1.21.11": {
       "branch": "spigot/1.21.11",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -170,7 +170,7 @@
     },
     "Spigot_1.21.1": {
       "branch": "spigot/1.21.1",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -188,7 +188,7 @@
     },
     "Bukkit_26.3": {
       "branch": "bukkit/26.3",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -206,7 +206,7 @@
     },
     "Bukkit_26.2": {
       "branch": "bukkit/26.2",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -224,7 +224,7 @@
     },
     "Bukkit_26.1.x": {
       "branch": "bukkit/26.1.x",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -242,7 +242,7 @@
     },
     "Bukkit_1.21.11": {
       "branch": "bukkit/1.21.11",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
@@ -260,7 +260,7 @@
     },
     "Bukkit_1.21.1": {
       "branch": "bukkit/1.21.1",
-      "enabled": false,
+      "enabled": true,
       "dependencies": [
         {
           "source": "platform-bukkit/src",
