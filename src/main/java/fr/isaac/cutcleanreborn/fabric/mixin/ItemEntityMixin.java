@@ -35,8 +35,6 @@ abstract class ItemEntityMixin {
   private void ccr$pickup(Player player, CallbackInfo ci) {
     if (CutCleanReborn.ready() && player instanceof ServerPlayer serverPlayer) {
       ItemStack stack = getItem();
-      if (CutCleanReborn.instance().inventory().cleanEnabled(serverPlayer))
-        stack = CutCleanReborn.instance().inventory().clean(stack);
       CutCleanReborn.instance().inventory().auto(stack);
       setItem(stack);
     }
