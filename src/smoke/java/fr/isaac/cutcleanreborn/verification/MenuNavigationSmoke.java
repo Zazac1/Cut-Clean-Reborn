@@ -62,7 +62,7 @@ final class MenuNavigationSmoke {
         steps.add(() -> {
             expect("BetterSugarCaneMenu");
             smoke.call(smoke.call(ccr, "betterSugarCane"), "setChance", smoke.enumValue("BetterSugarCaneService$Cause", "PLAYER"), 17.0);
-            click(30);
+            click(31);
         });
         steps.add(() -> { expect("ConfirmationMenu"); escape(); });
         steps.add(() -> {
