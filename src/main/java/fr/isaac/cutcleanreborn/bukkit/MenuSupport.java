@@ -132,11 +132,9 @@ abstract class MenuSupport implements InventoryHolder, Listener {
     protected final void footer(String destination) {
         int start = inventory.getSize() - 9;
         inventory.setItem(start, MenuItems.item(Material.ARROW, "§eBack • " + destination,
-                List.of("§7Go up one menu.", "§7Shortcut: Escape")));
-        information(start + 4, MenuItems.item(Material.PAPER, "§7Navigation & Saving",
-                List.of("§7Escape: previous menu.", "§7Changes are saved automatically.", "§7Use Close to leave CCR at any time.")));
+                List.of("§7Esc")));
         inventory.setItem(start + 8, MenuItems.item(Material.BARRIER, "§cClose CCR",
-                List.of("§7Leave all configuration menus.")));
+                List.of()));
     }
 
     protected final boolean handleNavigation(Player player, int slot) {
@@ -159,7 +157,7 @@ final class MenuItems {
     private MenuItems() { }
     static String component(String text) { return text; }
     static ItemStack pageInfo(int page, int pages) {
-        return item(Material.BOOK, "§6Page " + (page + 1) + " / " + pages, List.of("§7Changes are saved automatically.", "§7Use the arrows to browse."));
+        return item(Material.BOOK, "§6Page " + (page + 1) + " / " + pages, List.of());
     }
     static ItemStack item(Material material, String name, List<String> lore) {
         ItemStack stack = new ItemStack(material);
