@@ -85,5 +85,5 @@ $receipt = [pscustomobject]@{ generated_at=[DateTimeOffset]::Now.ToString('o'); 
 if (-not $Preview) {
     $receipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $workspace 'validation/results/artifact-layout-latest.json') -Encoding UTF8
 }
-$moves | Format-Table source, archive -AutoSize
+$moves | Select-Object source, archive
 Write-Host "$($moves.Count) CCR artifacts $(if ($Preview) { 'would be archived' } else { 'archived' }); no files deleted."

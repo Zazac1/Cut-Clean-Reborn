@@ -2,6 +2,14 @@
 
 Ces observations ne remplacent ni la matrice complète ni les tests de toutes les plateformes. Un test natif automatique ne doit jamais être présenté comme un essai visuel.
 
+## Artifact naming follow-up — 24 October 2026
+
+After the user accepted the preceding objective, the requested folder/naming cleanup removed `-SNAPSHOT` consistently from all 25 declared versions and installable filenames, preserving base version `0.1.0`. No gameplay Java source or default configuration changed. Each module now has one installable `cutcleanreborn-0.1.0+<family>.jar` in `build/libs/`; Fabric source and verification JARs have separate output directories. The internal client helper uses `qa-gradlew.bat`/`qa-gradlew`, and its existing four guard tests still pass. The actual Dev Launcher scanner, run without modifying the launcher or its configuration, reports exactly 25 variants, five per platform, all `0.1.0` at 20:59:31. This is discovery verification, not a screenshot of a refreshed launcher.
+
+Old generated CCR artifacts were archived with their original bytes; user `run-server/` files and Modrinth profiles are outside the organizer's scope. An interrupted first validation exposed an old plugin still present in a smoke-server directory. Bukkit and Fabric preparation now archive superseded copies automatically, and the full runner also checks the plugin version actually enabled in each plugin server log. First-attempt logs remain under `validation/results/artifact-naming-first-attempt/` and are not used as final evidence.
+
+The new unfiltered Full run finishes at 20:57:47 with zero failures across all 25 variants, 289 unit tests and 6,280 native checks. All 25 fingerprints match. Fabric passes 126 cold checks; plugin attempt `20261024-183948-f059d43b` finishes at 21:03:13 with all 20 variants passing 2,140 storage checks and matching source/JAR identities. Standalone attempt `20261024-204342-0f8d5428`, from `0637f8bdeeeb523dad2c7e258036781ac3495be7`, passes all 25 isolated builds and 289 unit tests at 20:51:24. The collector gathers 25 matching JARs with cold evidence. Previous actual-client observations below retain their original hashes; no in-game PASS is transferred to this packaging build and no new client interaction is claimed.
+
 ## Profils de test séparés
 
 Cinq nouveaux profils Modrinth sont réservés aux essais : `CCR QA 26.3 - FO`, puis `CCR QA 26.2 - préparation`, `CCR QA 26.1.2 - préparation`, `CCR QA 1.21.11 - préparation` et `CCR QA 1.21.1 - préparation`. Leur nom n'est jamais une preuve de la version installée. L'installation et le lancement des quatre profils supplémentaires ont été explicitement confirmés par l'utilisateur.

@@ -1,7 +1,7 @@
 # CutClean Reborn
 
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
-The 25-variant full validation passed on October 24, 2026 at 20:07 Paris time with 289 unit tests and 6,280 native checks, including the reorganized menus and broken-block-drops-only Clean Stacks. Matching cold-restart checks pass for all 25 variants, and all 25 standalone branches build independently. Actual Fabric 1.21.1 client checks confirm menu navigation and persistence; overall real-client coverage remains partial. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
+The 25-variant full validation passed on October 24, 2026 at 20:57 Paris time with 289 unit tests and 6,280 native checks, including the normalized artifact names. Matching cold-restart checks pass for all 25 variants, and all 25 standalone branches build independently. Actual Fabric 1.21.1 menu and persistence observations belong to the preceding layout build; this packaging-only update was not relabelled as a new client test. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
 
 ## Features
 

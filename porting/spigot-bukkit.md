@@ -28,7 +28,7 @@ Commande officielle : `java -Xms256M -Xmx2G -jar ../BuildTools.jar --rev <Minecr
 
 ## Vérification native
 
-The unfiltered Full25 run finished on 24 October 2026 at 20:07 Paris time with no failures, including the blocks-only Clean Stacks scope and menu layout changes. The ten variants below also passed matching three-JVM cold checks (107 storage assertions each) in attempt `20261024-174352-e4c3917d`. These are native checks; actual player traversals remain pending.
+The unfiltered Full25 run finished on 24 October 2026 at 20:57 Paris time with no failures, including the blocks-only Clean Stacks scope and menu layout changes. The ten variants below also passed matching three-JVM cold checks (107 storage assertions each) in attempt `20261024-183948-f059d43b`. These are native checks; actual player traversals remain pending.
 
 | Minecraft | Bukkit compilation/unitaires | Bukkit natif | Spigot compilation/unitaires | Spigot natif | Joueur réel |
 | --- | --- | --- | --- | --- | --- |
