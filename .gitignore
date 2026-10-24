@@ -9,6 +9,7 @@
 build/
 **/build/
 validation/results/
+validation/manual/
 dist/
 tools/buildtools/
 

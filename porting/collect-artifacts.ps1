@@ -5,6 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
 . (Join-Path $workspace 'validation/evidence.ps1')
+. (Join-Path $workspace 'validation/client-evidence.ps1')
 $output = Join-Path $workspace 'dist'
 $null = New-Item -ItemType Directory -Path $output -Force
 $rows = [System.Collections.Generic.List[object]]::new()
@@ -21,7 +22,8 @@ foreach ($platform in 'Paper','Purpur','Spigot','Bukkit','Fabric') {
         $row = [ordered]@{
             project=$project; platform=$platform; family=$family; minecraft=''
             state='A faire'; build='Non verifiee'; startup='Non verifie'; unit_tests=0
-            native_checks='Non verifiees'; cold_restart='A faire'; real_player='A faire'; artifact=''; sha256=''; detail=''
+            native_checks='Non verifiees'; cold_restart='A faire'; real_player='A faire'
+            real_player_scenarios=@(); artifact=''; sha256=''; detail=''
         }
         try {
             if (-not (Test-Path -LiteralPath (Join-Path $module 'gradle.properties'))) {
@@ -68,11 +70,17 @@ foreach ($platform in 'Paper','Purpur','Spigot','Bukkit','Fabric') {
             }
             $manualPath=Join-Path $workspace "validation/manual/$project.json"
             if (Test-Path -LiteralPath $manualPath) {
-                $manual=Get-Content -LiteralPath $manualPath -Raw | ConvertFrom-Json
-                if ($manual.artifact_sha256 -eq $hash -and $manual.result -eq 'PASS' -and @($manual.scenarios).Count -gt 0) {
-                    $row.real_player='PASS'; $row.state='Valide avec joueur'
-                    $row.detail += '; en jeu : ' + ($manual.scenarios -join ', ')
-                } else { $row.real_player='A revalider' }
+                try {
+                    $manual=Get-Content -LiteralPath $manualPath -Raw | ConvertFrom-Json
+                    $clientProof=Test-ClientEvidence $manual $project $platform $row.minecraft $hash $receipt.source_fingerprint
+                    $row.real_player_scenarios=$clientProof.scenarios
+                    $row.real_player="$($clientProof.status): $($clientProof.passed)/$($clientProof.required) scenarios"
+                    $row.detail += '; en jeu : ' + $clientProof.detail
+                    if ($clientProof.status -eq 'PASS') { $row.state='Valide avec joueur' }
+                } catch {
+                    # A malformed manual receipt must not hide a native-verified JAR.
+                    $row.real_player='INVALID'; $row.detail += '; recu client illisible'
+                }
             }
             $relative="$platform/$family/$expectedName"
             $destination=Join-Path $output $relative
@@ -92,7 +100,7 @@ foreach ($platform in 'Paper','Purpur','Spigot','Bukkit','Fabric') {
 }
 
 $summary=[pscustomobject]@{ generated_at=[DateTimeOffset]::Now.ToString('o'); rows=$rows.ToArray() }
-$summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'compatibility.json') -Encoding UTF8
+$summary | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $output 'compatibility.json') -Encoding UTF8
 $report=[System.Collections.Generic.List[string]]::new()
 $report.Add('# CutCleanReborn — livrables et compatibilite')
 $report.Add('')
@@ -108,6 +116,15 @@ $report.Add('')
 $report.Add('## Details')
 $report.Add('')
 foreach ($row in $rows) { $report.Add("- $($row.project) : $($row.detail)") }
+$report.Add('')
+$report.Add('## Observations avec joueur')
+$report.Add('')
+$report.Add('Un scenario partiel ne valide pas toute sa famille. Les observations ci-dessous proviennent uniquement des recus client ; leur validation ne peut pas etre deduite des tests natifs.')
+foreach ($row in $rows) {
+    foreach ($scenario in $row.real_player_scenarios) {
+        $report.Add("- $($row.project) / $($scenario.id) [$($scenario.status)] : $($scenario.observation)")
+    }
+}
 $report.Add('')
 $report.Add('Aucune publication Modrinth. Les binaires des serveurs Minecraft et les profils de test personnels ne sont pas redistribues.')
 $report | Set-Content -LiteralPath (Join-Path $output 'README.md') -Encoding UTF8
