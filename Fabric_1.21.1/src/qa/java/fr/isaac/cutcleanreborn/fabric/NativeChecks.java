@@ -1035,7 +1035,7 @@ public final class NativeChecks implements ModInitializer {
             .getItem()
             .getHoverName()
             .getString()
-            .contains("Configuration"));
+            .contains("CCR Config"));
     player.containerMenu.clicked(11, 0, ClickType.PICKUP, player);
     steps.add(
         () ->
@@ -1060,7 +1060,7 @@ public final class NativeChecks implements ModInitializer {
                         .getItem()
                         .getHoverName()
                         .getString()
-                        .contains("Configuration")));
+                        .contains("CCR Config")));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape root closes", player.containerMenu == player.inventoryMenu));
     steps.add(() -> mod.menus().main(player));
@@ -1140,7 +1140,7 @@ public final class NativeChecks implements ModInitializer {
                         .getItem()
                         .getHoverName()
                         .getString()
-                        .contains("Configuration")));
+                        .contains("CCR Config")));
     menuComfort();
   }
 
@@ -1256,9 +1256,9 @@ public final class NativeChecks implements ModInitializer {
                     .getItem()
                     .getHoverName()
                     .getString()
-                    .contains("pause")));
-    steps.add(() -> clickNamed("Cible :", 0));
-    steps.add(() -> clickNamed("Choisir des objets exacts", 0));
+                    .contains("paused")));
+    steps.add(() -> clickNamed("Target:", 0));
+    steps.add(() -> clickNamed("Select Specific Items", 0));
     steps.add(
         () ->
             check(
@@ -1269,11 +1269,11 @@ public final class NativeChecks implements ModInitializer {
                     .getItem()
                     .getHoverName()
                     .getString()
-                    .contains("0 objet")));
-    steps.add(() -> clickNamed("Rechercher un objet", 0));
+                    .contains("0 item")));
+    steps.add(() -> clickNamed("Search Items", 0));
     steps.add(() -> submit("diamond_boots"));
     steps.add(() -> clickNamed("Diamond boots", 0));
-    steps.add(() -> clickNamed("Appliquer", 0));
+    steps.add(() -> clickNamed("Apply", 0));
     steps.add(
         () -> {
           check(
@@ -1300,7 +1300,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickNamed("Maximum :", 0));
     steps.add(() -> submit("10000"));
-    steps.add(() -> clickNamed("XP par niveau retiré", 0));
+    steps.add(() -> clickNamed("XP per Removed Level", 0));
     steps.add(() -> submit("2000"));
     steps.add(
         () -> {
@@ -1311,7 +1311,7 @@ public final class NativeChecks implements ModInitializer {
                   && Settings.number(rule, "xp-per-removed-level", 0) == 2000);
           page("autoItem", "tools", Items.BOW);
         });
-    steps.add(() -> clickNamed("Ajouter un enchantement", 0));
+    steps.add(() -> clickNamed("Add Enchantment", 0));
     steps.add(
         () -> {
           check(
@@ -1326,7 +1326,7 @@ public final class NativeChecks implements ModInitializer {
                               .getHoverName()
                               .getString()
                               .contains("Sharpness")));
-          clickNamed("Rechercher un enchantement", 0);
+          clickNamed("Search Enchantments", 0);
         });
     steps.add(() -> submit("unbreaking"));
     steps.add(() -> clickNamed("Unbreaking", 0));
@@ -1348,8 +1348,8 @@ public final class NativeChecks implements ModInitializer {
           mod.settings().set("automatic-enchantments.tools.DIAMOND_PICKAXE", Map.of());
           page("autoItem", "tools", Items.DIAMOND_AXE);
         });
-    steps.add(() -> clickNamed("Copier aux objets", 0));
-    steps.add(() -> clickNamed("Confirmer", 0));
+    steps.add(() -> clickNamed("Copy to Same Material", 0));
+    steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
         () -> {
           check(
@@ -1395,8 +1395,8 @@ public final class NativeChecks implements ModInitializer {
                       List.of(Map.of("item", "beef", "minimum", 1, "maximum", 1, "chance", 0))));
           page("mob", "COW");
         });
-    steps.add(() -> clickNamed("uniquement le butin", 0));
-    steps.add(() -> clickNamed("Confirmer", 0));
+    steps.add(() -> clickNamed("Reset Drops", 0));
+    steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
         () -> {
           check(
@@ -1424,14 +1424,14 @@ public final class NativeChecks implements ModInitializer {
           mod.settings().set("ore-drops.deepslate_iron_ore", Map.of("xp-bonus", 3));
           page("ore", "iron_ore");
         });
-    steps.add(() -> clickNamed("Copier vers un minerai", 0));
+    steps.add(() -> clickNamed("Copy to Ore", 0));
     steps.add(() -> submit("deepslate_iron_ore"));
     steps.add(
         () ->
             check(
                 "native ore overwrite waits for confirmation",
                 mod.settings().integer("ore-drops.deepslate_iron_ore.xp-bonus", 0, 0, 100) == 3));
-    steps.add(() -> clickNamed("Confirmer", 0));
+    steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
         () ->
             check(
@@ -1479,8 +1479,8 @@ public final class NativeChecks implements ModInitializer {
           mod.settings().set("mobs.COW", Map.of("xp-bonus", 17, "cooked-food", false));
           page("mob", "COW");
         });
-    steps.add(() -> clickNamed("Cuisson", 0));
-    steps.add(() -> clickNamed("XP bonus", 0));
+    steps.add(() -> clickNamed("Cook Food", 0));
+    steps.add(() -> clickNamed("Bonus XP", 0));
     steps.add(() -> submit("0"));
     steps.add(
         () -> {
@@ -1496,7 +1496,7 @@ public final class NativeChecks implements ModInitializer {
         () -> {
           check(
               "native mob follows later global cooking and XP changes",
-              player.containerMenu.getSlot(9).getItem().getHoverName().getString().contains("NON")
+              player.containerMenu.getSlot(9).getItem().getHoverName().getString().contains("OFF")
                   && player
                       .containerMenu
                       .getSlot(10)
@@ -1541,7 +1541,7 @@ public final class NativeChecks implements ModInitializer {
                         .getHoverName()
                         .getString()
                         .contains("Confirmation")));
-    steps.add(() -> clickNamed("Confirmer", 0));
+    steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
         () ->
             check(
@@ -1552,7 +1552,7 @@ public final class NativeChecks implements ModInitializer {
           mod.settings().set("automatic-enchantments.tools.BOW", Map.of("unbreaking", 7));
           page("autoItem", "tools", Items.BOW);
         });
-    steps.add(() -> clickNamed("Ajouter un enchantement", 0));
+    steps.add(() -> clickNamed("Add Enchantment", 0));
     steps.add(() -> clickNamed("Unbreaking", 0));
     steps.add(
         () -> {
@@ -1570,7 +1570,7 @@ public final class NativeChecks implements ModInitializer {
                             .integer(
                                 "automatic-enchantments.tools.BOW.minecraft:unbreaking", 0, 0, 255)
                         == 5));
-    steps.add(() -> clickNamed("Ajouter un enchantement", 0));
+    steps.add(() -> clickNamed("Add Enchantment", 0));
     steps.add(() -> clickNamed("Unbreaking", 1));
     steps.add(
         () ->
@@ -1644,7 +1644,7 @@ public final class NativeChecks implements ModInitializer {
           asSecond(() -> page("ruleList", true));
         });
     steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
-    steps.add(() -> asSecond(() -> clickNamed("Confirmer", 0)));
+    steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> submit("7"));
     steps.add(
         () -> {
@@ -1667,7 +1667,7 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> clickNamed("Maximum :", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
     steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
-    steps.add(() -> asSecond(() -> clickNamed("Confirmer", 0)));
+    steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> submit("9"));
     steps.add(
         () -> {
@@ -1684,15 +1684,15 @@ public final class NativeChecks implements ModInitializer {
                       .getItem()
                       .getHoverName()
                       .getString()
-                      .contains("Plafonds"));
+                      .contains("Enchantment Caps"));
           concurrentFixture();
           page("ruleById", true, "editing");
         });
-    steps.add(() -> clickNamed("Supprimer cette règle", 0));
+    steps.add(() -> clickNamed("Delete Rule", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
     steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
-    steps.add(() -> asSecond(() -> clickNamed("Confirmer", 0)));
-    steps.add(() -> clickNamed("Confirmer", 0));
+    steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
+    steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
         () -> {
           var rules = mod.settings().entries(InventoryRules.ROOT + ".enchantment-caps");
@@ -1702,11 +1702,11 @@ public final class NativeChecks implements ModInitializer {
           concurrentFixture();
           page("ruleById", true, "editing");
         });
-    steps.add(() -> clickNamed("Dupliquer vers", 0));
+    steps.add(() -> clickNamed("Copy to Another Target", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
     steps.add(() -> secondAdmin.containerMenu.clicked(11, 0, ClickType.QUICK_MOVE, secondAdmin));
-    steps.add(() -> asSecond(() -> clickNamed("Confirmer", 0)));
-    steps.add(() -> clickNamed("Groupe : TOOLS", 0));
+    steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
+    steps.add(() -> clickNamed("Group: TOOLS", 0));
     steps.add(
         () -> {
           var rules = mod.settings().entries(InventoryRules.ROOT + ".enchantment-caps");
@@ -1720,14 +1720,14 @@ public final class NativeChecks implements ModInitializer {
                       .getItem()
                       .getHoverName()
                       .getString()
-                      .contains("Plafonds"));
+                      .contains("Enchantment Caps"));
           concurrentFixture();
           page("ruleById", true, "editing");
         });
-    steps.add(() -> clickNamed("Cible :", 0));
+    steps.add(() -> clickNamed("Target:", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
     steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
-    steps.add(() -> asSecond(() -> clickNamed("Confirmer", 0)));
+    steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> player.closeContainer());
     steps.add(
         () ->

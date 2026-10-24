@@ -14,6 +14,8 @@ Le mode `Full`, utilisé par défaut, vérifie :
 3. la compilation, les tests unitaires et les tests sur un vrai serveur isolé de la plateforme demandée, dont l'identité est vérifiée dans le journal ;
 4. le nom et le contenu des JAR, leurs métadonnées et l'absence du plugin de test dans le JAR à distribuer.
 
+Un contrôle de texte (`./validation/test-ui-copy.ps1`) refuse aussi les libellés français résiduels et les explications internes de navigation dans les sources de production. Ce contrôle statique ne prouve pas le rendu visuel.
+
 Pour Fabric, le mode complet lance le véritable JAR de distribution dans le serveur officiel Fabric, hors des classes de développement Loom. Il contrôle les dépendances embarquées, l'identité Minecraft/Loader, les tests natifs et l'égalité du JAR installé avec celui à distribuer. Les sources partagées et adaptateurs de version entrent dans l'empreinte de validation ; toute modification pendant les tests invalide le résultat.
 
 Les sources doivent rester identiques entre les variantes Paper en dehors des adaptations documentées. Le contrôle exclut les métadonnées `plugin.yml` (plugin et vérificateur), les paramètres de compilation Java/API et normalise uniquement `view.open()` en son équivalent ancien `player.openInventory(view)` dans le fichier de saisie à enclume. Toutes les autres lignes de ce fichier restent contrôlées. La famille `26.1.x` porte son nom de dossier/JAR mais déclare sa révision concrète `26.1.2` dans les métadonnées.

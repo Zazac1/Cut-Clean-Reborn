@@ -123,8 +123,8 @@ public final class CutCleanReborn implements ModInitializer {
                                       .sendSuccess(
                                           () ->
                                               Component.literal(
-                                                  "CCR • Ouvrez les menus en jeu, ou modifiez"
-                                                      + " config.yml puis /ccr reload."),
+                                                  "CCR • Open the menus in game, or edit"
+                                                      + " config.yml and run /ccr reload."),
                                           false);
                                 return 1;
                               }))
@@ -164,14 +164,14 @@ public final class CutCleanReborn implements ModInitializer {
                                       .getSource()
                                       .sendFailure(
                                           Component.literal(
-                                              "CCR • Configuration invalide : ancien état conservé,"
-                                                  + " consultez le journal."));
+                                              "CCR • Invalid config. Previous settings kept;"
+                                                  + " see the server log."));
                                   return 0;
                                 }
                                 context
                                     .getSource()
                                     .sendSuccess(
-                                        () -> Component.literal("CCR • Configuration rechargée."),
+                                        () -> Component.literal("CCR • Config reloaded."),
                                         false);
                                 return 1;
                               }))
@@ -185,8 +185,7 @@ public final class CutCleanReborn implements ModInitializer {
                                         () ->
                                             Component.literal(
                                                 "CCR • /ccr config|status|reload|help|ping •"
-                                                    + " /cleanstacks on|off|status|toggle • Échap"
-                                                    + " retourne au menu parent."),
+                                                    + " /cleanstacks on|off|status|toggle"),
                                         false);
                                 return 1;
                               }))
@@ -196,7 +195,7 @@ public final class CutCleanReborn implements ModInitializer {
                               context -> {
                                 context
                                     .getSource()
-                                    .sendSuccess(() -> Component.literal("CCR • Pong !"), false);
+                                    .sendSuccess(() -> Component.literal("CCR • Pong!"), false);
                                 return 1;
                               }));
           var registered = dispatcher.register(root);
@@ -325,13 +324,13 @@ public final class CutCleanReborn implements ModInitializer {
       save();
       if (value) inventory.tick(player);
     } else if (!mode.equalsIgnoreCase("status")) {
-      source.sendFailure(Component.literal("CCR • on, off, status ou toggle attendu"));
+      source.sendFailure(Component.literal("CCR • Expected on, off, status or toggle"));
       return 0;
     }
     player.sendSystemMessage(
         Component.literal(
-            "§6CCR • Clean Stacks : "
-                + (inventory.cleanEnabled(player) ? "§aactivé" : "§cdésactivé")));
+            "§6CCR • Clean Stacks: "
+                + (inventory.cleanEnabled(player) ? "§aON" : "§cOFF")));
     return 1;
   }
 

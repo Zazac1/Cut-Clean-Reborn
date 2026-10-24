@@ -76,6 +76,8 @@ function Test-Artifact([System.IO.DirectoryInfo]$Project, [hashtable]$Properties
 }
 
 try {
+    & (Join-Path $PSScriptRoot 'test-ui-copy.ps1')
+    Add-Check 'Workspace' 'UI Copy' $true 'English player-facing text, concise navigation and no redundant Fabric page counter'
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $projects = @(Get-ChildItem -LiteralPath $workspaceRoot -Directory | Where-Object {
         $_.Name -match '^(Paper|Purpur|Spigot|Bukkit|Fabric)_\d' -and ($_.Name.Split('_')[0] -in $Platform)
