@@ -260,7 +260,7 @@ public final class InventoryRules {
     if (levels > 0) {
       player.giveExperienceLevels(levels);
       player.sendSystemMessage(
-          Component.literal("§6CCR §8» §aRemboursement : +" + levels + " niveau(x)."));
+          Component.literal("§6CCR §8» §aRefund: +" + levels + " XP level(s)."));
     }
     return levels;
   }
@@ -395,7 +395,7 @@ public final class InventoryRules {
       Map<Holder<Enchantment>, Integer> removed = enforceCaps(stack);
       if (!removed.isEmpty())
         player.displayClientMessage(
-            Component.literal("§eCCR • Enchantement ramené au plafond configuré"), true);
+            Component.literal("§eCCR • Enchantment reduced to its limit."), true);
     }
     if (mod.settings().bool(ROOT + ".enabled", false))
       for (var rule : mod.settings().entries(ROOT + ".armor-rules")) {
@@ -411,7 +411,7 @@ public final class InventoryRules {
           player.setItemSlot(slot, ItemStack.EMPTY);
           if (!player.getInventory().add(stack)) player.drop(stack, false);
           player.displayClientMessage(
-              Component.literal("§eCCR • Armure " + target + " : maximum " + maximum), true);
+              Component.literal("§eCCR • Armor " + target + ": maximum " + maximum), true);
         }
       }
     player.getInventory().setChanged();
@@ -429,7 +429,7 @@ public final class InventoryRules {
         && mod.settings().bool(ROOT + ".unique-mace.enabled", false)) {
       if (maceBlocked()) {
         stack.setCount(0);
-        player.sendSystemMessage(Component.literal("§cCCR • La masse unique existe déjà."));
+        player.sendSystemMessage(Component.literal("§cCCR • The unique mace already exists."));
         return;
       }
       String identity = UUID.randomUUID().toString();
@@ -439,7 +439,7 @@ public final class InventoryRules {
       mod.settings().set(ROOT + ".unique-mace.exists", true);
       mod.settings().set(ROOT + ".unique-mace.id", identity);
       mod.save();
-      player.sendSystemMessage(Component.literal("§6CCR • Vous avez fabriqué la masse unique !"));
+      player.sendSystemMessage(Component.literal("§6CCR • You crafted the unique mace!"));
     }
     auto(stack);
     enforceCaps(stack);
@@ -457,7 +457,7 @@ public final class InventoryRules {
         .getPlayerList()
         .broadcastSystemMessage(
             Component.literal(
-                "§6CCR • La masse unique a été détruite. Une nouvelle peut être fabriquée."),
+                "§6CCR • The unique mace was destroyed. A new one can now be crafted."),
             false);
   }
 }

@@ -246,7 +246,7 @@ public final class Timber {
   private void finish(UUID id, ServerPlayer player) {
     Harvest removed = active.remove(id);
     if (removed != null && removed.cut > 1 && player != null)
-      player.displayClientMessage(Component.literal("§6Timber • " + removed.cut + " bûches"), true);
+      player.displayClientMessage(Component.literal("§6Timber • " + removed.cut + " logs"), true);
   }
 
   public void clear() {

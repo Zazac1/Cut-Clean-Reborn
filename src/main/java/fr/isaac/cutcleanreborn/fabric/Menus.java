@@ -122,23 +122,22 @@ public final class Menus {
         (!enabled ? "§c" : available ? "§a" : "§e")
             + title
             + " : "
-            + (!enabled ? "NON" : available ? "OUI" : "EN PAUSE"),
+            + (!enabled ? "OFF" : available ? "ON" : "PAUSED"),
         player -> {
           writeSetting(path, !mod.settings().bool(path, fallback));
           mod.save();
           open(player, page.get());
         },
         enabled && !available
-            ? "§eActivez d'abord l'interrupteur général"
-            : "§7Cliquer pour changer",
-        "§7Réglage enregistré : " + (enabled ? "activé" : "désactivé"));
+            ? "§eEnable the main switch first."
+            : "§7Click to toggle.");
   }
 
   private Entry number(
       Item icon, String title, String path, int fallback, int min, int max, Supplier<Page> page) {
     return entry(
         icon,
-        title + " : §e" + mod.settings().integer(path, fallback, min, max),
+        title + ": §e" + mod.settings().integer(path, fallback, min, max),
         player ->
             input(
                 player,
@@ -147,19 +146,19 @@ public final class Menus {
                 page,
                 text -> {
                   Integer value = GameplayMath.integer(text, min, max);
-                  if (value == null) return "Entrez un entier de " + min + " à " + max;
+                  if (value == null) return "Enter a whole number from " + min + " to " + max;
                   writeSetting(path, value);
                   mod.save();
                   return null;
                 }),
-        "§7Valeur autorisée : " + min + " à " + max);
+        "§7Range: " + min + " to " + max);
   }
 
   private Entry percent(
       Item icon, String title, String path, double fallback, Supplier<Page> page) {
     return entry(
         icon,
-        title + " : §e" + mod.settings().decimal(path, fallback, 0, 100) + "%",
+        title + ": §e" + mod.settings().decimal(path, fallback, 0, 100) + "%",
         player ->
             input(
                 player,
@@ -168,12 +167,12 @@ public final class Menus {
                 page,
                 text -> {
                   Double value = GameplayMath.percentage(text);
-                  if (value == null) return "Entrez un pourcentage de 0 à 100";
+                  if (value == null) return "Enter a percentage from 0 to 100";
                   mod.settings().set(path, value);
                   mod.save();
                   return null;
                 }),
-        "§7Pourcentage de 0 à 100");
+        "§7Range: 0–100%");
   }
 
   /** Returning a mob setting to its inherited value must restore future global inheritance. */
@@ -211,78 +210,78 @@ public final class Menus {
                   mod.settings().set(path, null);
                   mod.save();
                 }),
-        "§7Confirmation nécessaire");
+        "§7Click to review.");
   }
 
   private Page mainPage() {
     return new Page(
-        "CCR • Configuration",
+        "CCR Config",
         null,
         () ->
             List.of(
                 folder(
                     Items.BEEF,
-                    "§6Créatures et butin",
+                    "§6Mob Drops",
                     this::mobs,
-                    "§7Cuisson, XP, butin vanilla et extras"),
+                    "§7Drops, cooked food and XP."),
                 folder(
                     Items.DIAMOND_ORE,
-                    "§bMinerais",
+                    "§bOre Drops",
                     this::ores,
-                    "§7Chaque variante, Fortune, fusion et XP"),
+                    "§7Drops, Fortune, auto smelt and XP."),
                 folder(
                     Items.IRON_AXE,
                     "§aTimber",
                     this::timber,
-                    "§7Outils, arbres naturels, temps et récolte"),
+                    "§7Fell natural trees with your chosen tools."),
                 folder(
                     Items.ENCHANTED_BOOK,
-                    "§dEnchantements automatiques",
+                    "§dAutomatic Enchantments",
                     this::automatic,
-                    "§7Armures, outils, copie et rafraîchissement"),
+                    "§7Enchantments for new armor, tools and weapons."),
                 folder(
                     Items.OAK_LOG,
                     "§eClean Stacks",
                     this::clean,
-                    "§7Conversions et préférence personnelle"),
+                    "§7Combine wood and stone into matching stacks."),
                 folder(
                     Items.SUGAR_CANE,
-                    "§aCanne à sucre",
+                    "§aBetter Sugar Cane",
                     this::cane,
-                    "§7Casse joueur et perte du support séparées"),
+                    "§7Player break and support break drops."),
                 folder(
                     Items.DIAMOND_CHESTPLATE,
                     "§cStuff Rules",
                     this::stuff,
-                    "§7Armures équipées, caps, XP et masse unique"),
+                    "§7Armor limits, enchantment caps and unique mace."),
                 entry(
                     Items.COMPASS,
-                    "§fRecharger la configuration",
+                    "§fReload Config",
                     player -> {
                       if (mod.reload()) open(player, mainPage());
                       else
                         player.sendSystemMessage(
-                            Component.literal("§cCCR • YAML invalide, ancien état conservé."));
+                            Component.literal("§cCCR • Invalid config.yml. Previous settings kept."));
                     },
-                    "§7Relit le fichier YAML sans effacer les préférences")));
+                    "§7Reload config.yml.")));
   }
 
   private Page mobs() {
     return new Page(
-        "CCR • Créatures",
+        "CCR • Mob Drops",
         this::mainPage,
         () -> {
           List<Entry> list = new ArrayList<>();
-          list.add(folder(Items.COOKED_BEEF, "§6Réglages globaux", this::mobGlobals));
+          list.add(folder(Items.COOKED_BEEF, "§6Global Settings", this::mobGlobals));
           list.add(
               entry(
                   Items.COMPASS,
-                  "§bTrouver une créature",
+                  "§bSearch Mobs",
                   player -> {
                     Page[] destination = {mobs()};
                     input(
                         player,
-                        "Identifiant de créature",
+                        "Mob ID",
                         "minecraft:cow",
                         () -> destination[0],
                         text -> {
@@ -296,7 +295,7 @@ public final class Menus {
                               || !(BuiltInRegistries.ENTITY_TYPE
                                       .get(key)
                                       .create(mod.server().overworld())
-                                  instanceof LivingEntity)) return "Créature vivante inconnue";
+                                  instanceof LivingEntity)) return "Unknown mob";
                           destination[0] = mob(Settings.materialKey(key.toString()));
                           return null;
                         });
@@ -351,8 +350,8 @@ public final class Menus {
                     icon == null ? Items.BONE : icon,
                     "§f" + pretty(id),
                     () -> mob(id),
-                    "§7Modifications actives : " + mobScore(id),
-                    "§7Cuisson, XP, overrides et extras"));
+                    "§7Custom drops: " + mobScore(id),
+                    "§7Drops, cooked food and XP."));
           }
           return list;
         });
@@ -380,19 +379,19 @@ public final class Menus {
 
   private Page mobGlobals() {
     return new Page(
-        "CCR • Butin global",
+        "CCR • Global Drops",
         this::mobs,
         () ->
             List.of(
                 toggle(
                     Items.CAMPFIRE,
-                    "Cuire la viande animale",
+                    "Cook Animal Food",
                     "animal-drops.cook",
                     true,
                     this::mobGlobals),
                 number(
                     Items.BEEF,
-                    "Quantité animale finale ×",
+                    "Animal Drop Multiplier",
                     "animal-drops.multiplier",
                     1,
                     1,
@@ -400,7 +399,7 @@ public final class Menus {
                     this::mobGlobals),
                 number(
                     Items.EXPERIENCE_BOTTLE,
-                    "XP animale bonus",
+                    "Animal Bonus XP",
                     "animal-drops.xp-bonus",
                     0,
                     0,
@@ -408,7 +407,7 @@ public final class Menus {
                     this::mobGlobals),
                 number(
                     Items.CHEST,
-                    "Portée de collecte (blocs)",
+                    "Collection Range",
                     "animal-drops.collection-range",
                     0,
                     0,
@@ -416,13 +415,13 @@ public final class Menus {
                     this::mobGlobals),
                 toggle(
                     Items.IRON_SWORD,
-                    "Looting sur overrides",
+                    "Looting on Vanilla Drops",
                     "mob-drops.looting-vanilla",
                     true,
                     this::mobGlobals),
                 toggle(
                     Items.DIAMOND_SWORD,
-                    "Looting sur extras",
+                    "Looting on Extra Drops",
                     "mob-drops.looting-custom",
                     false,
                     this::mobGlobals)));
@@ -438,7 +437,7 @@ public final class Menus {
             List.of(
                 toggle(
                     Items.CAMPFIRE,
-                    "Cuisson",
+                    "Cook Food",
                     path + ".cooked-food",
                     List.of(
                                 "COW",
@@ -454,7 +453,7 @@ public final class Menus {
                     here),
                 number(
                     Items.EXPERIENCE_BOTTLE,
-                    "XP bonus",
+                    "Bonus XP",
                     path + ".xp-bonus",
                     List.of(
                                 "COW",
@@ -473,51 +472,51 @@ public final class Menus {
                     here),
                 folder(
                     Items.BOOK,
-                    "§eButin vanilla",
+                    "§eVanilla Drops",
                     () -> vanillaMob(id, false),
-                    "§7Table réelle, aperçu Looting et overrides"),
+                    "§7Preview and customize vanilla drops."),
                 folder(
                     Items.CHEST,
-                    "§aButin supplémentaire",
+                    "§aExtra Drops",
                     () -> drops(path + ".drops", false, here),
-                    "§7Ajouts indépendants de la chance vanilla"),
-                reset("Réinitialiser cette créature", path, here),
+                    "§7Adds drops without changing vanilla drops."),
+                reset("Reset Mob", path, here),
                 entry(
                     Items.CLOCK,
-                    "§eRéinitialiser uniquement le butin",
+                    "§eReset Drops",
                     player ->
                         confirm(
                             player,
-                            "Rétablir les drops vanilla et enlever les extras ?",
+                            "Reset vanilla and extra drops?",
                             here,
                             () -> {
                               mod.settings().set(path + ".vanilla-overrides", null);
                               mod.settings().set(path + ".drops", null);
                               mod.save();
                             }),
-                    "§7Conserve la cuisson et le bonus d'XP")));
+                    "§7Cooking and bonus XP are unchanged.")));
   }
 
   private Page ores() {
     return new Page(
-        "CCR • Minerais",
+        "CCR • Ore Drops",
         this::mainPage,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               toggle(
-                  Items.FURNACE, "Fusion automatique", "ore-drops.auto-smelt", false, this::ores));
+                  Items.FURNACE, "Auto Smelt", "ore-drops.auto-smelt", false, this::ores));
           list.add(
               toggle(
                   Items.DIAMOND_PICKAXE,
-                  "Fortune sur vanilla",
+                  "Fortune on Vanilla Drops",
                   "ore-drops.fortune-vanilla",
                   true,
                   this::ores));
           list.add(
               toggle(
                   Items.GOLDEN_PICKAXE,
-                  "Fortune sur extras",
+                  "Fortune on Extra Drops",
                   "ore-drops.fortune-custom",
                   false,
                   this::ores));
@@ -530,7 +529,7 @@ public final class Menus {
                               InventoryRules.item(id),
                               "§f" + pretty(id),
                               () -> ore(id),
-                              "§7XP, butin et copie vers une variante")));
+                              "§7Drops, XP and copy settings.")));
           return list;
         });
   }
@@ -544,20 +543,20 @@ public final class Menus {
         () ->
             List.of(
                 number(
-                    Items.EXPERIENCE_BOTTLE, "XP bonus", path + ".xp-bonus", 0, 0, 1_000_000, here),
-                folder(Items.BOOK, "§eRemplacement vanilla", () -> vanillaOre(id)),
+                    Items.EXPERIENCE_BOTTLE, "Bonus XP", path + ".xp-bonus", 0, 0, 1_000_000, here),
+                folder(Items.BOOK, "§eVanilla Drop", () -> vanillaOre(id)),
                 folder(
                     Items.CHEST,
-                    "§aButin supplémentaire",
+                    "§aExtra Drops",
                     () -> drops(path + ".drops", false, here)),
                 entry(
                     Items.WRITABLE_BOOK,
-                    "§bCopier vers un minerai",
+                    "§bCopy to Ore",
                     player -> {
                       Page[] destination = {here.get()};
                       input(
                           player,
-                          "Minerai destinataire",
+                          "Target Ore",
                           "deepslate_" + id,
                           () -> destination[0],
                           text -> {
@@ -565,11 +564,11 @@ public final class Menus {
                                 text.trim()
                                     .replace("minecraft:", "")
                                     .toLowerCase(java.util.Locale.ROOT);
-                            if (!LootRules.ORES.containsKey(target)) return "Minerai inconnu";
-                            if (target.equals(id)) return "Choisissez un autre minerai";
+                            if (!LootRules.ORES.containsKey(target)) return "Unknown ore";
+                            if (target.equals(id)) return "Choose a different ore";
                             destination[0] =
                                 confirmation(
-                                    "Écraser les réglages de " + pretty(target) + " ?",
+                                    "Overwrite settings for " + pretty(target) + " ?",
                                     here,
                                     () -> {
                                       mod.settings()
@@ -579,30 +578,30 @@ public final class Menus {
                             return null;
                           });
                     },
-                    "§7Copie XP, overrides et extras"),
-                reset("Réinitialiser ce minerai", path, here)));
+                    "§7Copy drops and bonus XP."),
+                reset("Reset Ore", path, here)));
   }
 
   private Page drops(String path, boolean source, Supplier<Page> parent) {
     Supplier<Page> here = () -> drops(path, source, parent);
     return new Page(
-        "CCR • " + (path.endsWith(".drops") ? "Butin supplémentaire" : "Overrides vanilla"),
+        "CCR • " + (path.endsWith(".drops") ? "Extra Drops" : "Vanilla Drops"),
         parent,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               entry(
                   Items.LIME_DYE,
-                  "§aAjouter un objet",
+                  "§aAdd Item",
                   player ->
                       input(
                           player,
-                          "Identifiant de l'objet",
+                          "Item ID",
                           "minecraft:diamond",
                           here,
                           text -> {
                             Item item = InventoryRules.item(text);
-                            if (item == null || item == Items.AIR) return "Objet Minecraft inconnu";
+                            if (item == null || item == Items.AIR) return "Unknown Minecraft item";
                             List<Map<String, Object>> values = mod.settings().entries(path);
                             Map<String, Object> rule = new LinkedHashMap<>();
                             rule.put("item", InventoryRules.id(item));
@@ -625,8 +624,8 @@ public final class Menus {
                     icon == null ? Items.BARRIER : icon,
                     "§f" + rule.get("item") + " §7[" + (index + 1) + "]",
                     () -> drop(path, position, source, here),
-                    "§7Quantité : " + rule.get("minimum") + "–" + rule.get("maximum"),
-                    "§7Chance : " + rule.get("chance") + "%"));
+                    "§7Amount: " + rule.get("minimum") + "–" + rule.get("maximum"),
+                    "§7Chance: " + rule.get("chance") + "%"));
           }
           return list;
         });
@@ -635,7 +634,7 @@ public final class Menus {
   private Page drop(String path, int index, boolean source, Supplier<Page> parent) {
     Supplier<Page> here = () -> drop(path, index, source, parent);
     return new Page(
-        "CCR • Objet de butin",
+        "CCR • Drop Item",
         parent,
         () -> {
           List<Map<String, Object>> values = mod.settings().entries(path);
@@ -645,16 +644,16 @@ public final class Menus {
           list.add(
               entry(
                   Items.ITEM_FRAME,
-                  "§fObjet : " + rule.get("item"),
+                  "§fItem: " + rule.get("item"),
                   player ->
                       input(
                           player,
-                          "Objet de sortie",
+                          "Output Item",
                           String.valueOf(rule.get("item")),
                           here,
                           text -> {
                             Item item = InventoryRules.item(text);
-                            if (item == null || item == Items.AIR) return "Objet inconnu";
+                            if (item == null || item == Items.AIR) return "Unknown item";
                             editRule(path, index, map -> map.put("item", InventoryRules.id(item)));
                             return null;
                           })));
@@ -662,16 +661,16 @@ public final class Menus {
             list.add(
                 entry(
                     Items.BOOK,
-                    "§eRemplacer : " + rule.getOrDefault("source", rule.get("item")),
+                    "§eReplace: " + rule.getOrDefault("source", rule.get("item")),
                     player ->
                         input(
                             player,
-                            "Objet vanilla à remplacer",
+                            "Vanilla Item to Replace",
                             String.valueOf(rule.getOrDefault("source", rule.get("item"))),
                             here,
                             text -> {
                               Item item = InventoryRules.item(text);
-                              if (item == null || item == Items.AIR) return "Objet inconnu";
+                              if (item == null || item == Items.AIR) return "Unknown item";
                               editRule(
                                   path, index, map -> map.put("source", InventoryRules.id(item)));
                               return null;
@@ -679,17 +678,17 @@ public final class Menus {
           list.add(
               entry(
                   Items.HOPPER,
-                  "§eQuantité : " + rule.get("minimum") + "–" + rule.get("maximum"),
+                  "§eAmount: " + rule.get("minimum") + "–" + rule.get("maximum"),
                   player ->
                       input(
                           player,
-                          "Quantité : 1 ou 1-3",
+                          "Amount: 1 or 1-3",
                           rule.get("minimum") + "-" + rule.get("maximum"),
                           here,
                           text -> {
                             var range = GameplayMath.range(text, 0, 64);
                             if (range == null)
-                              return "Quantité attendue : 0 à 64, minimum ≤ maximum";
+                              return "Enter an amount from 0 to 64; minimum ≤ maximum";
                             editRule(
                                 path,
                                 index,
@@ -702,16 +701,16 @@ public final class Menus {
           list.add(
               entry(
                   Items.GOLD_NUGGET,
-                  "§eChance : " + rule.get("chance") + "%",
+                  "§eChance: " + rule.get("chance") + "%",
                   player ->
                       input(
                           player,
-                          "Chance en %",
+                          "Chance (%)",
                           String.valueOf(rule.get("chance")),
                           here,
                           text -> {
                             Double chance = GameplayMath.percentage(text);
-                            if (chance == null) return "Pourcentage attendu : 0 à 100";
+                            if (chance == null) return "Enter a percentage from 0 to 100";
                             editRule(path, index, map -> map.put("chance", chance));
                             return null;
                           })));
@@ -719,14 +718,14 @@ public final class Menus {
               entry(
                   Items.TNT,
                   path.endsWith("vanilla-overrides")
-                      ? "§eRétablir le comportement vanilla"
-                      : "§cSupprimer cet extra",
+                      ? "§eRestore Vanilla Drop"
+                      : "§cDelete Extra Drop",
                   player ->
                       confirm(
                           player,
                           path.endsWith("vanilla-overrides")
-                              ? "Retirer ce remplacement et rétablir vanilla ?"
-                              : "Supprimer cet extra ?",
+                              ? "Restore this vanilla drop?"
+                              : "Delete this extra drop?",
                           parent,
                           () -> {
                             List<Map<String, Object>> current = mod.settings().entries(path);
@@ -738,13 +737,13 @@ public final class Menus {
             list.add(
                 entry(
                     Items.BARRIER,
-                    "§cDésactiver ce drop vanilla (0%)",
+                    "§cDisable Vanilla Drop",
                     player -> {
                       editRule(path, index, map -> map.put("chance", 0.0));
                       open(player, here.get());
                     },
-                    "§7Conserve un remplacement explicite à 0%",
-                    "§7Ne restaure pas la table vanilla"));
+                    "§7Prevents this vanilla drop.",
+                    "§7Vanilla drops remain unchanged."));
           return list;
         });
   }
@@ -769,13 +768,13 @@ public final class Menus {
           list.add(
               folder(
                   Items.IRON_SWORD,
-                  looting ? "§eVoir sans Looting" : "§bAperçu avec Looting III",
+                  looting ? "§ePreview Without Looting" : "§bPreview Looting III",
                   () -> vanillaMob(id, !looting),
-                  "§7Aperçu de la table native, sans apparition de créature"));
+                  "§7Vanilla drops preview."));
           list.add(
               folder(
                   Items.WRITABLE_BOOK,
-                  "§eOverrides configurés / ajout manuel",
+                  "§eCustom Vanilla Drops",
                   () -> drops(path, true, here)));
           for (Map<String, Object> vanilla : mod.catalog().mob(id, looting)) {
             Item item = InventoryRules.item(String.valueOf(vanilla.get("item")));
@@ -793,27 +792,27 @@ public final class Menus {
                 new Entry(
                     item,
                     (configured != null && Settings.number(configured, "chance", 100.0) <= 0
-                            ? "§c[DÉSACTIVÉ] "
+                            ? "§c[OFF] "
                             : "§f")
                         + pretty(source),
                     List.of(
                         configured == null
-                            ? "§7Vanilla non modifié"
+                            ? "§7Vanilla"
                             : "§eOverride : "
                                 + configured.get("minimum")
                                 + "–"
                                 + configured.get("maximum")
-                                + " à "
+                                + " to "
                                 + configured.get("chance")
                                 + "%",
-                        "§7Quantité vanilla : "
+                        "§7Vanilla amount: "
                             + vanilla.get("minimum")
                             + "–"
                             + vanilla.get("maximum"),
-                        "§7Chance observée : "
+                        "§7Estimated chance: "
                             + String.format(java.util.Locale.ROOT, "%.1f", vanilla.get("chance"))
-                            + "% (256 tirages)",
-                        "§eGauche : modifier • droite : désactiver / rétablir"),
+                            + "%",
+                        "§eClick to edit. Right-click to disable or restore."),
                     player -> {
                       List<Map<String, Object>> values = mod.settings().entries(path);
                       int index = -1;
@@ -851,9 +850,9 @@ public final class Menus {
             list.add(
                 entry(
                     Items.BARRIER,
-                    "§7Aucun drop découvert",
+                    "§7No drops found.",
                     player -> {},
-                    "§7Les ajouts manuels restent disponibles"));
+                    "§7You can also add a drop manually."));
           return list;
         });
   }
@@ -862,7 +861,7 @@ public final class Menus {
     String path = "ore-drops." + id + ".vanilla-overrides";
     Supplier<Page> here = () -> vanillaOre(id);
     return new Page(
-        "CCR • Butin " + pretty(id),
+        "CCR • Drops / " + pretty(id),
         () -> ore(id),
         () -> {
           Map<String, Object> vanilla = VanillaCatalog.ore(id, false),
@@ -871,7 +870,7 @@ public final class Menus {
           list.add(
               entry(
                   LootRules.ORES.get(id),
-                  "§eModifier le drop vanilla",
+                  "§eEdit Vanilla Drop",
                   player -> {
                     List<Map<String, Object>> values = mod.settings().entries(path);
                     if (values.isEmpty()) {
@@ -880,20 +879,20 @@ public final class Menus {
                     }
                     open(player, drop(path, 0, false, here));
                   },
-                  "§7Sans Fortune : " + vanilla.get("minimum") + "–" + vanilla.get("maximum"),
+                  "§7Without Fortune: " + vanilla.get("minimum") + "–" + vanilla.get("maximum"),
                   "§7Fortune III : " + fortune.get("minimum") + "–" + fortune.get("maximum"),
-                  "§7Silk Touch garde le minerai, sans override"));
-          list.add(reset("Rétablir le drop vanilla", path, here));
+                  "§7Silk Touch keeps the ore block."));
+          list.add(reset("Restore Vanilla Drop", path, here));
           list.add(
               entry(
                   Items.BARRIER,
-                  "§cDésactiver le drop vanilla (0%)",
+                  "§cDisable Vanilla Drop",
                   player -> {
                     mod.settings().set(path, List.of(new LinkedHashMap<>(vanilla)));
                     editRule(path, 0, map -> map.put("chance", 0.0));
                     open(player, here.get());
                   },
-                  "§7Les extras et XP bonus restent configurés"));
+                  "§7Extra drops and bonus XP are unchanged."));
           return list;
         });
   }
@@ -931,27 +930,27 @@ public final class Menus {
         this::mainPage,
         () ->
             List.of(
-                toggle(Items.IRON_AXE, "Timber actif", "tree-cutter.enabled", true, this::timber),
+                toggle(Items.IRON_AXE, "Enable Timber", "tree-cutter.enabled", true, this::timber),
                 folder(
                     Items.DIAMOND_AXE,
-                    "§bOutils autorisés",
+                    "§bTools & Activation",
                     this::timberTools,
-                    "§7Chaque hache et autres outils/main"),
+                    "§7Choose which tools can fell trees."),
                 folder(
                     Items.CLOCK,
-                    "§eTemps et progression",
+                    "§eBreaking & Limits",
                     this::timberTime,
-                    "§7Casses répétées proportionnelles à l'arbre"),
-                folder(Items.OAK_LEAVES, "§aFeuilles et pommes", this::timberHarvest),
+                    "§7Mining effort based on tree size."),
+                folder(Items.OAK_LEAVES, "§aLeaves & Apples", this::timberHarvest),
                 toggle(
                     Items.LEATHER_BOOTS,
-                    "Accroupi uniquement",
+                    "Require Sneaking",
                     "tree-cutter.sneak-only",
                     false,
                     this::timber),
                 number(
                     Items.OAK_LOG,
-                    "Limite de bûches",
+                    "Maximum Tree Size",
                     "tree-cutter.max-logs",
                     256,
                     2,
@@ -959,25 +958,25 @@ public final class Menus {
                     this::timber),
                 number(
                     Items.HOPPER,
-                    "Blocs par tick",
+                    "Blocks per Tick",
                     "tree-cutter.blocks-per-tick",
                     12,
                     1,
                     64,
                     this::timber),
-                reset("Réinitialiser Timber", "tree-cutter", this::timber)));
+                reset("Reset Timber", "tree-cutter", this::timber)));
   }
 
   private Page timberTools() {
     return new Page(
-        "CCR • Outils Timber",
+        "Timber • Tools & Activation",
         this::timber,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               toggle(
                   Items.STICK,
-                  "Main / autres outils",
+                  "Hand / Other Tools",
                   "tree-cutter.hand",
                   false,
                   this::timberTools));
@@ -998,19 +997,19 @@ public final class Menus {
 
   private Page timberTime() {
     return new Page(
-        "CCR • Temps Timber",
+        "Timber • Breaking & Limits",
         this::timber,
         () ->
             List.of(
                 toggle(
                     Items.CLOCK,
-                    "Temps proportionnel",
+                    "Scale Mining Effort",
                     "tree-cutter.break-time.enabled",
                     false,
                     this::timberTime),
                 percent(
                     Items.REPEATER,
-                    "Temps par bûche restante",
+                    "Effort per Extra Log",
                     "tree-cutter.break-time.percent",
                     100,
                     this::timberTime)));
@@ -1018,85 +1017,85 @@ public final class Menus {
 
   private Page timberHarvest() {
     return new Page(
-        "CCR • Récolte Timber",
+        "Timber • Leaves & Apples",
         this::timber,
         () ->
             List.of(
                 toggle(
                     Items.OAK_LEAVES,
-                    "Casser les feuilles naturelles",
+                    "Harvest Tree Leaves",
                     "tree-cutter.break-leaves",
                     false,
                     this::timberHarvest),
                 percent(
                     Items.APPLE,
-                    "Chance de pomme personnalisée",
+                    "Apple Chance",
                     "tree-cutter.apple-chance",
                     0.5,
                     this::timberHarvest),
                 reset(
-                    "Rétablir les pommes vanilla",
+                    "Reset Apple Chance",
                     "tree-cutter.apple-chance",
                     this::timberHarvest)));
   }
 
   private Page cane() {
     return new Page(
-        "CCR • Canne à sucre",
+        "CCR • Better Sugar Cane",
         this::mainPage,
         () ->
             List.of(
                 toggle(
                     Items.SUGAR_CANE,
-                    "Bonus actif",
+                    "Enable Bonus",
                     "better-sugar-cane.enabled",
                     false,
                     this::cane),
                 folder(
                     Items.IRON_AXE,
-                    "§bCasse par un joueur",
+                    "§bPlayer Break",
                     () -> caneCause("player"),
-                    "§7Réglages directs, indépendants du support"),
+                    "§7Drops when a player breaks the cane."),
                 folder(
                     Items.SAND,
-                    "§ePerte du support",
+                    "§eSupport Break",
                     () -> caneCause("support"),
-                    "§7Bloc cassé dessous / physique"),
-                reset("Réinitialiser la canne", "better-sugar-cane", this::cane)));
+                    "§7Drops when the block underneath breaks."),
+                reset("Reset Sugar Cane", "better-sugar-cane", this::cane)));
   }
 
   private Page caneCause(String cause) {
     String path = "better-sugar-cane." + cause;
     Supplier<Page> here = () -> caneCause(cause);
     return new Page(
-        "CCR • Canne / " + (cause.equals("player") ? "joueur" : "support"),
+        "CCR • Cane / " + (cause.equals("player") ? "player" : "support"),
         this::cane,
         () ->
             List.of(
-                toggle(Items.SUGAR_CANE, "Cause active", path + ".enabled", true, here),
-                percent(Items.GOLD_NUGGET, "Chance de bonus", path + ".chance", 100, here),
+                toggle(Items.SUGAR_CANE, "Enable", path + ".enabled", true, here),
+                percent(Items.GOLD_NUGGET, "Bonus Chance", path + ".chance", 100, here),
                 entry(
                     Items.HOPPER,
-                    "§eQuantité finale : "
+                    "§eFinal Amount: "
                         + mod.settings().integer(path + ".minimum", 1, 1, 64)
                         + "–"
                         + mod.settings().integer(path + ".maximum", 3, 1, 64),
                     player ->
                         input(
                             player,
-                            "Quantité : 1-3",
+                            "Amount: 1-3",
                             "1-3",
                             here,
                             text -> {
                               var range = GameplayMath.range(text, 1, 64);
-                              if (range == null) return "Quantité attendue : 1 à 64";
+                              if (range == null) return "Enter an amount from 1 to 64";
                               mod.settings().set(path + ".minimum", range.minimum());
                               mod.settings().set(path + ".maximum", range.maximum());
                               mod.save();
                               return null;
                             }),
-                    "§7Remplace le total, n'ajoute pas 1",
-                    "§7Les blocs placés gardent le butin vanilla")));
+                    "§7Total drops, not extra drops.",
+                    "§7Player-placed cane uses vanilla drops.")));
   }
 
   private Page clean() {
@@ -1105,11 +1104,11 @@ public final class Menus {
         this::mainPage,
         () ->
             List.of(
-                folder(Items.OAK_LOG, "§aBois et planches", () -> cleanGroup("wood")),
-                folder(Items.STONE, "§7Pierres naturelles", () -> cleanGroup("stone")),
+                folder(Items.OAK_LOG, "§aWood & Planks", () -> cleanGroup("wood")),
+                folder(Items.STONE, "§7Stone conversions.", () -> cleanGroup("stone")),
                 entry(
                     Items.LEVER,
-                    "§eMa préférence Clean Stacks",
+                    "§eMy Clean Stacks",
                     player -> {
                       mod.settings()
                           .set(
@@ -1119,23 +1118,23 @@ public final class Menus {
                       mod.inventory().tick(player);
                       open(player, clean());
                     },
-                    "§7Commande personnelle : /cleanstacks status"),
-                reset("Rétablir les conversions bois", "clean-stacks.wood", this::clean),
-                reset("Rétablir les conversions pierre", "clean-stacks.stone", this::clean)));
+                    "§7/cleanstacks on|off|status"),
+                reset("Reset Wood Conversions", "clean-stacks.wood", this::clean),
+                reset("Reset Stone Conversions", "clean-stacks.stone", this::clean)));
   }
 
   private Page cleanGroup(String group) {
     Supplier<Page> here = () -> cleanGroup(group);
     return new Page(
-        "CCR • Conversions " + group,
+        "CCR • Conversions / " + group,
         this::clean,
         () -> {
           List<Entry> list = new ArrayList<>();
-          list.add(cleanBulk(group, "all", "Tout convertir", here));
+          list.add(cleanBulk(group, "all", "Convert All", here));
           if (group.equals("wood")) {
-            list.add(cleanBulk(group, "logs", "Convertir les bûches non écorcées", here));
-            list.add(cleanBulk(group, "stripped", "Convertir les bûches écorcées", here));
-            list.add(cleanBulk(group, "planks", "Convertir toutes les planches", here));
+            list.add(cleanBulk(group, "logs", "Convert Logs", here));
+            list.add(cleanBulk(group, "stripped", "Convert Stripped Logs", here));
+            list.add(cleanBulk(group, "planks", "Convert Planks", here));
           }
           BuiltInRegistries.ITEM.stream()
               .filter(item -> group.equals(InventoryRules.category(item)))
@@ -1158,18 +1157,18 @@ public final class Menus {
                             item,
                             "§f" + pretty(InventoryRules.id(item)),
                             List.of(
-                                "§7Vers : " + mod.settings().text(path, defaultValue),
-                                "§eClic gauche : choisir • clic droit : rétablir"),
+                                "§7Output: " + mod.settings().text(path, defaultValue),
+                                "§eClick to choose. Right-click to reset."),
                             player ->
                                 input(
                                     player,
-                                    "Objet de destination",
+                                    "Output Item",
                                     mod.settings().text(path, defaultValue),
                                     here,
                                     text -> {
                                       Item target = InventoryRules.item(text);
                                       if (target == null || target == Items.AIR)
-                                        return "Objet inconnu";
+                                        return "Unknown item";
                                       mod.inventory().setCleanTarget(item, target);
                                       return null;
                                     }),
@@ -1190,14 +1189,14 @@ public final class Menus {
         player ->
             input(
                 player,
-                "Destination du groupe",
+                "Group Output",
                 group.equals("stone")
                     ? "minecraft:stone"
                     : kind.equals("planks") ? "minecraft:oak_planks" : "minecraft:oak_log",
                 here,
                 text -> {
                   Item target = InventoryRules.item(text);
-                  if (target == null || target == Items.AIR) return "Objet inconnu";
+                  if (target == null || target == Items.AIR) return "Unknown item";
                   BuiltInRegistries.ITEM.stream()
                       .filter(
                           item ->
@@ -1230,30 +1229,30 @@ public final class Menus {
                   mod.save();
                   return null;
                 }),
-        "§7Applique une destination au groupe en une fois");
+        "§7Set an output for this group.");
   }
 
   private Page automatic() {
     return new Page(
-        "CCR • Enchantements auto",
+        "CCR • Auto Enchantments",
         this::mainPage,
         () ->
             List.of(
                 toggle(
                     Items.ENCHANTED_BOOK,
-                    "Activation",
+                    "Enable",
                     "automatic-enchantments.enabled",
                     true,
                     this::automatic),
-                folder(Items.DIAMOND_CHESTPLATE, "§bArmures", () -> autoGroup("armor")),
-                folder(Items.DIAMOND_PICKAXE, "§eOutils et armes", () -> autoGroup("tools")),
+                folder(Items.DIAMOND_CHESTPLATE, "§bArmor", () -> autoGroup("armor")),
+                folder(Items.DIAMOND_PICKAXE, "§eTools & Weapons", () -> autoGroup("tools")),
                 entry(
                     Items.CLOCK,
-                    "§aRafraîchir les anciens objets CCR",
+                    "§aRefresh CCR Items",
                     player ->
                         confirm(
                             player,
-                            "Rafraîchir les objets intacts ?",
+                            "Refresh unchanged CCR items?",
                             this::automatic,
                             () -> {
                               mod.settings()
@@ -1272,8 +1271,8 @@ public final class Menus {
                                   .getPlayers()
                                   .forEach(mod.inventory()::tick);
                             }),
-                    "§7Ne modifie jamais les enchantements changés par le joueur",
-                    "§7Restaure les enchantements d'origine avant recalcul")));
+                    "§7Player-modified enchantments are kept.",
+                    "§7Refresh unchanged CCR items.")));
   }
 
   private Page autoGroup(String group) {
@@ -1285,12 +1284,12 @@ public final class Menus {
           list.add(
               entry(
                   Items.COMPASS,
-                  "§bRechercher un objet",
+                  "§bSearch Items",
                   player -> {
                     Page[] destination = {autoGroup(group)};
                     input(
                         player,
-                        "Identifiant de l'objet",
+                        "Item ID",
                         group.equals("armor")
                             ? "minecraft:diamond_chestplate"
                             : "minecraft:diamond_sword",
@@ -1301,7 +1300,7 @@ public final class Menus {
                               || !(group.equals("armor")
                                   ? InventoryRules.armor(item)
                                   : InventoryRules.tool(item)))
-                            return "Objet non compatible avec cette catégorie";
+                            return "Item does not match this category";
                           String path =
                               "automatic-enchantments."
                                   + group
@@ -1329,13 +1328,13 @@ public final class Menus {
                             item,
                             "§f" + pretty(InventoryRules.id(item)),
                             List.of(
-                                "§7" + mod.settings().section(path).size() + " enchantement(s)",
-                                "§eGauche : configurer • droite : supprimer"),
+                                "§7" + mod.settings().section(path).size() + " enchantment(s)",
+                                "§eClick to edit. Right-click to delete."),
                             player -> open(player, autoItem(group, item)),
                             player ->
                                 confirm(
                                     player,
-                                    "Supprimer la configuration ?",
+                                    "Reset these settings?",
                                     () -> autoGroup(group),
                                     () -> {
                                       mod.settings().set(path, null);
@@ -1358,7 +1357,7 @@ public final class Menus {
           list.add(
               folder(
                   Items.ENCHANTED_BOOK,
-                  "§aAjouter un enchantement",
+                  "§aAdd Enchantment",
                   () ->
                       enchantmentPicker(
                           item,
@@ -1367,16 +1366,16 @@ public final class Menus {
                           (player, enchantment) ->
                               input(
                                   player,
-                                  "Niveau (1–255)",
+                                  "Level (1–255)",
                                   String.valueOf(Math.max(1, automaticLevel(path, enchantment))),
                                   here,
                                   text -> {
                                     Integer level = GameplayMath.integer(text, 1, 255);
-                                    if (level == null) return "Niveau attendu : 1 à 255";
+                                    if (level == null) return "Enter a level from 1 to 255";
                                     setAutomaticLevel(path, enchantment, level);
                                     return null;
                                   })),
-                  "§7Parcourir les enchantements compatibles et rechercher"));
+                  "§7Browse or search enchantments."));
           mod.settings()
               .section(path)
               .forEach(
@@ -1388,12 +1387,12 @@ public final class Menus {
                               player ->
                                   input(
                                       player,
-                                      "Niveau (0 = supprimer)",
+                                      "Level (0 = remove)",
                                       String.valueOf(value),
                                       here,
                                       text -> {
                                         Integer level = GameplayMath.integer(text, 0, 255);
-                                        if (level == null) return "Niveau attendu : 0 à 255";
+                                        if (level == null) return "Enter a level from 0 to 255";
                                         var enchantment = mod.inventory().enchantment(id);
                                         if (enchantment != null)
                                           setAutomaticLevel(path, enchantment, level);
@@ -1407,11 +1406,11 @@ public final class Menus {
           list.add(
               entry(
                   Items.WRITABLE_BOOK,
-                  "§bCopier aux objets du même matériau",
+                  "§bCopy to Same Material",
                   player ->
                       confirm(
                           player,
-                          "Copier sans écraser ?",
+                          "Copy without overwriting?",
                           here,
                           () -> {
                             String raw = InventoryRules.id(item);
@@ -1453,7 +1452,7 @@ public final class Menus {
                                     });
                             mod.save();
                           })));
-          list.add(reset("Supprimer la règle automatique", path, () -> autoGroup(group)));
+          list.add(reset("Delete Auto Enchantment Rule", path, () -> autoGroup(group)));
           return list;
         });
   }
@@ -1466,59 +1465,58 @@ public final class Menus {
             List.of(
                 toggle(
                     Items.REDSTONE_TORCH,
-                    "Règles actives",
+                    "Enable Stuff Rules",
                     InventoryRules.ROOT + ".enabled",
                     false,
                     this::stuff),
                 folder(
                     Items.DIAMOND_CHESTPLATE,
-                    "§bLimites d'armure équipée",
+                    "§bArmor Limits",
                     () -> ruleList(false),
-                    "§7Déplace les pièces en surplus vers l'inventaire"),
+                    "§7Move excess equipped armor into the inventory."),
                 folder(
                     Items.ENCHANTED_BOOK,
-                    "§dPlafonds d'enchantement",
+                    "§dEnchantment Caps",
                     () -> ruleList(true),
-                    "§7Objets ciblés, plafonds et remboursement payé"),
+                    "§7Enchantment limits and XP refunds."),
                 folder(
                     Items.MACE,
-                    "§6Masse unique",
+                    "§6Unique Mace",
                     this::mace,
-                    "§7Identité persistante et libération après destruction")));
+                    "§7One mace at a time.")));
   }
 
   private Page mace() {
     String path = InventoryRules.ROOT + ".unique-mace";
     return new Page(
-        "CCR • Masse unique",
+        "CCR • Unique Mace",
         this::stuff,
         () ->
             List.of(
                 toggle(
-                    Items.MACE, "Une seule masse fabriquée", path + ".enabled", false, this::mace),
+                    Items.MACE, "Enable Unique Mace", path + ".enabled", false, this::mace),
                 entry(
                     Items.COMPASS,
-                    "§eÉtat : "
+                    "§eStatus: "
                         + (mod.settings().bool(path + ".exists", false)
-                            ? "DÉJÀ FABRIQUÉE"
-                            : "DISPONIBLE"),
+                            ? "ALREADY CRAFTED"
+                            : "AVAILABLE"),
                     player -> open(player, mace()),
-                    "§7Identité : " + mod.settings().text(path + ".id", "aucune"),
-                    "§7Déchargement, coffre et ramassage ne libèrent pas la masse"),
+                    "§7Only destruction unlocks a new craft."),
                 entry(
                     Items.TNT,
-                    "§cAutoriser manuellement une nouvelle masse",
+                    "§cUnlock New Craft",
                     player ->
                         confirm(
                             player,
-                            "Autoriser une autre masse ?",
+                            "Unlock a new mace craft?",
                             this::mace,
                             () -> {
                               mod.settings().set(path + ".exists", false);
                               mod.settings().set(path + ".id", null);
                               mod.save();
                             }),
-                    "§cAction administrateur : peut permettre une seconde masse")));
+                    "§cMay allow a second mace.")));
   }
 
   private List<Map<String, Object>> identifiedRules(String path) {
@@ -1581,7 +1579,7 @@ public final class Menus {
     final boolean cap;
 
     RemovedRule(boolean cap) {
-      super("Cette règle a été supprimée par un autre administrateur. Modification annulée.");
+      super("This rule was deleted by another admin. Changes cancelled.");
       this.cap = cap;
     }
   }
@@ -1595,14 +1593,14 @@ public final class Menus {
     String path = InventoryRules.ROOT + (cap ? ".enchantment-caps" : ".armor-rules");
     Supplier<Page> here = () -> ruleList(cap);
     return new Page(
-        "CCR • " + (cap ? "Plafonds d'enchantement" : "Armures équipées"),
+        "CCR • " + (cap ? "Enchantment Caps" : "Armor Limits"),
         this::stuff,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               entry(
                   Items.LIME_DYE,
-                  "§aAjouter une règle",
+                  "§aAdd Rule",
                   player -> {
                     List<Map<String, Object>> rules = identifiedRules(path);
                     Map<String, Object> rule = new LinkedHashMap<>();
@@ -1620,7 +1618,7 @@ public final class Menus {
                     mod.save();
                     open(player, rule(cap, rules.size() - 1));
                   },
-                  "§7Créée désactivée pour choisir les valeurs d'abord"));
+                  "§7New rules start OFF."));
           List<Map<String, Object>> rules = identifiedRules(path);
           for (int index = 0; index < rules.size(); index++) {
             Map<String, Object> rule = rules.get(index);
@@ -1638,19 +1636,19 @@ public final class Menus {
                         + rule.get("maximum")
                         + (Settings.enabled(rule)
                                 && !mod.settings().bool(InventoryRules.ROOT + ".enabled", false)
-                            ? " [EN PAUSE]"
+                            ? " [PAUSED]"
                             : ""),
                     List.of(
-                        cap ? "§7" + rule.get("enchantment") : "§7Nombre de pièces équipées",
-                        "§eGauche : éditer • droite : activer/désactiver",
-                        "§7Maj-clic : confirmer la suppression"),
+                        cap ? "§7" + rule.get("enchantment") : "§7Maximum equipped armor pieces.",
+                        "§eClick to edit. Right-click to toggle.",
+                        "§7Shift-click to review deletion."),
                     player -> open(player, ruleById(cap, id)),
                     player -> {
                       editRule(path, id, map -> map.put("enabled", !Settings.enabled(map)));
                       open(player, here.get());
                     },
                     player ->
-                        confirm(player, "Supprimer la règle ?", here, () -> deleteRule(path, id))));
+                        confirm(player, "Delete this rule?", here, () -> deleteRule(path, id))));
           }
           return list;
         });
@@ -1669,8 +1667,8 @@ public final class Menus {
     int index = indexOfRule(identifiedRules(path), id);
     return new Page(
         index < 0
-            ? "CCR • Règle supprimée"
-            : "CCR • " + (cap ? "Plafond" : "Armure") + " #" + (index + 1),
+            ? "CCR • Rule Deleted"
+            : "CCR • " + (cap ? "Cap" : "Armor") + " #" + (index + 1),
         () -> ruleList(cap),
         () -> {
           Map<String, Object> rule = findRule(path, id);
@@ -1678,9 +1676,9 @@ public final class Menus {
             return List.of(
                 entry(
                     Items.BARRIER,
-                    "§cRègle supprimée : modification annulée",
+                    "§cRule Deleted",
                     player -> open(player, ruleList(cap)),
-                    "§7Un autre administrateur a retiré cette règle."));
+                    "§7This rule no longer exists."));
           List<Entry> list = new ArrayList<>();
           list.add(
               entry(
@@ -1690,12 +1688,12 @@ public final class Menus {
                           : mod.settings().bool(InventoryRules.ROOT + ".enabled", false)
                               ? "§a"
                               : "§e")
-                      + "Règle "
+                      + "Rule "
                       + (!Settings.enabled(rule)
                           ? "inactive"
                           : mod.settings().bool(InventoryRules.ROOT + ".enabled", false)
                               ? "active"
-                              : "en pause (Stuff Rules désactivé)"),
+                              : "paused (Stuff Rules is OFF)"),
                   player -> {
                     editRule(path, id, map -> map.put("enabled", !Settings.enabled(map)));
                     open(player, here.get());
@@ -1703,7 +1701,7 @@ public final class Menus {
           list.add(
               folder(
                   Items.ITEM_FRAME,
-                  "§bCible : " + InventoryRules.ruleTarget(rule, cap ? "item" : "material"),
+                  "§bTarget: " + InventoryRules.ruleTarget(rule, cap ? "item" : "material"),
                   () ->
                       targetPicker(
                           cap,
@@ -1711,8 +1709,8 @@ public final class Menus {
                           here,
                           target -> editRule(path, id, map -> map.put("target", target))),
                   cap
-                      ? "§7ALL / TOOLS / SWORDS / ARMOR / objets exacts"
-                      : "§7ARMOR / DIAMOND / IRON… / pièces exactes"));
+                      ? "§7ALL / TOOLS / SWORDS / ARMOR / specific items"
+                      : "§7ARMOR / DIAMOND / IRON / specific pieces"));
           list.add(
               entry(
                   Items.HOPPER,
@@ -1728,7 +1726,7 @@ public final class Menus {
                                 GameplayMath.integer(
                                     text, cap ? 1 : 0, cap ? Integer.MAX_VALUE : 4);
                             if (value == null)
-                              return cap ? "Entier positif attendu" : "Maximum 0 à 4";
+                              return cap ? "Enter a positive whole number" : "Enter a maximum from 0 to 4";
                             editRule(path, id, map -> map.put("maximum", value));
                             return null;
                           })));
@@ -1736,7 +1734,7 @@ public final class Menus {
             list.add(
                 folder(
                     Items.ENCHANTED_BOOK,
-                    "§dEnchantement : " + rule.get("enchantment"),
+                    "§dEnchantment: " + rule.get("enchantment"),
                     () ->
                         enchantmentPicker(
                             null,
@@ -1751,11 +1749,11 @@ public final class Menus {
                                           "enchantment", enchantment.key().location().toString()));
                               open(player, here.get());
                             }),
-                    "§7Parcourir le registre ou rechercher par identifiant"));
+                    "§7Browse or search by name."));
             list.add(
                 entry(
                     Items.EXPERIENCE_BOTTLE,
-                    "§aRembourser l'XP : " + Boolean.TRUE.equals(rule.get("refund-xp")),
+                    "§aRefund XP: " + Boolean.TRUE.equals(rule.get("refund-xp")),
                     player -> {
                       editRule(
                           path,
@@ -1763,21 +1761,21 @@ public final class Menus {
                           map -> map.put("refund-xp", !Boolean.TRUE.equals(map.get("refund-xp"))));
                       open(player, here.get());
                     },
-                    "§7Uniquement une transaction réellement payée",
-                    "§7Jamais plus que les niveaux payés"));
+                    "§7Refund levels spent at an anvil or enchanting table.",
+                    "§7Refunds cannot exceed the levels spent."));
             list.add(
                 entry(
                     Items.GOLD_NUGGET,
-                    "§eXP par niveau retiré : " + rule.getOrDefault("xp-per-removed-level", 0),
+                    "§eXP per Removed Level: " + rule.getOrDefault("xp-per-removed-level", 0),
                     player ->
                         input(
                             player,
-                            "Niveaux d'XP par enchantement retiré",
+                            "XP per Removed Level",
                             String.valueOf(rule.getOrDefault("xp-per-removed-level", 0)),
                             here,
                             text -> {
                               Integer value = GameplayMath.integer(text, 0, Integer.MAX_VALUE);
-                              if (value == null) return "Entier positif ou nul attendu";
+                              if (value == null) return "Enter a non-negative whole number";
                               editRule(path, id, map -> map.put("xp-per-removed-level", value));
                               return null;
                             })));
@@ -1785,7 +1783,7 @@ public final class Menus {
           list.add(
               folder(
                   Items.WRITABLE_BOOK,
-                  "§bDupliquer vers une autre cible",
+                  "§bCopy to Another Target",
                   () ->
                       targetPicker(
                           cap,
@@ -1801,15 +1799,15 @@ public final class Menus {
                             mod.settings().set(path, current);
                             mod.save();
                           }),
-                  "§7La copie est désactivée"));
+                  "§7The copy starts OFF."));
           list.add(
               entry(
                   Items.TNT,
-                  "§cSupprimer cette règle",
+                  "§cDelete Rule",
                   player ->
                       confirm(
                           player,
-                          "Supprimer la règle ?",
+                          "Delete this rule?",
                           () -> ruleList(cap),
                           () -> deleteRule(path, id))));
           return list;
@@ -1842,19 +1840,19 @@ public final class Menus {
       BiConsumer<ServerPlayer, Holder.Reference<Enchantment>> choose) {
     Supplier<Page> here = () -> enchantmentPicker(compatible, query, parent, choose);
     return new Page(
-        "CCR • Enchantements",
+        "CCR • Enchantments",
         parent,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               entry(
                   Items.COMPASS,
-                  "§bRechercher un enchantement",
+                  "§bSearch Enchantments",
                   player -> {
                     Page[] destination = {here.get()};
                     input(
                         player,
-                        "Recherche (vide = tous)",
+                        "Search (empty = all)",
                         query,
                         () -> destination[0],
                         text -> {
@@ -1867,7 +1865,7 @@ public final class Menus {
                           return null;
                         });
                   },
-                  "§7Identifiant partiel accepté • seuls les compatibles sont proposés"));
+                  "§7Search by name or item ID."));
           mod.inventory()
               .enchantments()
               .holders()
@@ -1884,11 +1882,11 @@ public final class Menus {
                               "§d" + pretty(holder.key().location().toString()),
                               compatible == null
                                   ? List.of(
-                                      "§7" + holder.key().location(), "§eCliquer pour choisir")
+                                      "§7" + holder.key().location(), "§eClick to choose.")
                                   : List.of(
                                       "§7" + holder.key().location(),
-                                      "§eGauche : niveau • droite : retirer",
-                                      "§7Niveau enregistré : "
+                                      "§eClick to set level. Right-click to remove.",
+                                      "§7Level: "
                                           + automaticLevel(
                                               "automatic-enchantments."
                                                   + (InventoryRules.armor(compatible)
@@ -1919,7 +1917,7 @@ public final class Menus {
       boolean cap, String current, Supplier<Page> parent, Consumer<String> choose) {
     Supplier<Page> here = () -> targetPicker(cap, current, parent, choose);
     return new Page(
-        "CCR • Cible de la règle",
+        "CCR • Rule Target",
         parent,
         () -> {
           List<Entry> list = new ArrayList<>();
@@ -1939,16 +1937,16 @@ public final class Menus {
             list.add(
                 entry(
                     cap ? Items.COMPASS : Items.DIAMOND_CHESTPLATE,
-                    "§bGroupe : " + preset,
+                    "§bGroup: " + preset,
                     player -> {
                       choose.accept(preset);
                       open(player, parent.get());
                     },
-                    "§7Choix actuel : " + current));
+                    "§7Selected: " + current));
           list.add(
               folder(
                   Items.ITEM_FRAME,
-                  "§eChoisir des objets exacts",
+                  "§eSelect Specific Items",
                   () -> {
                     Set<Item> selected = new LinkedHashSet<>();
                     if (!presets.contains(current.trim().toUpperCase(java.util.Locale.ROOT)))
@@ -1960,15 +1958,15 @@ public final class Menus {
                       }
                     return exactTargets(cap, selected, "", here, parent, choose);
                   },
-                  "§7Sélection multiple, recherche et validation explicite"));
+                  "§7Select items, then click Apply."));
           list.add(
               entry(
                   Items.NAME_TAG,
-                  "§fSaisir une liste d'identifiants",
+                  "§fEnter Item IDs",
                   player ->
                       input(
                           player,
-                          "Cible ou liste d'objets",
+                          "Target or Item List",
                           current,
                           parent,
                           text -> {
@@ -1977,7 +1975,7 @@ public final class Menus {
                                     .toUpperCase(java.util.Locale.ROOT)
                                     .replace("MINECRAFT:", "");
                             if (!validTarget(target, cap))
-                              return "Cible inconnue ou liste contenant un objet invalide";
+                              return "Unknown target or invalid item list";
                             choose.accept(target);
                             return null;
                           }),
@@ -1995,18 +1993,18 @@ public final class Menus {
       Consumer<String> choose) {
     Supplier<Page> here = () -> exactTargets(cap, selected, query, picker, destination, choose);
     return new Page(
-        "CCR • Objets exacts (" + selected.size() + ")",
+        "CCR • Specific Items (" + selected.size() + ")",
         picker,
         () -> {
           List<Entry> list = new ArrayList<>();
           list.add(
               entry(
                   Items.LIME_CONCRETE,
-                  "§aAppliquer " + selected.size() + " objet(s)",
+                  "§aApply " + selected.size() + " item(s)",
                   player -> {
                     if (selected.isEmpty()) {
                       player.sendSystemMessage(
-                          Component.literal("§cChoisissez au moins un objet."));
+                          Component.literal("§cSelect at least one item."));
                       return;
                     }
                     choose.accept(
@@ -2016,16 +2014,16 @@ public final class Menus {
                             .collect(java.util.stream.Collectors.joining(",")));
                     open(player, destination.get());
                   },
-                  "§7Aucune modification avant cette validation"));
+                  "§7Click Apply to save your selection."));
           list.add(
               entry(
                   Items.COMPASS,
-                  "§bRechercher un objet",
+                  "§bSearch Items",
                   player -> {
                     Page[] page = {here.get()};
                     input(
                         player,
-                        "Recherche (vide = tous)",
+                        "Search (empty = all)",
                         query,
                         () -> page[0],
                         text -> {
@@ -2056,7 +2054,7 @@ public final class Menus {
                                 open(player, here.get());
                               },
                               "§7" + InventoryRules.id(item),
-                              "§eCliquer pour sélectionner / retirer")));
+                              "§eClick to select or remove.")));
           return list;
         });
   }
@@ -2093,17 +2091,17 @@ public final class Menus {
             List.of(
                 entry(
                     Items.LIME_CONCRETE,
-                    "§aConfirmer : " + title,
+                    "§aConfirm: " + title,
                     p -> {
                       action.run();
                       open(p, parent.get());
                     }),
-                entry(Items.RED_CONCRETE, "§cAnnuler", p -> open(p, parent.get()))));
+                entry(Items.RED_CONCRETE, "§cCancel", p -> open(p, parent.get()))));
   }
 
   public void open(ServerPlayer player, Page page) {
     if (!mod.admin(player)) {
-      player.sendSystemMessage(Component.literal("§cCCR • Permission administrateur requise."));
+      player.sendSystemMessage(Component.literal("§cCCR • Admin permission required."));
       return;
     }
     opening.put(player.getUUID(), true);
@@ -2167,9 +2165,7 @@ public final class Menus {
               icon(
                   Items.BOOK,
                   "§6" + page.title(),
-                  List.of(
-                      "§7Échap = niveau précédent",
-                      "§7Les réglages sont sauvegardés immédiatement")));
+                  List.of()));
       List<Entry> entries = page.entries().get();
       int pages = Math.max(1, (entries.size() + 35) / 36),
           index = Math.clamp(page.index(), 0, pages - 1);
@@ -2182,30 +2178,27 @@ public final class Menus {
         if (entry.shiftClick() != null) shiftActions.put(slot, entry.shiftClick());
       }
       if (page.parent() != null) {
-        getSlot(45).set(icon(Items.ARROW, "§eRetour", List.of("§7Comme la touche Échap")));
+        getSlot(45).set(icon(Items.ARROW, "§eBack", List.of("§7Esc")));
         actions.put(45, player -> open(player, page.parent().get()));
       }
       if (index > 0) {
-        getSlot(48).set(icon(Items.PAPER, "§ePage précédente", List.of()));
+        getSlot(48).set(icon(Items.PAPER, "§ePrevious Page", List.of()));
         actions.put(
             48,
             player ->
                 open(player, new Page(page.title(), page.parent(), page.entries(), index - 1)));
       }
-      getSlot(49)
-          .set(
-              icon(
-                  Items.MAP,
-                  "§fPage " + (index + 1) + " / " + pages,
-                  List.of("§7La pagination ne change pas le niveau de retour")));
+      if (pages > 1)
+        getSlot(49)
+            .set(icon(Items.MAP, "§fPage " + (index + 1) + " / " + pages, List.of()));
       if (index + 1 < pages) {
-        getSlot(50).set(icon(Items.PAPER, "§ePage suivante", List.of()));
+        getSlot(50).set(icon(Items.PAPER, "§eNext Page", List.of()));
         actions.put(
             50,
             player ->
                 open(player, new Page(page.title(), page.parent(), page.entries(), index + 1)));
       }
-      getSlot(53).set(icon(Items.BARRIER, "§cFermer les menus", List.of()));
+      getSlot(53).set(icon(Items.BARRIER, "§cClose CCR", List.of()));
       actions.put(
           53,
           player -> {
@@ -2286,10 +2279,7 @@ public final class Menus {
               icon(
                   Items.PAPER,
                   initial,
-                  List.of(
-                      "§7Modifiez le texte au-dessus",
-                      "§7Cliquez le résultat pour valider",
-                      "§7Échap annule et revient au menu")));
+                  List.of("§7Click the result to apply. Esc to cancel.")));
       createResult();
     }
 
@@ -2312,8 +2302,8 @@ public final class Menus {
           0,
           icon(
               Items.LIME_DYE,
-              "§aValider : " + (value == null ? "" : value),
-              List.of("§7Clic pour valider • Échap pour annuler")));
+              "§aApply: " + (value == null ? "" : value),
+              List.of("§7Click to apply. Esc to cancel.")));
       setData(0, 0);
       broadcastChanges();
     }
@@ -2356,7 +2346,7 @@ public final class Menus {
               serverPlayer.sendSystemMessage(Component.literal("§cCCR • " + error));
               resultSlots.setItem(
                   0,
-                  icon(Items.BARRIER, "§c" + error, List.of("§7Corrigez le texte puis validez")));
+                  icon(Items.BARRIER, "§c" + error, List.of("§7Correct the value and try again.")));
               broadcastChanges();
             }
           });
