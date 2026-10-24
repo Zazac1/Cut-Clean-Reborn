@@ -69,7 +69,7 @@ public final class Menus {
   public record Page(
       String title, Supplier<Page> parent, Supplier<List<Entry>> entries, int index) {
     Page(String title, Supplier<Page> parent, Supplier<List<Entry>> entries) {
-      this(title, parent, entries, 0);
+      this(title, parent, entries, -1);
     }
   }
 
@@ -2105,15 +2105,31 @@ public final class Menus {
       player.sendSystemMessage(Component.literal("§cCCR • Admin permission required."));
       return;
     }
+    Page destination = withContext(page, player.containerMenu instanceof Panel panel ? panel.page : null);
     opening.put(player.getUUID(), true);
     try {
       player.openMenu(
           new SimpleMenuProvider(
-              (id, inventory, p) -> new Panel(id, inventory, page),
-              Component.literal(page.title())));
+              (id, inventory, p) -> new Panel(id, inventory, destination),
+              Component.literal(destination.title())));
     } finally {
       opening.remove(player.getUUID());
     }
+  }
+
+  private Page withContext(Page destination, Page current) {
+    if (current != null) {
+      if (destination.title().equals(current.title()))
+        return new Page(destination.title(), current.parent(), destination.entries(),
+            destination.index() < 0 ? current.index() : destination.index());
+      if (current.parent() != null) {
+        Page parent = current.parent().get();
+        if (destination.title().equals(parent.title())) return withContext(destination, parent);
+      }
+      if (destination.parent() != null && destination.parent().get().title().equals(current.title()))
+        return new Page(destination.title(), () -> current, destination.entries(), Math.max(0, destination.index()));
+    }
+    return new Page(destination.title(), destination.parent(), destination.entries(), Math.max(0, destination.index()));
   }
 
   private void input(
@@ -2122,11 +2138,13 @@ public final class Menus {
       String initial,
       Supplier<Page> parent,
       Function<String, String> submit) {
+    Page current = player.containerMenu instanceof Panel panel ? panel.page : null;
+    Supplier<Page> returnPage = () -> withContext(parent.get(), current);
     opening.put(player.getUUID(), true);
     try {
       player.openMenu(
           new SimpleMenuProvider(
-              (id, inventory, p) -> new TextInput(id, inventory, title, initial, parent, submit),
+              (id, inventory, p) -> new TextInput(id, inventory, title, initial, returnPage, submit),
               Component.literal(title)));
     } finally {
       opening.remove(player.getUUID());
@@ -2158,7 +2176,6 @@ public final class Menus {
 
     Panel(int id, Inventory inventory, Page page) {
       super(MenuType.GENERIC_9x6, id, inventory, new SimpleContainer(54), 6);
-      this.page = page;
       for (int slot = 0; slot < 54; slot++)
         getSlot(slot).set(icon(Items.GRAY_STAINED_GLASS_PANE, " ", List.of()));
       getSlot(4)
@@ -2170,6 +2187,7 @@ public final class Menus {
       List<Entry> entries = page.entries().get();
       int pages = Math.max(1, (entries.size() + 35) / 36),
           index = Math.clamp(page.index(), 0, pages - 1);
+      this.page = new Page(page.title(), page.parent(), page.entries(), index);
       for (int offset = 0; offset < 36 && index * 36 + offset < entries.size(); offset++) {
         Entry entry = entries.get(index * 36 + offset);
         int slot = 9 + offset;
