@@ -11,7 +11,7 @@ Cinq nouveaux profils Modrinth sont réservés aux essais : `CCR QA 26.3 - FO`, 
 | 26.3 | 15.0.0-beta.2 / 26.3 | Client déjà utilisé pour les essais Paper décrits ci-dessous |
 | 26.2 | 14.1.1 / 26.2 | Installation terminée, bouton Play et 49 mods ; pas encore lancé |
 | 26.1.2 | 13.6.0 / 26.1.2 | Installation terminée, bouton Play et 48 mods ; pas encore lancé |
-| 1.21.11 | 12.3.0 / 1.21.11 | Installation déclenchée sur le profil dédié ; fin et lancement à revérifier |
+| 1.21.11 | 12.3.0 / 1.21.11 | Installation terminée, bouton Play et 48 mods vérifiés ; pas encore lancé |
 | 1.21.1 | 6.5.0 / 1.21.1 | Client réellement lancé, accueil terminé et écran principal atteint : Minecraft 1.21.1/Fabric, FO 6.5.0 visibles |
 
 Le premier lancement 1.21.1 vérifie seulement le profil de base : aucun CCR n'y était encore installé, aucun monde n'a été ouvert et aucun essai gameplay 1.21.1 n'est déduit de cet écran principal. Les lancements et essais restants se feront séquentiellement pour limiter la mémoire.
@@ -19,6 +19,8 @@ Le premier lancement 1.21.1 vérifie seulement le profil de base : aucun CCR n'y
 La duplication Modrinth conservait la synchronisation globale de certains fichiers. Les quatre options par instance `Unsync game settings`, `Unsync multiplayer servers`, `Unsync command history` et `Unsync saved creative hotbars` ont été activées et vérifiées visuellement dans les cinq profils QA avant les prochains lancements. Les réglages globaux et les options des anciennes instances n'ont pas été modifiés par cette séparation. Les packs de ressources restent gérés par le modpack ; leur interrupteur est désactivé dans cette interface, et aucun réglage global de packs n'a été changé.
 
 Le nom affiché d'une instance peut différer de son dossier physique : vérifier le profil et son dossier avant toute copie de JAR. Les mondes solo de test doivent être créés neufs dans le bon profil QA ; ne jamais reprendre une sauvegarde existante.
+
+Le profil QA 1.21.1 utilise encore Fabric Loader 0.19.3, lu dans ses réglages d'installation ; le port CCR requiert au moins 0.20.1. La mise à jour du chargeur est demandée avant les essais solo. Le dossier de ce profil a été identifié en ouvrant son dossier depuis Modrinth : `CCR QA 26.2 - préparation (1)`, malgré son nom affiché 1.21.1. Ne pas déduire les autres correspondances de cet exemple.
 
 ## Paper26.3 — 24octobre2026, en cours
 
