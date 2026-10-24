@@ -8,11 +8,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDropItemEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.ItemStack;
 
-/** Personal stack normalisation for wood and decorative stone families. */
+/** Personal conversion of broken-block drops, never stored, picked-up or crafted items. */
 final class CleanStackService implements Listener {
     enum Category { WOOD("Wood"), STONE("Stone"); private final String title; Category(String title) { this.title = title; } String title() { return title; } }
     private static final List<Material> WOOD = materials(Category.WOOD);
@@ -22,7 +20,6 @@ final class CleanStackService implements Listener {
     boolean enabled(Player player) { return plugin.getConfig().getBoolean("clean-stacks.players." + player.getUniqueId(), false); }
     void setEnabled(Player player, boolean enabled) {
         plugin.setConfigValue("clean-stacks.players." + player.getUniqueId(), enabled);
-        if (enabled) normaliseInventory(player);
     }
     List<Material> sources(Category category) { return category == Category.WOOD ? WOOD : STONE; }
     Material target(Category category, Material source) {
@@ -71,22 +68,6 @@ final class CleanStackService implements Listener {
     public void onBlockDrops(BlockDropItemEvent event) {
         if (!enabled(event.getPlayer())) return;
         event.getItems().forEach(item -> item.setItemStack(normalise(item.getItemStack())));
-    }
-    @EventHandler(ignoreCancelled = true)
-    public void onPickup(EntityPickupItemEvent event) {
-        if (event.getEntity() instanceof Player player && enabled(player)) event.getItem().setItemStack(normalise(event.getItem().getItemStack()));
-    }
-    @EventHandler
-    public void onCraftPreview(PrepareItemCraftEvent event) {
-        if (!(event.getView().getPlayer() instanceof Player player) || !enabled(player) || event.isRepair()) return;
-        ItemStack result = event.getInventory().getResult();
-        if (result != null && categoryOf(result.getType()) == Category.WOOD && result.getType().name().endsWith("_PLANKS"))
-            event.getInventory().setResult(normalise(result));
-    }
-    private void normaliseInventory(Player player) {
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) contents[i] = normalise(contents[i]);
-        player.getInventory().setContents(contents);
     }
     private static String path(Category category, Material source) { return "clean-stacks." + category.name().toLowerCase() + "." + source.name(); }
     private static Material defaultTarget(Category category, Material source) {
