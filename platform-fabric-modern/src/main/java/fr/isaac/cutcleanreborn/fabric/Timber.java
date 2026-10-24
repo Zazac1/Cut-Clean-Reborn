@@ -235,7 +235,7 @@ public final class Timber {
   private void finish(UUID id, ServerPlayer player) {
     Harvest removed = active.remove(id);
     if (removed != null && removed.cut > 1 && player != null)
-      NativeAccess.overlay(player, Component.literal("§6Timber • " + removed.cut + " bûches"));
+      NativeAccess.overlay(player, Component.literal("§6Timber • " + removed.cut + " logs"));
   }
 
   public void clear() {
