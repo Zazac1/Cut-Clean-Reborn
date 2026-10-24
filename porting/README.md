@@ -61,29 +61,29 @@ Les commandes, journaux de compilation et résultats restent dans les dossiers `
 
 ## Résultats automatiques — 24 octobre 2026
 
-Le passage global sans filtre `.\test-all.ps1`, en mode `Full`, a terminé à 01:50, heure de Paris, avec **zéro échec sur les 25 variantes**. Il couvre 259 tests unitaires et 5 935 vérifications natives. Chaque variante a réellement démarré sur le serveur annoncé ; Fabric utilise son JAR de distribution hors de Loom. Les nombres ci-dessous sont, dans chaque cellule, **tests unitaires / vérifications natives par variante** :
+The latest unfiltered `.\test-all.ps1` run, in default `Full` mode, finished at **16:31:15 Paris time on 24 October 2026**, with **zero failures across all 25 variants**: 259 unit tests and 5,985 native checks. Every variant started on its actual advertised runtime; Fabric uses its release JAR outside Loom. Each cell below gives **unit tests / native checks per variant**:
 
 | Minecraft réellement testé | Java | Paper et Purpur, chacun | Spigot et CraftBukkit, chacun | Fabric |
 | --- | --- | --- | --- | --- |
-| 1.21.1 | 21 | 9 / 248 | 9 / 259 | 15 / 165 |
-| 1.21.11 | 21 | 9 / 256 | 9 / 267 | 16 / 141 |
-| 26.1.2 (famille 26.1.x) | 25 | 9 / 256 | 9 / 267 | 16 / 141 |
-| 26.2 | 25 | 9 / 257 | 9 / 268 | 16 / 141 |
-| 26.3 | 25 | 9 / 257 | 9 / 268 | 16 / 141 |
+| 1.21.1 | 21 | 9 / 248 | 9 / 259 | 15 / 175 |
+| 1.21.11 | 21 | 9 / 256 | 9 / 267 | 16 / 151 |
+| 26.1.2 (famille 26.1.x) | 25 | 9 / 256 | 9 / 267 | 16 / 151 |
+| 26.2 | 25 | 9 / 257 | 9 / 268 | 16 / 151 |
+| 26.3 | 25 | 9 / 257 | 9 / 268 | 16 / 151 |
 
-Ces reçus correspondent aux sources et JAR courants, après le raccourcissement du titre d'armure et les corrections Fabric de concurrence, cycle de vie et canne/piston. Une modification ultérieure d'un fichier couvert ou d'un JAR exige une nouvelle preuve ; ce tableau n'est pas une certification permanente.
+These receipts match the current sources and JARs, including concise English in-game copy, Fabric input title/cost corrections and list-page return preservation. All 25 source fingerprints were rechecked after the run without drift. A later covered-source or JAR change requires new evidence; this table is not a permanent certification.
 
-La reprise homogène froide des vingt plugins a réussi 107 assertions par variante, soit 2 140 contrôles sur 60 lancements réels de JVM. Fabric a réussi 22 contrôles froids en 1.21.1 et 26 dans chacune des quatre autres variantes. Au total : 2 266 contrôles de persistance, trois démarrages par variante et 50 redémarrages à froid. La première matrice conserve ses échecs historiques de garde d'intégrité, fixture gravitaire et message d'arrêt amont ; ils ne sont ni effacés ni mélangés à la reprise réussie. Les preuves et explications sont dans les notes de plateforme.
+The 20-plugin cold run `20261024-130030-0dd226f8` passed 107 assertions per variant, or 2,140 checks across 60 JVM launches. Those plugin sources/JARs remain unchanged. The latest Fabric run passed 22 cold checks for 1.21.1 and 26 for each other version. Total: **2,266 storage checks, 75 launches and 50 actual cold restarts**. Earlier failed attempts remain archived separately; they are not erased or counted as successful runs. See the platform notes for their causes and corrections.
 
-Le collecteur a réuni **25 JAR sur 25 dont les empreintes sont à jour**, tous avec preuve froide ; il indique encore **0/25 parcours joueur complets**. Le passage autonome final des **25 branches** a ensuite réussi : 259 tests unitaires, compilation du JAR de distribution et du vérificateur dans une archive neuve par branche, sans aucun module voisin. L'essai `20261024-114856-bf61287d` conserve ses journaux sous `build/branch-validation/` et son reçu sous `validation/results/exports/`. Les fichiers et modes Git ont également été comparés aux sources courantes et dépendances matérialisées. Ces contrôles ne remplacent pas les essais client.
+The collector gathered **25/25 current native-verified JARs**, all with matching cold evidence. It still reports **0/25 complete player traversals**: Fabric 1.21.1 currently has only its menu/command family validated, or 1/11 families. Standalone build attempt `20261024-161746-32abe95c` passed all **25 branches and 259 unit tests** at 16:24:37 from source revision `2d24e6fd722cd504523b229a38bf98b7fdf7b2c6`. Each branch was built from a fresh archive with no sibling module, including its release and verifier JAR. Exact committed blobs and Git modes were checked as well. Logs remain under `build/branch-validation/` and receipts under `validation/results/exports/`. These checks do not replace client tests.
 
 Les nombres de vérifications varient avec les registres Minecraft et les adaptateurs de plateforme. Les essais automatisés couvrent notamment les menus, caps, enchantements, origines placées, objets persistants et masse unique. Ils ne prouvent ni le ressenti de minage standard ni une interaction réalisée à la souris dans un client.
 
 ### Essais réellement effectués dans Minecraft
 
-Sur Paper 26.3, dans un profil « CCR QA » et un monde neufs : ouverture de `/ccr`, navigation Timber, retour Échap d'un niveau en créatif, annulation de saisie et de confirmation dans Stuff Rules, fermeture explicite, conservation d'une règle après redémarrage, récolte réelle de quatre rondins avec durabilité de la hache, activation d'Auto Smelt et récolte de lingots avec Fortune. Les empreintes des JAR, conditions et limites de chaque essai figurent dans [le journal client](client-tests.md).
+Current Fabric 1.21.1 release `00c3fa79…` was installed only in its isolated QA profile, preserving all 48 other mod files. Its actual-client menu/command family passed at 16:37:24: Timber/Stuff Rules/cane navigation, invalid input cancellation without fake XP cost, confirmation cancellation, explicit Close, main commands and the repaired return to a consulted second list page. The world is paused at this checkpoint. Full gameplay and solo lifecycle coverage for this release remain outstanding.
 
-Le helper applique Haste uniquement dans cette scène QA ; le temps de minage normal n'est donc pas validé par cet essai. Les autres plateformes/versions, les remboursements d'XP réellement payés et le solo Fabric restent à vérifier avec un véritable client. Aucun reçu « joueur réel : PASS » global n'est déduit de ces essais partiels.
+Historical Paper 1.21.11 checks covered menus/commands, the unique-mace lifecycle, Clean Stacks and a cold restart; historical Fabric 1.21.1 checks covered two-world solo lifecycle, Clean Stacks and persistence. Paper 26.3 also has partial mining/menu observations, with Haste used only in its QA scene; standard mining feel was not proven by that accelerated test. Their exact JAR hashes, conditions and limitations remain in [the client log](client-tests.md) and local receipt history. None is relabelled with a new release hash or promoted into a complete player traversal. Current receipts and the generated `dist` matrix remain authoritative.
 
 Adaptations principales : ouverture des enclumes selon l'API de la version, API Bukkit minimale, ponts d'événements Spigot/CraftBukkit, menus et services Fabric natifs, Java 21 ou 25, et correction du retour Échap lorsque l'inventaire personnel est de type `CREATIVE` plutôt que `CRAFTING`.
 
