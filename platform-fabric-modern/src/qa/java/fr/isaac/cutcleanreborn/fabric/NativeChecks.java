@@ -772,24 +772,24 @@ public final class NativeChecks implements ModInitializer {
           mod.config.set("mobs.COW.cooked-food", false);
           mod.menus.root(player);
         });
-    steps.add(() -> clickLabel("Créatures et butin"));
-    steps.add(() -> clickLabel("Trouver une créature"));
+    steps.add(() -> clickLabel("Mob Drops"));
+    steps.add(() -> clickLabel("Search Mobs"));
     steps.add(
         () -> {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
               .setItemName("minecraft:cow");
           player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
         });
-    steps.add(() -> clickLabel("Cuisson"));
+    steps.add(() -> clickLabel("Cook Food"));
     steps.add(
         () -> {
           check(
               "restoring inherited cooking removes mob override",
               !mod.config.has("mobs.COW.cooked-food"));
-          clickLabel("Cuisson");
+          clickLabel("Cook Food");
         });
-    steps.add(() -> clickLabel("Butin vanilla"));
-    steps.add(() -> clickLabel("Aperçu avec Looting III"));
+    steps.add(() -> clickLabel("Vanilla Drops"));
+    steps.add(() -> clickLabel("Preview Looting III"));
     steps.add(() -> clickLabel("Beef"));
     steps.add(
         () -> {
@@ -830,9 +830,9 @@ public final class NativeChecks implements ModInitializer {
               List.of(
                   Map.of(
                       "item", "minecraft:diamond", "minimum", 1, "maximum", 1, "chance", 100.0)));
-          clickLabel("Réinitialiser uniquement le butin");
+          clickLabel("Reset Drops");
         });
-    steps.add(() -> clickLabel("Confirmer"));
+    steps.add(() -> clickLabel("Confirm"));
     steps.add(
         () ->
             check(
@@ -875,7 +875,7 @@ public final class NativeChecks implements ModInitializer {
           mod.menus.root(player);
         });
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel(cap ? "Plafonds d'enchantement" : "Limites d'armure équipée"));
+    steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
     steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
     steps.add(() -> clickLabel("Maximum"));
     steps.add(
@@ -905,7 +905,7 @@ public final class NativeChecks implements ModInitializer {
           mod.menus.root(player);
         });
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel(cap ? "Plafonds d'enchantement" : "Limites d'armure équipée"));
+    steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
     steps.add(() -> player.containerMenu.clicked(10, 0, ClickType.PICKUP, player));
     steps.add(() -> clickLabel("Maximum"));
     steps.add(
@@ -936,13 +936,13 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> resetConcurrentRules(cap));
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel(cap ? "Plafonds d'enchantement" : "Limites d'armure équipée"));
+    steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
     steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
-    steps.add(() -> clickLabel("Supprimer cette règle"));
+    steps.add(() -> clickLabel("Delete Rule"));
     steps.add(
         () -> {
           mod.config.removeEntryById(path, "qa-concurrent-A");
-          clickLabel("Confirmer");
+          clickLabel("Confirm");
         });
     steps.add(
         () ->
@@ -954,9 +954,9 @@ public final class NativeChecks implements ModInitializer {
                     && mod.config.entryById(path, "qa-concurrent-C") != null));
     steps.add(() -> resetConcurrentRules(cap));
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel(cap ? "Plafonds d'enchantement" : "Limites d'armure équipée"));
+    steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
     steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
-    steps.add(() -> clickLabel("Dupliquer vers une autre cible"));
+    steps.add(() -> clickLabel("Copy to Another Target"));
     steps.add(
         () -> {
           mod.config.removeEntryById(path, "qa-concurrent-B");
@@ -978,9 +978,9 @@ public final class NativeChecks implements ModInitializer {
           mod.config.editEntryById(path, "qa-concurrent-B", rule -> rule.put("maximum", 1));
         });
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel(cap ? "Plafonds d'enchantement" : "Limites d'armure équipée"));
+    steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
     steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
-    steps.add(() -> clickLabel("Cible"));
+    steps.add(() -> clickLabel("Target"));
     steps.add(
         () -> {
           mod.config.removeEntryById(path, "qa-concurrent-A");
@@ -1408,10 +1408,10 @@ public final class NativeChecks implements ModInitializer {
 
   private void visualSelectors() {
     steps.add(() -> mod.menus.root(player));
-    steps.add(() -> clickLabel("Enchantements automatiques"));
-    steps.add(() -> clickLabel("Outils et armes"));
+    steps.add(() -> clickLabel("Automatic Enchantments"));
+    steps.add(() -> clickLabel("Tools & Weapons"));
     steps.add(() -> clickLabel("Bow"));
-    steps.add(() -> clickLabel("Choisir un enchantement"));
+    steps.add(() -> clickLabel("Choose Enchantment"));
     steps.add(
         () ->
             check(
@@ -1422,7 +1422,7 @@ public final class NativeChecks implements ModInitializer {
                     .getItem()
                     .getHoverName()
                     .getString()
-                    .contains("compatibles")));
+                    .contains("Enchantments")));
     steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
     steps.add(
         () -> {
@@ -1437,8 +1437,8 @@ public final class NativeChecks implements ModInitializer {
             check(
                 "native visual enchantment selection persists",
                 !mod.config.section("automatic-enchantments.tools.BOW").isEmpty()));
-    steps.add(() -> clickLabel("Copier aux objets du même matériau"));
-    steps.add(() -> clickLabel("Confirmer"));
+    steps.add(() -> clickLabel("Copy to Same Material"));
+    steps.add(() -> clickLabel("Confirm"));
     steps.add(
         () ->
             check(
@@ -1452,9 +1452,9 @@ public final class NativeChecks implements ModInitializer {
                     .contains("Bow")));
     steps.add(() -> mod.menus.root(player));
     steps.add(() -> clickLabel("Stuff Rules"));
-    steps.add(() -> clickLabel("Limites d'armure équipée"));
-    steps.add(() -> clickLabel("Ajouter une règle"));
-    steps.add(() -> clickLabel("Cible"));
+    steps.add(() -> clickLabel("Armor Limits"));
+    steps.add(() -> clickLabel("Add Rule"));
+    steps.add(() -> clickLabel("Target"));
     steps.add(
         () ->
             check(
@@ -1465,8 +1465,8 @@ public final class NativeChecks implements ModInitializer {
                     .getItem()
                     .getHoverName()
                     .getString()
-                    .contains("Choisir")));
-    steps.add(() -> clickLabel("Objets exacts"));
+                    .contains("Choose")));
+    steps.add(() -> clickLabel("Specific Items"));
     steps.add(() -> clickLabel("Diamond chestplate"));
     steps.add(
         () ->
@@ -1485,7 +1485,7 @@ public final class NativeChecks implements ModInitializer {
                     .getItem()
                     .getHoverName()
                     .getString()
-                    .contains("Choisir")));
+                    .contains("Choose")));
   }
 
   private void menus() {
@@ -1498,7 +1498,7 @@ public final class NativeChecks implements ModInitializer {
             .getItem()
             .getHoverName()
             .getString()
-            .contains("Configuration"));
+            .contains("CCR Config"));
     player.containerMenu.clicked(11, 0, ClickType.PICKUP, player);
     steps.add(
         () ->
@@ -1523,7 +1523,7 @@ public final class NativeChecks implements ModInitializer {
                         .getItem()
                         .getHoverName()
                         .getString()
-                        .contains("Configuration")));
+                        .contains("CCR Config")));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape root closes", player.containerMenu == player.inventoryMenu));
     steps.add(() -> mod.menus.main(player));
