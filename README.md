@@ -5,6 +5,8 @@
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
 The 25 projects target five Minecraft families. Native server, cold restart, standalone build and actual player observations are recorded separately in [the validation reports](validation/README.md) and [the client log](validation/porting/client-tests.md). Plugin players use a normal matching Minecraft client; Fabric also supports single-player.
 
+**Download:** [CCR 0.1.0 on Modrinth](https://modrinth.com/mod/cut-clean-reborn/versions), with separate files for each platform and exact Minecraft version. All 25 public downloads have been checked against the tested JARs. See [the publication record](validation/modrinth/README.md).
+
 ## Features
 
 - Per-mob cooking, bonus XP, edited vanilla drops and additional drops with independent quantities and chances.

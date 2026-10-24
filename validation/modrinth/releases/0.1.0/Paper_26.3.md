@@ -1,0 +1,29 @@
+# 0.1.0-26.3-(Paper)
+
+## CutClean Reborn — Minecraft 26.3 (Paper)
+
+This release brings clearer in-game configuration and the full CutClean Reborn ruleset to Paper on Minecraft 26.3.
+
+## Improved
+
+- Timber settings are grouped into tools, leaves and apples, and breaking controls.
+- Stuff Rules makes armor limits, enchantment caps and the unique mace easier to find and configure.
+- Better Sugar Cane separates player breaks from support loss, each with its own chance and quantity.
+- Press Escape to return to the previous menu or cancel unfinished input.
+- Configuration menus use concise English labels.
+- Updated the CCR logo.
+
+## Fixed
+
+- Clean Stacks converts only drops from blocks you break, including Timber. Enabling it does not change stored items, command-given items, unrelated pickups or crafting results.
+
+## Compatibility / servers
+
+- Requires Java 25 and a Paper server running Minecraft 26.3.
+- Install in `plugins/`. Players do not need a client mod.
+- Operators can use `/ccr config`; plugin permission: `cutcleanreborn.config`.
+
+## Before updating
+
+- Existing configuration paths remain compatible.
+- Close your world or stop your server before replacing the previous CCR JAR.

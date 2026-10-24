@@ -8,7 +8,7 @@
 - Cible de suivi : 25 couples plateforme/famille de versions. Ne pas déclarer compatibles des révisions Minecraft non testées ; 26.1.2 est la première révision concrète pour la famille 26.1.x.
 - Préserver toutes les fonctionnalités ; documenter toute différence imposée par une API.
 - Keep each installable JAR in its own `<Loader>_<Minecraft>/build/libs/`, with a separate compatibility report linking those files.
-- Préserver les fichiers, profils, mondes et configurations existants. L'utilisateur a confirmé les cinq profils « CCR QA », le travail par sous-agents et la publication des sources/branches sur GitHub ; aucune publication Modrinth ni service payant.
+- Préserver les fichiers, profils, mondes et configurations existants. L'utilisateur a confirmé les cinq profils « CCR QA », le travail par sous-agents et la publication des sources/branches sur GitHub. Sa nouvelle demande du 24 octobre 2026 autorise aussi les 25 publications Modrinth 0.1.0, en acceptant la couverture manuelle partielle. Aucun service payant.
 
 ## Référence de départ
 
@@ -60,6 +60,8 @@ Ordre de travail :
 Les commandes, journaux de compilation et résultats restent dans les dossiers `build/` des modules et `validation/results/`. Ce document sera enrichi au fur et à mesure ; il ne constitue pas une déclaration de portage terminé.
 
 ## Current directory and logo update
+
+The 25 **0.1.0 releases are now public on [Modrinth](https://modrinth.com/mod/cut-clean-reborn/versions)**. Anonymous downloads match the tested JARs exactly. Release names, English changelogs, Fabric API dependencies and publication receipts are recorded under [validation/modrinth](../modrinth/README.md). This publication does not promote earlier partial client observations into complete player traversals.
 
 The 25 version directories now own their complete source trees, build scripts, resources and platform tools. No build reads a neighboring project or a root shared-code directory. The supplied logo is packaged as `icon.png` in each version and declared by Fabric. Technical reports and Git helpers are grouped under `validation/`; old central outputs and shared directories are preserved in its ignored build archive. New JARs stay in each version's `build/libs/`.
 

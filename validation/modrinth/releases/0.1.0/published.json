@@ -1,0 +1,475 @@
+{
+  "project_id": "2GUh56dK",
+  "release": "0.1.0",
+  "verified_at": "2026-10-24T21:36:01.582309+00:00",
+  "versions": [
+    {
+      "project": "Bukkit_1.21.1",
+      "id": "h0wsca9Y",
+      "name": "0.1.0-1.21.1-(Bukkit)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/h0wsca9Y",
+      "minecraft": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "bukkit"
+      ],
+      "dependencies": [],
+      "artifact": "Bukkit_1.21.1/build/libs/cutcleanreborn-0.1.0+1.21.1.jar",
+      "sha256": "cdf41e074802012ba265642a1b776bf07812993d808659b03dc94579fe2c1def",
+      "sha512": "390dbc56ce431b08edb641dd4cf89289aba37226ae71c19efc39b03176e1d3cd62a9fcd8afb4b3babfc663ea95f19c6c6bf088df162d8ddb37a5dd252a0bc410",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Spigot_1.21.1",
+      "id": "yTwuayRu",
+      "name": "0.1.0-1.21.1-(Spigot)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/yTwuayRu",
+      "minecraft": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "spigot"
+      ],
+      "dependencies": [],
+      "artifact": "Spigot_1.21.1/build/libs/cutcleanreborn-0.1.0+1.21.1.jar",
+      "sha256": "2a818f879b0d5bbc43622e983fda3365ebf589f553ca546b889beda89461208f",
+      "sha512": "3fddaa8c4c8c52a85c612efdfc33bdc2bdb072b23ba23079852a8c1d90798f535172994e2eda26dc1e407314ee6973ffb9a47c54b0f875bb79920d2317f681e4",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Purpur_1.21.1",
+      "id": "LUMur2Bs",
+      "name": "0.1.0-1.21.1-(Purpur)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/LUMur2Bs",
+      "minecraft": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "purpur"
+      ],
+      "dependencies": [],
+      "artifact": "Purpur_1.21.1/build/libs/cutcleanreborn-0.1.0+1.21.1.jar",
+      "sha256": "ba22cf513a87ee2ea450cc401a2f999da6684fee6c4ff3add58c9686adb4d2e0",
+      "sha512": "69f21f464759ce153d398f960e14ecb429387cad8306a22da2f2f019e593b318a1632d86f4c69b73227bbb8c42b25d77319fc42298b8207519ccc190cd7406cd",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Paper_1.21.1",
+      "id": "DUNQuKA2",
+      "name": "0.1.0-1.21.1-(Paper)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/DUNQuKA2",
+      "minecraft": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "paper"
+      ],
+      "dependencies": [],
+      "artifact": "Paper_1.21.1/build/libs/cutcleanreborn-0.1.0+1.21.1.jar",
+      "sha256": "7b591b87004891486280fc2e610fa848faac8ac77371d5360a6bf4e011a64c72",
+      "sha512": "7ea56c2ee9007aaf208c027502c76de65c0892481b08e6821f5f112e272dea377875788e9b8b1cc5c7f83795d42c324624d505732be6a595e13e0c3eafe5c3c4",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Fabric_1.21.1",
+      "id": "QWTZI1x7",
+      "name": "0.1.0-1.21.1-(Fabric)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/QWTZI1x7",
+      "minecraft": [
+        "1.21.1"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "dependencies": [
+        {
+          "project_id": "P7dR8mSH",
+          "version_id": "Mys3P7lK",
+          "dependency_type": "required"
+        }
+      ],
+      "artifact": "Fabric_1.21.1/build/libs/cutcleanreborn-0.1.0+1.21.1.jar",
+      "sha256": "69d56a8f01e47a2c868ce18d4ce3b3312ca474f364cb08ca9a318a5b78d95d9f",
+      "sha512": "66a9b5ee4d662b77fa965b7133984091a692b2122755c4ed9daf45b35e29586caa27c038a3c35412cc33e49d0ce2e82cd9aed2ba9dbe645c12009b05c70193a2",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Bukkit_1.21.11",
+      "id": "esrb5BsP",
+      "name": "0.1.0-1.21.11-(Bukkit)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/esrb5BsP",
+      "minecraft": [
+        "1.21.11"
+      ],
+      "loaders": [
+        "bukkit"
+      ],
+      "dependencies": [],
+      "artifact": "Bukkit_1.21.11/build/libs/cutcleanreborn-0.1.0+1.21.11.jar",
+      "sha256": "79407d3938f06b6cd152d0b2d958c8e98f4c2103754d31cfe17b424ad96e664e",
+      "sha512": "d6618a7d20486ba6ec43b935c9904bd55f8aac65fbc43fbb699728c2aa106b5cefec4eb3759320238860fe0044e2038ff7e8fb226aa04f051a59e2ed211db84e",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Spigot_1.21.11",
+      "id": "Ghgl3j5E",
+      "name": "0.1.0-1.21.11-(Spigot)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/Ghgl3j5E",
+      "minecraft": [
+        "1.21.11"
+      ],
+      "loaders": [
+        "spigot"
+      ],
+      "dependencies": [],
+      "artifact": "Spigot_1.21.11/build/libs/cutcleanreborn-0.1.0+1.21.11.jar",
+      "sha256": "10aeafc39cb960e090834b45287077f5123ca927b207f00de8f5d0e128e50f37",
+      "sha512": "302012b6c188e6a07dc601249bf236ac763893ada278c82711efe2778c939ee0a0140f1e5c9a199ec209e0686e49b4b63ff16b26c2f3c425c5a0bd7e543e7ee2",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Purpur_1.21.11",
+      "id": "xbHCwF2l",
+      "name": "0.1.0-1.21.11-(Purpur)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/xbHCwF2l",
+      "minecraft": [
+        "1.21.11"
+      ],
+      "loaders": [
+        "purpur"
+      ],
+      "dependencies": [],
+      "artifact": "Purpur_1.21.11/build/libs/cutcleanreborn-0.1.0+1.21.11.jar",
+      "sha256": "499995ea2460c34aab8b9889eb7adb865689b27d1cbbe9908d63c448fd7d20c9",
+      "sha512": "e63b7e5705dcbfe416e9767a81b6c9f5cc800da9c7c20028381a8ec7053e72134f0d10bef5d8ecb9a54ebd3262f768e76ab89ecd0053d2adcc67fe8de7aec839",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Paper_1.21.11",
+      "id": "VFB7mhUl",
+      "name": "0.1.0-1.21.11-(Paper)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/VFB7mhUl",
+      "minecraft": [
+        "1.21.11"
+      ],
+      "loaders": [
+        "paper"
+      ],
+      "dependencies": [],
+      "artifact": "Paper_1.21.11/build/libs/cutcleanreborn-0.1.0+1.21.11.jar",
+      "sha256": "7aecfaacc550f39b73a66107059896751ad0a292783c63600f9773dd0bcf19db",
+      "sha512": "18b6d3f29287c7bfa56fe1f303f456f9d5669cd86363bd122b7635e23e12e0013c3dc7510dae4686a291bf5ff55db61b6db819f78a63384f71dcc05ad16c4314",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Fabric_1.21.11",
+      "id": "c24JSApW",
+      "name": "0.1.0-1.21.11-(Fabric)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/c24JSApW",
+      "minecraft": [
+        "1.21.11"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "dependencies": [
+        {
+          "project_id": "P7dR8mSH",
+          "version_id": "6qAuTtLR",
+          "dependency_type": "required"
+        }
+      ],
+      "artifact": "Fabric_1.21.11/build/libs/cutcleanreborn-0.1.0+1.21.11.jar",
+      "sha256": "7d1b067463d76a48d03099813ba837669a85b35f5c886cc16bcb59cbfe4ba610",
+      "sha512": "2127470d99eb8239a114400d3e11a94d2eb43bd11bd65eaf5625f0217d7005c3a3d72bb037edb6782ad20793628d24b7b3956d0f16ef87273391b544f5b1f78e",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Bukkit_26.1.x",
+      "id": "fnsUyxfK",
+      "name": "0.1.0-26.1.2-(Bukkit)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/fnsUyxfK",
+      "minecraft": [
+        "26.1.2"
+      ],
+      "loaders": [
+        "bukkit"
+      ],
+      "dependencies": [],
+      "artifact": "Bukkit_26.1.x/build/libs/cutcleanreborn-0.1.0+26.1.x.jar",
+      "sha256": "ba8a2ff31c0d60b5dd0f73d25d7ec555ab0c9847dd2dba916ae62656581744c0",
+      "sha512": "41effe04bb5c24e576abfab04a7ee69f10cc7dc0d9de86203584c424f9fc6ded2202bdecae7c96c7ed0f5d54c313a2f35eefcb037c4e9d7a5460822d42235df3",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Spigot_26.1.x",
+      "id": "e7GrOwdE",
+      "name": "0.1.0-26.1.2-(Spigot)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/e7GrOwdE",
+      "minecraft": [
+        "26.1.2"
+      ],
+      "loaders": [
+        "spigot"
+      ],
+      "dependencies": [],
+      "artifact": "Spigot_26.1.x/build/libs/cutcleanreborn-0.1.0+26.1.x.jar",
+      "sha256": "952707391da0b90664e96c658b743eb988d1dd350b3bbcc40b3f9bb12e98ea11",
+      "sha512": "3da6a31f62d863266c6c08ce1b69f4df94fb250425316844e4a2e9141f49c86ca6b106bb19bf3f225d7c6087607c878f97c66b037d3606edb50a0d4bfc2044db",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Purpur_26.1.x",
+      "id": "3L4cjtRx",
+      "name": "0.1.0-26.1.2-(Purpur)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/3L4cjtRx",
+      "minecraft": [
+        "26.1.2"
+      ],
+      "loaders": [
+        "purpur"
+      ],
+      "dependencies": [],
+      "artifact": "Purpur_26.1.x/build/libs/cutcleanreborn-0.1.0+26.1.x.jar",
+      "sha256": "fdbec148200c8a22abb93b945ac33735b7fbcf07b5c47b7d77ef26eceee02664",
+      "sha512": "ca5940ffa6b6108fbaaf527f5a41edff3e37e932d70b3a0221855b3abc06b3a35a08b826c4f228370eb22f806931ad000a2bc9f3b7c6369b0168e23f61d5362e",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Paper_26.1.x",
+      "id": "lXgiXBTj",
+      "name": "0.1.0-26.1.2-(Paper)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/lXgiXBTj",
+      "minecraft": [
+        "26.1.2"
+      ],
+      "loaders": [
+        "paper"
+      ],
+      "dependencies": [],
+      "artifact": "Paper_26.1.x/build/libs/cutcleanreborn-0.1.0+26.1.x.jar",
+      "sha256": "bf3c2fe710fb71c7b6eae853735aef083a84be02b6e36d4aa77539337bd22d56",
+      "sha512": "a9ceae8b62d60bc3e11f36f8ae018a3c681cfc4fe6fc90c5afb61c7a7ad60961df85b91fe3b76e08be9243b69a8fb2099dda4e00d33ad183e73bcf9f0ecc27f1",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Fabric_26.1.x",
+      "id": "jk22lezJ",
+      "name": "0.1.0-26.1.2-(Fabric)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/jk22lezJ",
+      "minecraft": [
+        "26.1.2"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "dependencies": [
+        {
+          "project_id": "P7dR8mSH",
+          "version_id": "3dM0X6ou",
+          "dependency_type": "required"
+        }
+      ],
+      "artifact": "Fabric_26.1.x/build/libs/cutcleanreborn-0.1.0+26.1.x.jar",
+      "sha256": "4ed66c512a73901c3c54e920ae35cbd66f53aaee84ee0a19d636684ac228e498",
+      "sha512": "2ebb59052cb0614c437e181d571a6e58b5af91bd6ddd69cbbb5fa61756d3a3948e9e13e3ff0193b5bdba30010d7b41f6818e42bf5b4ccab1ebef040f333c01e8",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Bukkit_26.2",
+      "id": "RENPsLQa",
+      "name": "0.1.0-26.2-(Bukkit)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/RENPsLQa",
+      "minecraft": [
+        "26.2"
+      ],
+      "loaders": [
+        "bukkit"
+      ],
+      "dependencies": [],
+      "artifact": "Bukkit_26.2/build/libs/cutcleanreborn-0.1.0+26.2.jar",
+      "sha256": "9842e3df198aa177edd69933e56679f4b58de16532ac075a97ac3973f82b2b34",
+      "sha512": "d128a9931951dcb7be414427e3730b73cb26676c740b08534dab7da306eddddcc85ddbd09f5c0e87cf875efd626ddf9a2ca3e7fb1e8409d134932f8360032b08",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Spigot_26.2",
+      "id": "191udHhV",
+      "name": "0.1.0-26.2-(Spigot)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/191udHhV",
+      "minecraft": [
+        "26.2"
+      ],
+      "loaders": [
+        "spigot"
+      ],
+      "dependencies": [],
+      "artifact": "Spigot_26.2/build/libs/cutcleanreborn-0.1.0+26.2.jar",
+      "sha256": "5c364a2cbd9ac50db4be36d420259ed8d586bc1ccc83015dd96a9b4c87886f92",
+      "sha512": "8ffea184ce3998341c211e5ff04d4f6bfd76892969e01ce30c4c0cc283d97f606823edcd41950b2260190e82c9a49c15761e0baf84793ef3fa34485ad5ba21be",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Purpur_26.2",
+      "id": "3en0Q9BY",
+      "name": "0.1.0-26.2-(Purpur)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/3en0Q9BY",
+      "minecraft": [
+        "26.2"
+      ],
+      "loaders": [
+        "purpur"
+      ],
+      "dependencies": [],
+      "artifact": "Purpur_26.2/build/libs/cutcleanreborn-0.1.0+26.2.jar",
+      "sha256": "67c3559572233cbffd58a3e9aa59fe5c78e4806999ae8bf64e83cb249f3152f2",
+      "sha512": "a4ceeb7f6932ce7822b1f1f8f46f910074021ce6a5380b0678235ff87d5d43401f8ad999feda99f01988e8692f492ed9561bf1033d0b8350339ea863797b71ff",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Paper_26.2",
+      "id": "FNdkHdxP",
+      "name": "0.1.0-26.2-(Paper)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/FNdkHdxP",
+      "minecraft": [
+        "26.2"
+      ],
+      "loaders": [
+        "paper"
+      ],
+      "dependencies": [],
+      "artifact": "Paper_26.2/build/libs/cutcleanreborn-0.1.0+26.2.jar",
+      "sha256": "6192d2880085da24bee4665d14f712b2ed99278c1978757ff0cac87d03eb92f3",
+      "sha512": "aeb08ffc4c88f331ee2e5a51afffb0774ddb82870863e155c9cc7851471842362244d9d0e4f6ca3a1d1e20e0ace4dff811d7a9d24002986d3fb862a84decda02",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Fabric_26.2",
+      "id": "U6VbTGfz",
+      "name": "0.1.0-26.2-(Fabric)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/U6VbTGfz",
+      "minecraft": [
+        "26.2"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "dependencies": [
+        {
+          "project_id": "P7dR8mSH",
+          "version_id": "ewUK83HI",
+          "dependency_type": "required"
+        }
+      ],
+      "artifact": "Fabric_26.2/build/libs/cutcleanreborn-0.1.0+26.2.jar",
+      "sha256": "1305e6adc3de622bcb34cb2ed8cacc3865872c72826c9fa4397e635aa6c98f06",
+      "sha512": "2992643d6307d62fb2f51d67cfd74770b7e16412133154b9d381b15f56199d84930632c21e4cb2ac919639045762af45e797b8eb9c1a94223790a1e6c5e0c9e8",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Bukkit_26.3",
+      "id": "xGJ2LRwa",
+      "name": "0.1.0-26.3-(Bukkit)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/xGJ2LRwa",
+      "minecraft": [
+        "26.3"
+      ],
+      "loaders": [
+        "bukkit"
+      ],
+      "dependencies": [],
+      "artifact": "Bukkit_26.3/build/libs/cutcleanreborn-0.1.0+26.3.jar",
+      "sha256": "f09e6ac82904b20012a0a2bdf5362114e72c4ffea3e4354dbf96d00c7a0c6640",
+      "sha512": "46d9725ab17abfb4e913ed64d925b270c7d64fac55920747a30ef77a96243e9944fff7a3627ccbc93e6a649dd65fee6a4ecce4aef6c77b2849b021166e278ac0",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Spigot_26.3",
+      "id": "keNsyebV",
+      "name": "0.1.0-26.3-(Spigot)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/keNsyebV",
+      "minecraft": [
+        "26.3"
+      ],
+      "loaders": [
+        "spigot"
+      ],
+      "dependencies": [],
+      "artifact": "Spigot_26.3/build/libs/cutcleanreborn-0.1.0+26.3.jar",
+      "sha256": "08782992c125a0256b39b1327099626a67a056df0612699f0e548645d48d3e11",
+      "sha512": "b71a1bcffce75266e4a93b7ce415a81e821ab262506f885d944a13ca551a6cf802b52e05d8da33a4bbad59cbfa8d037b7ec1a5f83f8bc30325084643ab1cf5dd",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Purpur_26.3",
+      "id": "f3D1kApf",
+      "name": "0.1.0-26.3-(Purpur)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/f3D1kApf",
+      "minecraft": [
+        "26.3"
+      ],
+      "loaders": [
+        "purpur"
+      ],
+      "dependencies": [],
+      "artifact": "Purpur_26.3/build/libs/cutcleanreborn-0.1.0+26.3.jar",
+      "sha256": "e633cef957720383b610ae38495a95cce85448bd59fb6c087bdaf724d4821360",
+      "sha512": "1a522a07b5794b501644047bee4146eeaa803e3d81d728b38dd4ef7fbf1c34cacb1fc14ac3249f37b5945c7f829728db2e467c50c36f1fbf4ab6f1c0344068f2",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Paper_26.3",
+      "id": "gc2TUGxF",
+      "name": "0.1.0-26.3-(Paper)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/gc2TUGxF",
+      "minecraft": [
+        "26.3"
+      ],
+      "loaders": [
+        "paper"
+      ],
+      "dependencies": [],
+      "artifact": "Paper_26.3/build/libs/cutcleanreborn-0.1.0+26.3.jar",
+      "sha256": "7e018d1714be3386695b725fe18df7552ceac99673c2233ddde9b7459f5f5afa",
+      "sha512": "e492921eef09bc794e48d06416302e7e20a9a3d7ad8dfadbe045975a18b879a67f36ecd5d5fb72791ce18119015915de1a590b28abcffc4e00bfb047e39524ab",
+      "public_download": "PASS"
+    },
+    {
+      "project": "Fabric_26.3",
+      "id": "tD79ZPds",
+      "name": "0.1.0-26.3-(Fabric)",
+      "url": "https://modrinth.com/mod/cut-clean-reborn/version/tD79ZPds",
+      "minecraft": [
+        "26.3"
+      ],
+      "loaders": [
+        "fabric"
+      ],
+      "dependencies": [
+        {
+          "project_id": "P7dR8mSH",
+          "version_id": "EQKgpeKu",
+          "dependency_type": "required"
+        }
+      ],
+      "artifact": "Fabric_26.3/build/libs/cutcleanreborn-0.1.0+26.3.jar",
+      "sha256": "0de6b5b5e453157ad62116317ef3f6fd8da96a6f91b313ff2e008f8930eb3636",
+      "sha512": "60b9ab3889d9764db200b2a2efdc69095f6fb656777e6cbfe1f40291fd499f8eca83ed2d787befe6f0b5676cdb538871a0581fa4a9076d4f03fa345b79bdddcc",
+      "public_download": "PASS"
+    }
+  ],
+  "project_description": {
+    "status": "NOT_UPDATED",
+    "reason": "Modrinth denied the project edit with HTTP 401; project write permission is required.",
+    "prepared_file": "project-description.md"
+  },
+  "validation": {
+    "full_projects": 25,
+    "unit_tests": 289,
+    "native_checks": 6280,
+    "cold_storage_checks": 2266,
+    "standalone_builds": 25,
+    "player_scope": "Historical partial observations; no complete player traversal claimed."
+  }
+}
