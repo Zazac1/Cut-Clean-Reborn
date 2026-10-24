@@ -21,7 +21,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
@@ -1963,11 +1963,11 @@ public final class RuleMenus {
     }
 
     @Override
-    public void clicked(int slot, int button, ClickType type, Player player) {
+    public void clicked(int slot, int button, ContainerInput type, Player player) {
       if (!(player instanceof ServerPlayer serverPlayer)) return;
       Consumer<ServerPlayer> action =
           button == 0 ? actions.get(slot) : button == 1 ? rightActions.get(slot) : null;
-      if (type == ClickType.PICKUP && action != null)
+      if (type == ContainerInput.PICKUP && action != null)
         mod.later(
             () -> {
               if (serverPlayer.containerMenu == this
@@ -2075,10 +2075,10 @@ public final class RuleMenus {
     }
 
     @Override
-    public void clicked(int slot, int button, ClickType type, Player player) {
+    public void clicked(int slot, int button, ContainerInput type, Player player) {
       if (slot != 2
           || button != 0
-          || type != ClickType.PICKUP
+          || type != ContainerInput.PICKUP
           || !(player instanceof ServerPlayer serverPlayer)) return;
       mod.later(
           () -> {

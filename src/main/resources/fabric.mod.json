@@ -3,6 +3,7 @@
   "id": "cutcleanreborn",
   "version": "${version}",
   "name": "CutCleanReborn",
+  "icon": "icon.png",
   "description": "CutClean gameplay rules and hierarchical configuration menus, dedicated and integrated server.",
   "authors": [
     "Zazac1"
