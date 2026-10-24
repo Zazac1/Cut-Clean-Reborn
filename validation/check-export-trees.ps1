@@ -24,7 +24,7 @@ $results=[System.Collections.Generic.List[object]]::new()
 Push-Location -LiteralPath $workspace
 try {
     $source=(Read-Git @('rev-parse','HEAD')) -join ''
-    $manifest=(Read-Git @('show',"${source}:branch-exports.json")) -join "`n" | ConvertFrom-Json
+    $manifest=(Read-Git @('show',"${source}:validation/git/branch-exports.json")) -join "`n" | ConvertFrom-Json
     $entries=@($manifest.projects.PSObject.Properties | Where-Object {$_.Value.enabled} | Sort-Object Name)
     foreach ($requested in $Project) {
         if ($requested -notin $entries.Name) { throw "Unknown or disabled export: $requested" }
@@ -67,7 +67,7 @@ try {
             else { 'src/main/resources/plugin.yml' }
             if (-not $actual.ContainsKey($metadata)) { throw "Missing platform metadata: $metadata" }
             if (((Read-Git @('rev-parse',"refs/heads/$branch")) -join '') -ne $revision) { throw 'Branch moved during audit' }
-            $results.Add([pscustomobject]@{project=$entry.Name;branch=$branch;revision=$revision;status='PASS';files=$actual.Count;detail='Exact committed sources, materialized dependencies and executable wrapper; no compilation implied'})
+            $results.Add([pscustomobject]@{project=$entry.Name;branch=$branch;revision=$revision;status='PASS';files=$actual.Count;detail='Exact local project sources and executable wrapper; no compilation implied'})
         } catch {
             $results.Add([pscustomobject]@{project=$entry.Name;branch=$branch;revision='';status='FAIL';files=0;detail=$_.Exception.Message})
         }

@@ -1,6 +1,193 @@
-plugins {
-    id 'java'
+plugins { id 'java' }
+
+group = project.group
+version = project.version
+
+def family = project.findProperty('minecraft_family') ?: project.minecraft_version
+def javaVersion = (project.findProperty('java_version') ?: '25').toInteger()
+def referenceDir = projectDir
+
+
+sourceSets {
+    main {
+        java.setSrcDirs([new File(referenceDir, 'src/main/java')])
+        resources.setSrcDirs([new File(referenceDir, 'src/main/resources')])
+    }
+    test { java.setSrcDirs([new File(referenceDir, 'src/test/java')]) }
 }
 
-apply from: file('build-logic/purpur.gradle').exists()
-        ? 'build-logic/purpur.gradle' : '../build-logic/purpur.gradle'
+
+base {
+    archivesName = 'cutcleanreborn'
+}
+
+// Match the other mods: <project>-<plugin-version>+<minecraft-version>.jar.
+// Keep the plugin's declared version unchanged; this only names the artifact.
+def archivePreviousPluginJars = { File directory, File backupDirectory, String currentName ->
+    def sourceDirectory = directory.canonicalFile
+    fileTree(sourceDirectory).matching {
+        include 'CutCleanReborn-Paper*.jar', 'cutcleanreborn-*.jar'
+    }.files.each { oldJar ->
+        if (oldJar.name == currentName || oldJar.canonicalFile.parentFile != sourceDirectory) return
+        boolean cutClean = false
+        new java.util.zip.ZipFile(oldJar).withCloseable { archive ->
+            def metadata = archive.getEntry('plugin.yml')
+            if (metadata != null) cutClean = archive.getInputStream(metadata).getText('UTF-8').readLines().any { it.trim() == 'name: CutCleanReborn' }
+        }
+        if (cutClean) {
+            backupDirectory.mkdirs()
+            java.nio.file.Files.move(oldJar.toPath(), new File(backupDirectory, "${System.currentTimeMillis()}-${oldJar.name}").toPath())
+        }
+    }
+}
+
+tasks.named('jar', Jar) {
+    archiveVersion = "${project.version}+${family}"
+    doLast {
+        archivePreviousPluginJars(destinationDirectory.get().asFile,
+                layout.buildDirectory.dir('artifact-backups').get().asFile, archiveFileName.get())
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compileOnly("io.papermc.paper:paper-api:${project.paper_version}")
+    testImplementation("io.papermc.paper:paper-api:${project.paper_version}")
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'platform', 'Purpur'
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+        filter { line -> line.replace('Paper plugin.', 'Purpur plugin.') }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = javaVersion
+    options.encoding = 'UTF-8'
+}
+
+def runServerDir = layout.projectDirectory.dir('run-server')
+def paperJar = runServerDir.file("purpur-${project.minecraft_version}.jar")
+
+tasks.register('downloadServer') {
+    outputs.file(paperJar)
+    // Purpur publishes frequent security and bug-fix builds for the same game version.
+    // Always refresh the isolated development server rather than retaining a stale JAR.
+    outputs.upToDateWhen { false }
+    doLast {
+        def target = paperJar.asFile
+        target.parentFile.mkdirs()
+        def downloadUrl = "https://api.purpurmc.org/v2/purpur/${project.minecraft_version}/latest/download"
+        new URL(downloadUrl).withInputStream { input -> target.withOutputStream { output -> output << input } }
+    }
+}
+
+tasks.register('prepareServer', Copy) {
+    dependsOn tasks.named('jar'), tasks.named('downloadServer')
+    from(tasks.named('jar'))
+    into(runServerDir.dir('plugins'))
+    doFirst {
+        archivePreviousPluginJars(runServerDir.dir('plugins').asFile, runServerDir.dir('plugin-backups').asFile,
+                tasks.named('jar').get().archiveFileName.get())
+    }
+    doLast {
+        def eula = runServerDir.file('eula.txt').asFile
+        if (!eula.exists()) {
+            eula.text = 'eula=true\n'
+        }
+    }
+}
+
+tasks.register('runServer', JavaExec) {
+    group = 'application'
+    description = "Builds the plugin and starts an isolated local Purpur ${project.minecraft_version} server."
+    dependsOn tasks.named('prepareServer')
+    workingDir(runServerDir)
+    classpath(files(paperJar))
+    mainClass = 'io.papermc.paperclip.Main'
+    standardInput = System.in
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Optional native-server regression suite. It uses an isolated world under build/, never run-server/world.
+sourceSets {
+    smoke {
+        java.setSrcDirs([new File(referenceDir, 'src/smoke/java')])
+        resources.setSrcDirs([new File(referenceDir, 'src/smoke/resources')])
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+    }
+}
+
+tasks.register('smokePluginJar', Jar) {
+    dependsOn tasks.named('smokeClasses')
+    archiveFileName = 'CCRSmoke.jar'
+    destinationDirectory = layout.buildDirectory.dir('smoke-plugin')
+    from sourceSets.smoke.output
+}
+
+tasks.register('prepareSmokeServer', Copy) {
+    dependsOn tasks.named('jar'), tasks.named('smokePluginJar')
+    // Smoke checks deliberately edit their config; restore the fixture on every run.
+    outputs.upToDateWhen { false }
+    into layout.buildDirectory.dir('smoke-server')
+    from(new File(referenceDir, 'src/smoke/server.properties'))
+    from(runServerDir.file('eula.txt'))
+    into('plugins') {
+        from tasks.named('jar')
+        from tasks.named('smokePluginJar')
+    }
+    into('plugins/CutCleanReborn') {
+        from new File(referenceDir, 'src/main/resources/config.yml')
+    }
+    doFirst {
+        archivePreviousPluginJars(layout.buildDirectory.dir('smoke-server/plugins').get().asFile,
+                layout.buildDirectory.dir('smoke-plugin-backups').get().asFile,
+                tasks.named('jar').get().archiveFileName.get())
+    }
+}
+
+tasks.register('smokeTest', JavaExec) {
+    timeout = java.time.Duration.ofMinutes(4)
+    group = 'verification'
+    description = 'Runs native item/menu regressions in an isolated local Purpur server, then shuts it down.'
+    dependsOn tasks.named('prepareSmokeServer')
+    workingDir layout.buildDirectory.dir('smoke-server')
+    classpath files(paperJar)
+    mainClass = 'io.papermc.paperclip.Main'
+    jvmArgs '-Xms256M', '-Xmx1G'
+    systemProperty 'terminal.jline', 'false'
+    systemProperty 'terminal.ansi', 'false'
+    args '--nogui', '--port', '0'
+    doFirst {
+        if (!paperJar.asFile.exists() || !runServerDir.file('eula.txt').asFile.exists())
+            throw new GradleException('smokeTest requires an existing run-server Purpur JAR and eula.txt.')
+        def result = layout.buildDirectory.file('smoke-server/smoke-result.txt').get().asFile
+        if (result.exists()) result.delete()
+    }
+    doLast {
+        def result = layout.buildDirectory.file('smoke-server/smoke-result.txt').get().asFile
+        if (!result.exists() || !result.text.startsWith('PASS')) throw new GradleException('Native smoke tests failed. See build/smoke-server/logs/latest.log.')
+    }
+}

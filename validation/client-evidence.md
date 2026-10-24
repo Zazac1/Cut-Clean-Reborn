@@ -46,14 +46,14 @@ Les dix premières familles sont requises pour chaque variante. Fabric demande e
 
 Renseigner une date ISO réelle dans `observed_at`, puis des objets `{ "id": "timber", "status": "PARTIAL", "observation": "description précise du test et de ses limites" }` uniquement après les interactions correspondantes. `mode` vaut `dedicated` pour un plugin, `singleplayer` pour les essais Fabric solo. Les fichiers `validation/results/evidence/<Projet>.json` permettent d'identifier les empreintes natives, mais ne constituent jamais une preuve joueur.
 
-Le collecteur affiche les observations partielles dans `dist/compatibility.json` et `dist/README.md`. Il ne passe à « Validé avec joueur » que si toutes les familles requises sont `PASS`, dans un contexte compatible et avec les bonnes empreintes. Un JSON manuel illisible ne retire pas un JAR déjà validé nativement.
+Le collecteur affiche les observations partielles dans `validation/results/artifacts/compatibility.json` et `validation/results/artifacts/README.md`. Il ne passe à « Validé avec joueur » que si toutes les familles requises sont `PASS`, dans un contexte compatible et avec les bonnes empreintes. Un JSON manuel illisible ne retire pas un JAR déjà validé nativement.
 
 ## Vérifier le contrôle sans lancer Minecraft
 
 ```powershell
 .\validation\test-client-evidence.ps1
-.\porting\collect-artifacts.ps1
-.\porting\collect-artifacts.ps1 -RequireComplete
+.\validation\porting\collect-artifacts.ps1
+.\validation\porting\collect-artifacts.ps1 -RequireComplete
 ```
 
 La dernière commande échoue tant qu'une des 25 variantes manque de parcours joueur complet ou de preuve froide. Les cas du premier script sont des données synthétiques, jamais des reçus de gameplay ; aucun n'est écrit sous `validation/manual/`.

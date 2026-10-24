@@ -11,7 +11,7 @@ build/
 validation/results/
 validation/manual/
 dist/
-tools/buildtools/
+validation/build/
 
 # Local Minecraft/Paper development data, worlds and logs
 dev-server/

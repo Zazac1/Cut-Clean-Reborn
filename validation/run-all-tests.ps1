@@ -68,6 +68,7 @@ function Test-Artifact([System.IO.DirectoryInfo]$Project, [hashtable]$Properties
         if ($metadata -notmatch ('(?m)^version:\s*' + [regex]::Escape($Properties['version']) + '\s*$')) { throw 'Version interne incorrecte' }
         if ($metadata -notmatch ('(?m)^api-version:\s*[''\"]?' + [regex]::Escape($Properties['minecraft_version']) + '[''\"]?\s*$')) { throw 'Version Minecraft incorrecte' }
         if ($null -eq $archive.GetEntry('config.yml')) { throw 'Configuration par defaut absente' }
+        if ($null -eq $archive.GetEntry('icon.png')) { throw 'Logo absent du JAR' }
         if (@($archive.Entries | Where-Object FullName -Match '^fr/isaac/cutcleanreborn/verification/').Count -ne 0) { throw 'Code de test present dans le JAR distribue' }
         $package = if ($Project.Name -match '^(Spigot|Bukkit)_') { 'bukkit' } else { 'paper' }
         if ($null -eq $archive.GetEntry("fr/isaac/cutcleanreborn/$package/CutCleanRebornPlugin.class")) { throw 'Classe principale absente' }
@@ -92,6 +93,8 @@ try {
 
     $reference = $null
     $referenceName = ''
+    $portableReference = $null
+    $portableReferenceName = ''
     foreach ($project in $projects) {
         try {
             if ($project.Name.StartsWith('Fabric_')) {
@@ -119,24 +122,36 @@ try {
             $apiKey = if ($isPortable) { 'bukkit_version' } else { 'paper_version' }
             if (-not $properties['version'] -or -not $properties[$apiKey]) { throw 'Versions de compilation manquantes' }
             $sourceDirectory = $project.FullName
-            if ($isPurpur) {
-                $expectedSource = "Paper_$family"
-                if ($properties['source_module'] -ne $expectedSource) { throw 'Module Paper partage inattendu' }
-                $sourceDirectory = Join-Path $workspaceRoot $expectedSource
-                if (-not (Test-Path -LiteralPath (Join-Path $workspaceRoot 'build-logic/purpur.gradle'))) { throw 'Compilation partagee Purpur absente' }
-                if ($buildScript -notmatch 'build-logic/purpur.gradle') { throw 'Compilation Purpur non configuree' }
-            } elseif ($isPortable) {
-                $expectedSource = 'platform-bukkit'
-                $sourceDirectory = Join-Path $workspaceRoot $expectedSource
-                $sharedBuild = Join-Path $workspaceRoot 'build-logic/bukkit.gradle'
-                if (-not (Test-Path -LiteralPath $sharedBuild) -or $buildScript -notmatch 'build-logic/bukkit.gradle') { throw 'Compilation Bukkit partagee absente' }
-                if ((Get-Content -LiteralPath $sharedBuild -Raw) -match 'io.papermc.paper:paper-api') { throw 'Le port portable depend de Paper' }
+            if ($buildScript -match '\.\./(?:platform-|build-logic|Paper_)') { throw 'Le projet depend encore de fichiers hors de son dossier' }
+            if ($isPortable) {
+                if ($buildScript -match 'io.papermc.paper:paper-api') { throw 'Le port portable depend de Paper' }
                 if ($properties['server_platform'] -ne $loader.ToLowerInvariant()) { throw 'Plateforme serveur incoherente' }
+            }
+            if ($isPurpur) {
+                $localSources = Get-SourceMap $project.FullName
+                $paperSources = Get-SourceMap (Join-Path $workspaceRoot "Paper_$family")
+                # Keep each module's existing copyright notice; compare all actual sources/resources.
+                $localSources.Remove('LICENSE')
+                $paperSources.Remove('LICENSE')
+                $differences = @(@($paperSources.Keys) + @($localSources.Keys) | Sort-Object -Unique | Where-Object {
+                    -not $paperSources.ContainsKey($_) -or -not $localSources.ContainsKey($_) -or $paperSources[$_] -ne $localSources[$_]
+                })
+                Add-Check $project.Name 'Parite Purpur' ($differences.Count -eq 0) $(if ($differences.Count -eq 0) { "Sources locales identiques a Paper_$family" } else { $differences -join ', ' })
             }
             foreach ($relative in $sourceRequired) {
                 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectory $relative))) { throw "Source requise absente : $relative" }
             }
-            Add-Check $project.Name 'Structure' $true $(if ($isPurpur -or $isPortable) { "Sources partagees explicitement avec $expectedSource" } else { 'Sources, configuration, tests et compilation locaux' })
+            Add-Check $project.Name 'Structure' $true 'Sources, configuration, tests et compilation dans le dossier de version'
+            if ($isPortable) {
+                $portableSources = Get-SourceMap $project.FullName
+                if ($null -eq $portableReference) { $portableReference=$portableSources; $portableReferenceName=$project.Name }
+                else {
+                    $differences = @(@($portableReference.Keys) + @($portableSources.Keys) | Sort-Object -Unique | Where-Object {
+                        -not $portableReference.ContainsKey($_) -or -not $portableSources.ContainsKey($_) -or $portableReference[$_] -ne $portableSources[$_]
+                    })
+                    Add-Check $project.Name 'Parite Bukkit-Spigot' ($differences.Count -eq 0) $(if ($differences.Count -eq 0) { "Sources locales identiques a $portableReferenceName" } else { $differences -join ', ' })
+                }
+            }
 
             if (-not $isPortable) { $sources = Get-SourceMap $sourceDirectory }
             if ($loader -eq 'Paper' -and $null -eq $reference) { $reference = $sources; $referenceName = $project.Name }

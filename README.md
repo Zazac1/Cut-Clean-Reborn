@@ -1,7 +1,7 @@
 # CutClean Reborn
 
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
-The 25-variant full validation passed on October 24, 2026 at 20:57 Paris time with 289 unit tests and 6,280 native checks, including the normalized artifact names. Matching cold-restart checks pass for all 25 variants, and all 25 standalone branches build independently. Actual Fabric 1.21.1 menu and persistence observations belong to the preceding layout build; this packaging-only update was not relabelled as a new client test. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
+The 25 projects target five Minecraft families. Native server, cold restart, standalone build and actual player observations are recorded separately in [the validation reports](validation/README.md) and [the client log](validation/porting/client-tests.md). Plugin players use a normal matching Minecraft client; Fabric also supports single-player.
 
 ## Features
 
@@ -64,81 +64,83 @@ Existing `config.yml` paths and item UUID markers remain supported. No existing 
 
 ## Repository layout and development
 
-The repository follows the same layout as CustomRecipies: one module per loader and Minecraft version. Version branches materialize shared source dependencies and remain independently buildable.
+Each `<Loader>_<Minecraft>` directory is an autonomous project, following CustomRecipies. Its sources, resources, tests, wrapper and build script are local; no version reads code from another directory.
 
 ```text
 CutCleanReborn/
-├── Paper_26.2/
-│   ├── src/main/          # Plugin sources and default configuration
-│   ├── src/test/          # Unit tests
-│   ├── src/smoke/         # Isolated native-server tests
-│   ├── build.gradle       # Standalone build
-│   ├── gradle.properties  # Plugin, Minecraft and Paper API versions
-│   ├── gradle/ + gradlew* # Build launcher
-│   ├── run-server/        # Local server, worlds and configuration (ignored by Git)
-│   ├── build/libs/        # Generated JAR (ignored by Git)
-│   ├── CHANGELOG.md
-│   ├── LICENSE
-│   └── README.md
-├── Paper_26.3/             # Same structure, independently buildable
-├── Paper_1.21.1/, Paper_1.21.11/, Paper_26.1.x/
-├── Purpur_<Minecraft>/    # Shares the matching Paper sources in main
-├── Spigot_<Minecraft>/, Bukkit_<Minecraft>/, Fabric_<Minecraft>/ # Native platform/version adapters
-├── build-logic/           # Shared platform-specific builds
-├── porting/               # Status, platform notes and verified artifact collector
-├── validation/            # Cross-version runner and manual test checklist
-├── test-all.ps1            # Default: full native validation of all 25 variants
-├── Modrinth/               # Existing artwork and model files
+├── Paper_<Minecraft>/
+├── Purpur_<Minecraft>/
+├── Spigot_<Minecraft>/
+├── Bukkit_<Minecraft>/
+├── Fabric_<Minecraft>/
+│   ├── src/                  # Sources, configuration, logo and tests
+│   ├── build.gradle
+│   ├── gradle.properties
+│   ├── settings.gradle
+│   ├── gradle/ + gradlew*
+│   ├── build/libs/            # This version's installable JAR
+│   ├── build/artifact-backups/ # Superseded generated artifacts, if any
+│   └── README.md + LICENSE
+├── validation/               # Workspace checks, reports and preserved technical archives
+│   ├── git/                  # Version branch workflow
+│   ├── porting/              # Platform notes and artifact reports
+│   └── results/artifacts/    # Compatibility index pointing to version JARs
+├── Modrinth/                 # Existing artwork and model files
+├── test-all.ps1
 └── README.md
 ```
 
-Each Paper directory can be built on its own without a sibling source folder. The five variants contain the same gameplay implementation apart from documented equivalent API calls; the common validation runner checks for unintended differences in sources, defaults and tests. Purpur reuses those exact sources and tests against the actual Purpur runtime, not a renamed Paper server.
-`gradle.properties` and `src/main/resources/plugin.yml` identify the target Minecraft/Paper version.
-The Git repository remains at the workspace root. Existing worlds, configurations and Modrinth assets are preserved. The former Fabric implementation remains in history; the new native Fabric ports are developed from the current feature requirements.
+Spigot and Bukkit also have their own `tools/` with the official BuildTools bootstrap. Existing development servers, worlds and configuration remain in their original version directories. The old central build outputs and shared directories are preserved in the ignored archive `validation/build/layout-backup-20261024-221357/`; current builds do not use them. There is no central `dist/`.
+
+All 25 projects contain the supplied logo at `src/main/resources/icon.png`. Fabric declares it in `fabric.mod.json`; plugins package the same resource. The original artwork is preserved without a background change.
+
+Paper variants retain strict implementation parity with documented API adaptations. Each Purpur project contains its corresponding Paper implementation locally. The ten Spigot/Bukkit copies are also checked for drift. These checks help keep independent projects consistent without sharing files between them.
 
 ## Git branches
 
-Like [CustomRecipe](https://github.com/Zazac1/CustomRecipe), version branches use `<loader>/<Minecraft>` and contain a buildable project directly at their root:
+Version branches follow [CustomRecipe](https://github.com/Zazac1/CustomRecipe):
 
-- `main`: complete workspace, documentation and cross-version validation (default branch).
-- `<paper|purpur|spigot|bukkit|fabric>/<Minecraft>`: standalone projects, enabled for export only once validated.
-- The historical `fabric/1.21.11` branch keeps its ancestry when the current native port is exported.
+- `main` contains the complete workspace.
+- `<paper|purpur|spigot|bukkit|fabric>/<Minecraft>` contains exactly the corresponding version project's files at its root.
 
-See [BRANCHES.md](BRANCHES.md) and `branch-exports.json` for the workflow. After validating and committing changes on `main`, `sync-branches.ps1` previews the updates; `-Mode Publish` synchronizes enabled branches and publishes them with `main`, without forced updates or branch deletion. GitHub publication was explicitly authorized; Modrinth publication was not.
+See [the branch workflow](validation/git/BRANCHES.md). After validation and a commit on main:
+
+```powershell
+.\validation\git\sync-branches.ps1              # Read-only plan
+.\validation\git\sync-branches.ps1 -Mode Local  # Update local version branches
+.\validation\validate-exports.ps1               # Compile fresh isolated branch archives
+.\validation\git\sync-branches.ps1 -Mode Publish
+```
+
+Publication preserves branch ancestry and uses an atomic push, without forced updates or branch deletion. GitHub publication is authorized; Modrinth publication is outside this workflow.
 
 ## Build and verification
 
-From the repository root, validate all 25 variants, using each platform's real server:
-
-```powershell
-.\test-all.ps1
-```
-
-See [validation/README.md](validation/README.md) for prerequisites, modes and reports. From either Paper directory:
+From any version directory:
 
 ```powershell
 .\gradlew.bat build
-.\gradlew.bat runServer
 ```
 
-The build produces `build/libs/cutcleanreborn-<plugin-version>+<minecraft-version>.jar`, following the same naming convention as Custom Recipe.
-For example: `cutcleanreborn-0.1.0+26.3.jar`. The development suffix was removed consistently from build properties and internal plugin/mod metadata; the base version remains `0.1.0`.
-Each module's `build/libs/` contains its installable CCR JAR. Fabric sources live in `build/sources/`, and internal verification JARs in `build/verification/`. Run `./porting/organize-artifacts.ps1 -Preview` to inspect the archive plan, then omit `-Preview` to archive superseded generated CCR artifacts. Backups remain under `build/artifact-backups/` or `dist/archive/`; user servers and Modrinth profiles are outside its scope.
-Install the JAR matching your server version, replacing the previous CCR JAR.
-`runServer` downloads the latest Paper build for that game version and starts `run-server/`.
-Stop the server before replacing its plugin. Local worlds, logs, caches and generated files are ignored by Git.
+Install its `build/libs/cutcleanreborn-0.1.0+<Minecraft>.jar`, for example `cutcleanreborn-0.1.0+26.3.jar`. Renaming or adding the logo does not increment the plugin version. Fabric source JARs are under `build/sources/`, and test JARs are under `build/verification/`.
 
-`build` runs that project's regression tests against its chosen API. CI builds the five Paper and five Purpur projects. It does not claim native-server or real-client validation.
-A native suite is also available once `run-server/` already contains a Paper JAR and an accepted `eula.txt`:
+From the workspace root, run the required complete native validation:
 
 ```powershell
-.\gradlew.bat smokeTest
+.\test-all.ps1
+.\validation\run-persistence-tests.ps1
 ```
 
-It starts a separate local server under `build/smoke-server/`, checks native items, menus, loot previews and configuration reload, writes `smoke-result.txt`, then shuts down. Menu navigation checks simulate player inventory events on the native server, including Escape, cancelled confirmations, text-field cancellation, pagination and explicit closure; they do not replace a visual check in a Minecraft client.
-It never opens an existing development world, and its test plugin is not included in release JARs.
-For hands-on verification, also test inventory navigation and cancellation, protected Timber blocks, tool breakage, Silk Touch/Fortune, sugar-cane support loss, and crafting/destroying the unique mace with real players.
+The default Full run checks all 25 variants on their real platform servers, including Fabric's distribution JAR outside Loom. The separate persistence run checks the 20 plugins across three cold JVMs each; Full already includes the five Fabric cold triplets. Read [the prerequisites and reports](validation/README.md).
 
-The separate [client QA environment](validation/client-server/README.md) uses `qa-gradlew.bat` so the Dev Launcher lists only the 25 release modules. It starts only fresh worlds under `build/client-test-server/` and is never included in distributed JARs.
+Tests use fresh worlds under each project's `build/`; they do not reuse `run-server/` worlds. Simulated menu interactions on a native server are not a visual Minecraft check. Actual client observations retain the hashes of the builds used at the time; this directory and logo update does not relabel them as new player tests. See [the isolated client QA environment](validation/client-server/README.md).
 
-After native validation, run `./porting/collect-artifacts.ps1`. It gathers only binaries whose hashes and source fingerprints still match their test evidence, under `dist/<Platform>/<Minecraft>/`, and writes the full 25-combination matrix. `-RequireComplete` refuses completion until all 25 also have valid real-player evidence.
+After native verification:
+
+```powershell
+.\validation\porting\collect-artifacts.ps1
+```
+
+This writes `validation/results/artifacts/compatibility.json` and `README.md`, linking the JAR in each version directory only when its evidence still matches. It does not copy binaries into a central output directory. `-RequireComplete` additionally requires a complete valid player traversal for every variant.
+
+`validation/porting/organize-artifacts.ps1 -Preview` previews archival of superseded generated CCR artifacts inside each version. It preserves user servers, worlds and Modrinth profiles.

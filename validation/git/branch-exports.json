@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "projects": {
+    "Paper_26.3": {
+      "branch": "paper/26.3",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Paper_26.2": {
+      "branch": "paper/26.2",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Paper_26.1.x": {
+      "branch": "paper/26.1.x",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Paper_1.21.11": {
+      "branch": "paper/1.21.11",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Paper_1.21.1": {
+      "branch": "paper/1.21.1",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Purpur_26.3": {
+      "branch": "purpur/26.3",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Purpur_26.2": {
+      "branch": "purpur/26.2",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Purpur_26.1.x": {
+      "branch": "purpur/26.1.x",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Purpur_1.21.11": {
+      "branch": "purpur/1.21.11",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Purpur_1.21.1": {
+      "branch": "purpur/1.21.1",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Spigot_26.3": {
+      "branch": "spigot/26.3",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Spigot_26.2": {
+      "branch": "spigot/26.2",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Spigot_26.1.x": {
+      "branch": "spigot/26.1.x",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Spigot_1.21.11": {
+      "branch": "spigot/1.21.11",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Spigot_1.21.1": {
+      "branch": "spigot/1.21.1",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Bukkit_26.3": {
+      "branch": "bukkit/26.3",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Bukkit_26.2": {
+      "branch": "bukkit/26.2",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Bukkit_26.1.x": {
+      "branch": "bukkit/26.1.x",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Bukkit_1.21.11": {
+      "branch": "bukkit/1.21.11",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Bukkit_1.21.1": {
+      "branch": "bukkit/1.21.1",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Fabric_26.3": {
+      "branch": "fabric/26.3",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Fabric_26.2": {
+      "branch": "fabric/26.2",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Fabric_26.1.x": {
+      "branch": "fabric/26.1.x",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Fabric_1.21.11": {
+      "branch": "fabric/1.21.11",
+      "enabled": true,
+      "dependencies": []
+    },
+    "Fabric_1.21.1": {
+      "branch": "fabric/1.21.1",
+      "enabled": true,
+      "dependencies": []
+    }
+  }
+}

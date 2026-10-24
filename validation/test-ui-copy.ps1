@@ -4,8 +4,8 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path -Parent $PSScriptRoot
-$sourceModules = @('Paper_1.21.1', 'Paper_1.21.11', 'Paper_26.1.x', 'Paper_26.2', 'Paper_26.3',
-    'platform-bukkit', 'Fabric_1.21.1', 'platform-fabric-modern')
+$sourceModules = @(Get-ChildItem -LiteralPath $workspace -Directory | Where-Object Name -Match '^(Paper|Purpur|Spigot|Bukkit|Fabric)_\d' | ForEach-Object Name)
+if ($sourceModules.Count -ne 25) { throw 'Expected all 25 local source modules for the UI-copy check' }
 $problems = [System.Collections.Generic.List[string]]::new()
 $literalPattern = '"(?:[^"\\]|\\.)*"'
 $frenchCopy = '[éèêàçùîôû]|\b(Cliquer|Confirmer|Butin|Retour|Fermer|Valider|Annuler|Supprimer|Choisir|Quantité|Niveau|Règle|aucune|joueur|Armure|Remboursement)\b'
@@ -23,9 +23,10 @@ foreach ($module in $sourceModules) {
         $checked++
     }
 }
-foreach ($relative in @(
-    'Fabric_1.21.1/src/main/java/fr/isaac/cutcleanreborn/fabric/Menus.java',
-    'platform-fabric-modern/src/main/java/fr/isaac/cutcleanreborn/fabric/RuleMenus.java')) {
+foreach ($relative in @($sourceModules | Where-Object { $_.StartsWith('Fabric_') } | ForEach-Object {
+    $class = if ($_ -eq 'Fabric_1.21.1') { 'Menus' } else { 'RuleMenus' }
+    "$_/src/main/java/fr/isaac/cutcleanreborn/fabric/$class.java"
+})) {
     $source = [IO.File]::ReadAllText((Join-Path $workspace $relative))
     if ($source -notmatch 'if \(pages > 1\)\s+getSlot\(footer \+ 4\)') {
         $problems.Add("${relative}: single-page menus must not display a redundant page counter")

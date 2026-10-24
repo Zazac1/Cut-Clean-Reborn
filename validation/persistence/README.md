@@ -6,7 +6,7 @@ Depuis la racine :
 pwsh -File validation/run-persistence-tests.ps1
 ```
 
-Le mode par défaut couvre les vingt plugins Paper/Purpur/Spigot/CraftBukkit, séquentiellement. Un contrôle intermédiaire peut utiliser `-Project Bukkit_1.21.1`. Java21/25, les serveurs officiels existants et les EULA déjà acceptées sont nécessaires ; le helper compile contre l'API minimale Bukkit1.21.1. Si celle-ci n'est pas installée, l'amorçage officiel décrit dans `platform-bukkit/tools/README.md` peut construire un dépôt privé, à fournir par `-MavenRepository <chemin>`.
+Le mode par défaut couvre les vingt plugins Paper/Purpur/Spigot/CraftBukkit, séquentiellement. Un contrôle intermédiaire peut utiliser `-Project Bukkit_1.21.1`. Java21/25, les serveurs officiels existants et les EULA déjà acceptées sont nécessaires ; le helper compile contre l'API minimale Bukkit1.21.1. Si celle-ci n'est pas installée, l'amorçage officiel décrit dans `Bukkit_1.21.1/tools/README.md` peut construire un dépôt privé, à fournir par `-MavenRepository <chemin>`.
 
 Le runner construit le JAR actuel, crée exclusivement un nouveau `build/persistence-server/<essai>` dans chaque module et démarre **trois processus Java distincts**, avec PID, nonce JVM et nonce d'essai contrôlés. Le même monde neuf est sauvegardé puis rechargé deux fois ; ce n'est ni un reload de plugin ni un nouveau tracker dans la même JVM. Chaque phase doit terminer avec code0 et un journal prouvant l'arrêt et la sauvegarde complets. Les empreintes sources/JAR/serveur/helper sont contrôlées entre toutes les phases ; un changement invalide le résultat. Un timeout arrête seulement le processus de test possédé et n'écrit aucun reçu réussi.
 

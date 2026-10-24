@@ -54,8 +54,7 @@ tasks.register('prepareClientServer') {
         }
         def config = new File(runtimeDir, 'plugins/CutCleanReborn/config.yml')
         if (!config.isFile()) {
-            def configRoot = loader == 'purpur' ? new File(workspace, "Paper_${family}")
-                    : (loader in ['spigot','bukkit'] ? new File(workspace, 'platform-bukkit') : targetDir)
+            def configRoot = targetDir
             copy { from new File(configRoot, 'src/main/resources/config.yml'); into config.parentFile }
         }
         logger.lifecycle("CCR QA target: ${targetName}, Minecraft ${mc}, local-only world ${runtimeDir}")

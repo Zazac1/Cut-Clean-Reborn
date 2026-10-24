@@ -3,7 +3,7 @@ function Test-FabricArtifact([System.IO.DirectoryInfo]$Project, [hashtable]$Prop
     $artifact=Join-Path $Project.FullName "build/libs/$name"
     $archive=[System.IO.Compression.ZipFile]::OpenRead($artifact)
     try {
-        foreach ($required in 'fabric.mod.json','config.yml','LICENSE','cutcleanreborn.mixins.json',
+        foreach ($required in 'fabric.mod.json','config.yml','LICENSE','icon.png','cutcleanreborn.mixins.json',
             'fr/isaac/cutcleanreborn/fabric/CutCleanReborn.class') {
             if ($null -eq $archive.GetEntry($required)) { throw "Fabric artifact missing $required" }
         }
@@ -11,6 +11,7 @@ function Test-FabricArtifact([System.IO.DirectoryInfo]$Project, [hashtable]$Prop
         try { $metadata=$reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
         if ($metadata.id -ne 'cutcleanreborn' -or $metadata.version -ne $Properties['mod_version']) { throw 'Wrong Fabric mod identity/version' }
         if ($metadata.depends.minecraft -ne $Properties['minecraft_version']) { throw 'Wrong declared Minecraft version' }
+        if ($metadata.icon -ne 'icon.png') { throw 'Fabric logo path is incorrect' }
         if ($metadata.environment -ne '*') { throw 'Fabric must support both dedicated and integrated servers' }
         if (@($archive.Entries | Where-Object FullName -Match 'NativeChecks|ColdRestartChecks|ColdPersistenceChecks|/qamixin/|ccrverification').Count -gt 0) { throw 'QA code present in released Fabric mod' }
         if (@($archive.Entries | Where-Object FullName -Match '^META-INF/jars/snakeyaml-[^/]+\.jar$').Count -ne 1) { throw 'Standalone YAML dependency missing' }
@@ -29,13 +30,13 @@ function Invoke-FabricProjectValidation([System.IO.DirectoryInfo]$Project, [stri
     foreach ($file in 'build.gradle','settings.gradle','README.md','LICENSE','gradlew.bat','gradlew','gradle/wrapper/gradle-wrapper.jar') {
         if (-not (Test-Path -LiteralPath (Join-Path $Project.FullName $file))) { throw "Fabric project missing $file" }
     }
-    $source=if ($Project.Name -eq 'Fabric_1.21.1') { $Project.FullName } else { Join-Path $workspaceRoot 'platform-fabric-modern' }
+    $source=$Project.FullName
     foreach ($file in 'src/main/resources/fabric.mod.json','src/main/resources/config.yml',
         'src/main/java/fr/isaac/cutcleanreborn/fabric/CutCleanReborn.java',
         'src/qa/java/fr/isaac/cutcleanreborn/fabric/NativeChecks.java') {
         if (-not (Test-Path -LiteralPath (Join-Path $source $file))) { throw "Fabric native source missing $file" }
     }
-    Add-Check $Project.Name 'Structure Fabric' $true $(if ($source -eq $Project.FullName) { 'Native autonomous Fabric source' } else { 'Shared native Fabric source with explicit version adapters' })
+    Add-Check $Project.Name 'Structure Fabric' $true 'Local autonomous Fabric sources, resources and build'
     if ($SelectedMode -eq 'Quick') { return }
     $tasks=if ($SelectedMode -eq 'Full') { @('build','productionSmokeTest','productionPersistenceTest') } else { @('compileJava','compileTestJava','compileQaJava') }
     if ($ForceTasks) { $tasks += '--rerun-tasks' }

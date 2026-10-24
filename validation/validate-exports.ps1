@@ -5,7 +5,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 $PSNativeCommandUseErrorActionPreference=$false
 $workspace=Split-Path -Parent $PSScriptRoot
-$output=Join-Path $workspace 'build/branch-validation'
+$output=Join-Path $workspace 'validation/build/branch-validation'
 $attempt=[DateTimeOffset]::Now.ToString('yyyyMMdd-HHmmss')+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8)
 $attemptOutput=Join-Path $output $attempt
 $null=New-Item -ItemType Directory -Path $output -Force
@@ -18,7 +18,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Export trees do not match main; synchronize locally before building' }
     $integrity=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'results/export-trees.json') -Raw | ConvertFrom-Json
     $source=[string]$integrity.source_revision
-    $manifest=(& git show HEAD:branch-exports.json) -join "`n" | ConvertFrom-Json
+    $manifest=(& git show HEAD:validation/git/branch-exports.json) -join "`n" | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw 'Cannot read committed export manifest' }
     foreach ($entry in $manifest.projects.PSObject.Properties | Where-Object {$_.Value.enabled} | Sort-Object Name) {
         if ($Project -and $entry.Name -notin $Project) { continue }

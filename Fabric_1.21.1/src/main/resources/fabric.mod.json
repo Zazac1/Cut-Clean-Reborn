@@ -3,6 +3,7 @@
   "id": "cutcleanreborn",
   "version": "${version}",
   "name": "CutCleanReborn",
+  "icon": "icon.png",
   "description": "CutClean gameplay, native server-authoritative configuration menus, timber and equipment rules.",
   "authors": ["Zazac1"],
   "license": "MIT",
