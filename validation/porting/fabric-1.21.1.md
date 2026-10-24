@@ -1,5 +1,9 @@
 # Fabric 1.21.1 — journal de portage
 
+This implementation journal preserves historical hashes and observations. Current native, cold and artifact evidence is in `validation/results/`; earlier hashes below are not receipts for the directory and logo update.
+
+During the directory update, an intermittent QA failure exposed a stale enchanting-menu seed in the book fixture. The fixture now opens a new vanilla menu after changing the player's seed, preserving every cap and paid-refund assertion. Production gameplay code is unchanged by this correction.
+
 ## Architecture
 
 Module autonome `Fabric_1.21.1`, Java21, mappings officiels Mojang, Loom1.17.13/Gradle9.5.1, Loader0.20.1, API0.116.17+1.21.1. YAML sûr (SnakeYAML2.5 inclus), sauvegardes atomiques, chemins de configuration Paper conservés. Les classes de vérification sont dans `src/qa`, jamais dans le JAR principal.
