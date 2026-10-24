@@ -1,0 +1,19 @@
+// Explicit CI evidence that compileClasspath resolved Bukkit from this checkout's private repository.
+gradle.projectsEvaluated {
+    allprojects { checkedProject ->
+        if (!checkedProject.hasProperty('bukkit_version')) return
+        checkedProject.tasks.register('verifyPrivateBukkitRepository') {
+            group = 'verification'
+            doLast {
+                def repository = System.getProperty('maven.repo.local')
+                if (!repository) throw new GradleException('Missing explicit -Dmaven.repo.local for the isolated bootstrap check.')
+                def expected = new File(repository, "org/bukkit/bukkit/${checkedProject.bukkit_version}/bukkit-${checkedProject.bukkit_version}.jar").canonicalFile
+                def actual = checkedProject.configurations.compileClasspath.resolvedConfiguration.resolvedArtifacts.find {
+                    it.moduleVersion.id.group == 'org.bukkit' && it.name == 'bukkit'
+                }?.file?.canonicalFile
+                if (!expected.isFile() || actual != expected) throw new GradleException("Bukkit was not resolved from the private repository. Expected ${expected}, got ${actual}.")
+                logger.lifecycle("PRIVATE_BUKKIT_API: ${actual}")
+            }
+        }
+    }
+}
