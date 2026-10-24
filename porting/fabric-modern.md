@@ -17,7 +17,7 @@ Chaque projet contient son wrapper Gradle, ses versions exactes, sa licence et u
 | Fabric_26.1.x | 26.1.2 | 25 | 0.155.3+26.1.2 | 1.17.21, non obfusqué |
 | Fabric_1.21.11 | 1.21.11 | 21 | 0.141.6+1.21.11 | 1.17.21, mappings Mojang puis remapping |
 
-Fabric Loader 0.19.5 et Fabric API sont nécessaires. SnakeYAML 2.5 est inclus dans le JAR. Le nom de sortie reste `cutcleanreborn-0.1.0-SNAPSHOT+<famille>.jar` ; aucun numéro de version artificiel ajouté pour le portage. Les métadonnées déclarent la version Minecraft exacte, pas une compatibilité non testée avec tous les correctifs 26.1.
+Fabric Loader 0.19.5 et Fabric API sont nécessaires. SnakeYAML 2.5 est inclus dans le JAR. Le nom de sortie reste `cutcleanreborn-0.1.0+<famille>.jar` ; seul le suffixe de développement a été retiré, sans incrémenter la version de base. Les métadonnées déclarent la version Minecraft exacte, pas une compatibilité non testée avec tous les correctifs 26.1.
 
 Serveur dédié : installer le JAR et Fabric API dans `mods/` ; les clients peuvent rester vanilla. Solo : installer le mod dans le profil Fabric local. L'administration est réservée aux opérateurs natifs de niveau 2 et au propriétaire du monde solo, même sans triches. Les permissions Bukkit/Paper d'un gestionnaire externe ne sont pas importées automatiquement.
 

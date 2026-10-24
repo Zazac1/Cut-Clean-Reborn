@@ -122,8 +122,8 @@ See [validation/README.md](validation/README.md) for prerequisites, modes and re
 ```
 
 The build produces `build/libs/cutcleanreborn-<plugin-version>+<minecraft-version>.jar`, following the same naming convention as Custom Recipe.
-For example: `cutcleanreborn-0.1.0-SNAPSHOT+26.3.jar`. Renaming the file does not change the plugin's declared version or its configuration directory.
-Superseded CCR JARs from `build/libs/` are preserved under `build/artifact-backups/` to keep the output folder unambiguous.
+For example: `cutcleanreborn-0.1.0+26.3.jar`. The development suffix was removed consistently from build properties and internal plugin/mod metadata; the base version remains `0.1.0`.
+Each module's `build/libs/` contains its installable CCR JAR. Fabric sources live in `build/sources/`, and internal verification JARs in `build/verification/`. Run `./porting/organize-artifacts.ps1 -Preview` to inspect the archive plan, then omit `-Preview` to archive superseded generated CCR artifacts. Backups remain under `build/artifact-backups/` or `dist/archive/`; user servers and Modrinth profiles are outside its scope.
 Install the JAR matching your server version, replacing the previous CCR JAR.
 `runServer` downloads the latest Paper build for that game version and starts `run-server/`.
 Stop the server before replacing its plugin. Local worlds, logs, caches and generated files are ignored by Git.
@@ -139,6 +139,6 @@ It starts a separate local server under `build/smoke-server/`, checks native ite
 It never opens an existing development world, and its test plugin is not included in release JARs.
 For hands-on verification, also test inventory navigation and cancellation, protected Timber blocks, tool breakage, Silk Touch/Fortune, sugar-cane support loss, and crafting/destroying the unique mace with real players.
 
-The separate [client QA environment](validation/client-server/README.md) is detected by Run Launcher and starts only fresh worlds under `build/client-test-server/`. It is never included in distributed JARs.
+The separate [client QA environment](validation/client-server/README.md) uses `qa-gradlew.bat` so the Dev Launcher lists only the 25 release modules. It starts only fresh worlds under `build/client-test-server/` and is never included in distributed JARs.
 
 After native validation, run `./porting/collect-artifacts.ps1`. It gathers only binaries whose hashes and source fingerprints still match their test evidence, under `dist/<Platform>/<Minecraft>/`, and writes the full 25-combination matrix. `-RequireComplete` refuses completion until all 25 also have valid real-player evidence.

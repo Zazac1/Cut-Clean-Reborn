@@ -19,7 +19,7 @@
 @if "%DEBUG%"=="" @echo off
 @rem ##########################################################################
 @rem
-@rem  Gradle startup script for Windows
+@rem  Internal QA Gradle startup script for Windows
 @rem
 @rem ##########################################################################
 

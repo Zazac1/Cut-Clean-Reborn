@@ -20,7 +20,7 @@ Projet autonome, organisé comme les variantes de CustomRecipies. Ce dossier con
 .\gradlew.bat runServer
 ```
 
-Le JAR est généré dans `build/libs/` au format `cutcleanreborn-<version>+26.3.jar`, par exemple `cutcleanreborn-0.1.0-SNAPSHOT+26.3.jar`.
+Le JAR est généré dans `build/libs/` au format `cutcleanreborn-<version>+26.3.jar`, par exemple `cutcleanreborn-0.1.0+26.3.jar`.
 Les anciens JAR de ce dossier sont conservés dans `build/artifact-backups/`.
 Se connecter avec un client Minecraft 26.3 normal pour jouer.
 

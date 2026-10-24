@@ -61,6 +61,8 @@ Les commandes, journaux de compilation et résultats restent dans les dossiers `
 
 ## Résultats automatiques — 24 octobre 2026
 
+**Packaging follow-up:** the user accepted the previous objective, then requested clearer naming and launcher discovery. All 25 variants now declare base version `0.1.0` without the development suffix. Source/verification JARs are separated from installable artifacts, old generated CCR copies are archived, and the internal QA wrapper no longer creates a sixth Paper entry. The actual launcher scanner reports 25 variants, five per platform, all `0.1.0`. A fresh unfiltered Full run, plugin cold run and standalone export rebuild are required for these changed build inputs. The results below describe the preceding layout build until those checks finish; no old client receipt is relabelled with a new hash.
+
 **Menu-layout follow-up validated automatically:** compact centered Fabric pages, grouped dashboards, separated footer utilities and matching Paper/Bukkit presentation are implemented. Actual Fabric 1.21.1 checks on JAR `cdfe6859…` now pass the menus/commands and cold-client persistence families. Other gameplay families remain partial or untested on this exact JAR; no complete player traversal is inferred.
 
 Clean Stacks affects only drops from blocks the player breaks, including Timber. Activation, inventory correction, unrelated pickup, mob collection and plank crafting never normalize those items. All 25 native runs, matching cold receipts and standalone exports have been refreshed for these sources. Client observations from preceding releases remain historical and are not relabelled.
@@ -109,6 +111,6 @@ Le contrôle global vérifie l'identité du serveur dans le journal. Les reçus 
 
 `collect-artifacts.ps1` génère le tableau complet des 25 combinaisons et ne copie que les JAR correspondant aux preuves à jour, dans `dist/<Plateforme>/<Famille>/`. Le tableau distingue compilation, démarrage, vérifications natives, redémarrages froids et joueur réel. `-RequireComplete` refuse une livraison déclarée complète si des essais client ou des preuves froides manquent.
 
-Les essais visuels utilisent uniquement les profils Modrinth « CCR QA » séparés et le projet Run Launcher `validation/client-server/`. Le serveur client QA écoute sur `127.0.0.1:25591`, avec authentification Minecraft normale. Les mondes et configurations d'origine ne sont jamais réutilisés.
+Les essais visuels utilisent uniquement les profils Modrinth « CCR QA » séparés et l'outil interne `validation/client-server/`, démarré avec `qa-gradlew.bat runServer`. Il n'apparaît plus comme une sixième variante Paper dans le Dev Launcher. Le serveur client QA écoute sur `127.0.0.1:25591`, avec authentification Minecraft normale. Les mondes et configurations d'origine ne sont jamais réutilisés.
 
 Notes détaillées : [Spigot/CraftBukkit](spigot-bukkit.md), [Fabric moderne](fabric-modern.md), [Fabric 1.21.1](fabric-1.21.1.md) et [audit de parité Fabric](fabric-parity-audit.md). Les rapports conservés attestent un état précis ; seul le tableau associé aux sources et JAR courants fait foi pour une livraison.

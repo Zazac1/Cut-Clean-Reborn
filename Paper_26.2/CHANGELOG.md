@@ -1,5 +1,10 @@
 # CutCleanReborn — Paper 26.2
 
+## 0.1.0 — artifact naming
+
+- Removed the development suffix from the declared version and JAR: `cutcleanreborn-0.1.0+26.2.jar`.
+- Base version, gameplay, configuration paths and saved data are unchanged.
+
 ## 0.1.0-SNAPSHOT — développement
 
 - Projet désormais autonome : sources, configuration, compilation et tests dans ce dossier.

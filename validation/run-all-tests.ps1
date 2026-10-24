@@ -185,6 +185,9 @@ try {
                     'This server is running ' + $serverBrand + ' version \S*-' + $revisionBrand + '-[^\r\n]*MC: ' + [regex]::Escape($properties['minecraft_version']) + '(?:[ )]| Unobfuscated)'
                 } else { 'This server is running ' + $loader + ' version ' + [regex]::Escape($properties['minecraft_version']) + '[- ]' }
                 if ($serverLog -notmatch $expectedRuntime) { throw "Le journal ne prouve pas l'execution du serveur $loader demande" }
+                $expectedPlugin = 'Enabling CutCleanReborn v' + [regex]::Escape($properties['version']) + '(?:[\s]|$)'
+                if ($serverLog -notmatch $expectedPlugin) { throw 'Le serveur de test a charge une autre version du plugin' }
+                Add-Check $project.Name 'Version chargee' $true $properties['version']
                 Add-Check $project.Name 'Plateforme native' $true "$loader $($properties['minecraft_version']) confirme dans le journal"
                 Test-Artifact $project $properties
                 $artifact = Join-Path $project.FullName "build/libs/cutcleanreborn-$($properties['version'])+$family.jar"
