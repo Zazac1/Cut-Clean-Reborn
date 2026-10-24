@@ -186,7 +186,6 @@ public final class LootRules {
           && killer.level() == level
           && killer.distanceToSqr(entity) <= (double) range * range) {
         mod.inventory.auto(stack);
-        if (mod.inventory.cleanEnabled(killer)) stack = mod.inventory.clean(stack);
         if (killer.getInventory().add(stack)) continue;
       }
       if (!stack.isEmpty()) {
