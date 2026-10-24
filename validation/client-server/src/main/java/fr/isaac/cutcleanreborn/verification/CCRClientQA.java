@@ -37,6 +37,17 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
     private String sceneName = "none";
 
     @Override public void onEnable() {
+        try {
+            if (!SceneSafety.isolatedRoot(getServer().getWorldContainer().toPath().toRealPath())) {
+                getLogger().severe("QA helper refused: this is not an authorized build/client-test-server directory.");
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+        } catch (IOException error) {
+            getLogger().severe("QA helper cannot verify its isolated directory: " + error.getMessage());
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         getServer().getPluginManager().registerEvents(this, this);
         getLogger().info("REAL CLIENT QA READY: /ccrqa setup, /ccrqa scene <timber|ore|cane|mob|stacks|equipment>, /ccrqa observe");
     }
@@ -85,6 +96,7 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
     }
 
     private void setup(Player player) {
+        if (!safePreparation(player)) return;
         World world = player.getWorld();
         world.setTime(6000);
         world.setStorm(false);
@@ -105,8 +117,15 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
     }
 
     private void prepare(Player player, String name) {
+        String requestedScene = name.toLowerCase(Locale.ROOT);
+        if (!SceneSafety.knownScene(requestedScene)) {
+            player.sendMessage("Unknown QA scene. Nothing was changed.");
+            return;
+        }
+        if (!safePreparation(player)) return;
         if (scene == null) setup(player);
-        sceneName = name.toLowerCase(Locale.ROOT);
+        if (scene == null || !scene.getWorld().equals(player.getWorld())) return;
+        sceneName = requestedScene;
         World world = scene.getWorld();
         int y = scene.getBlockY();
         for (int x = -3; x <= 3; x++) for (int z = -2; z <= 2; z++)
@@ -180,6 +199,32 @@ public final class CCRClientQA extends JavaPlugin implements Listener {
         player.getInventory().setHeldItemSlot(0);
         log(player, "scene", sceneName);
         player.sendMessage("QA scene: " + sceneName + ". Interact normally, then /ccrqa observe records actual state (not an automatic PASS).");
+    }
+
+    private boolean safePreparation(Player player) {
+        try {
+            if (!SceneSafety.isolatedWorld(getServer().getWorldContainer().toPath().toRealPath(),
+                    player.getWorld().getWorldFolder().toPath().toRealPath(), player.getWorld().getName())) {
+                player.sendMessage("QA preparation refused outside the isolated client-qa-world. Nothing was changed.");
+                return false;
+            }
+        } catch (IOException error) {
+            player.sendMessage("QA preparation refused: the world directory could not be verified.");
+            return false;
+        }
+        // Clearing a tracked mace would silently invalidate its real lifecycle evidence.
+        // Require normal storage first; never manufacture an item-removal event here.
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (stack != null && stack.getType() == Material.MACE) {
+                player.sendMessage("Store your QA mace in a chest before preparing another scene. Nothing was changed.");
+                return false;
+            }
+        }
+        if (player.getItemOnCursor().getType() == Material.MACE) {
+            player.sendMessage("Store the QA mace held by your cursor before preparing another scene. Nothing was changed.");
+            return false;
+        }
+        return true;
     }
 
     private void observe(Player player) {

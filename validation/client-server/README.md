@@ -6,6 +6,10 @@ Ce projet n'est pas un portage ou un JAR à distribuer. Run Launcher le détecte
 
 Le petit plugin séparé `CCRClientQA.jar` prépare des scènes et consigne des observations avec un joueur réel. Il n'entre jamais dans les JAR CutCleanReborn distribués. Le serveur utilise l'authentification Minecraft normale et n'écoute que sur la boucle locale.
 
+Le helper refuse de se charger hors d'un dossier `<Paper|Purpur|Spigot|Bukkit>_<version>/build/client-test-server`. Les opérations de préparation vérifient aussi le chemin réel du seul monde `client-qa-world` : les autres mondes, y compris les dimensions secondaires, sont refusés. Un nom de scène inconnu ne change plus rien. Ranger normalement toute masse QA dans un coffre avant `/ccrqa setup` ou `scene` : ces commandes refusent désormais d'effacer une masse présente dans l'inventaire ou sur le curseur, pour ne pas fausser la preuve de réservation/destruction.
+
+`./gradlew.bat test jar` compile le helper et vérifie ses gardes de chemins/noms sans démarrer Minecraft. Ces tests ne remplacent pas l'essai natif futur des refus de préparation.
+
 Le fichier facultatif `player.local.json`, ignoré par Git, contient les champs `name` et `uuid` du compte réellement utilisé. Il prépare uniquement la liste blanche et les droits de ce nouveau serveur QA. Ne pas copier les identifiants d'authentification du launcher ni modifier les listes d'un serveur existant.
 
 `/ccrqa setup` remet en place la scène et le joueur de test (créatif, invulnérable, niveau50). `/ccrqa scene timber|ore|cane|mob|stacks|equipment` fournit les blocs et outils d'un scénario en survie. Ces commandes effacent l'inventaire et la petite zone du **monde QA uniquement**. `/ccrqa observe` consigne l'état réel sans déclarer de réussite automatique. Les observations et ouvertures/fermetures des menus figurent dans `client-qa-observations.log` ; un résultat manuel exige toujours une interaction et une vérification visuelle réelles.
