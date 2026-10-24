@@ -16,7 +16,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetDataPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -39,6 +43,8 @@ import net.minecraft.world.phys.AABB;
 public final class NativeChecks implements ModInitializer {
   private final List<String> passed = new ArrayList<>(), failed = new ArrayList<>();
   private final ArrayDeque<Runnable> steps = new ArrayDeque<>();
+  private final List<Packet<?>> inputPackets = new ArrayList<>();
+  private boolean captureInputPackets;
   private RuleRuntime mod;
   private Map<String, Object> original;
   private ServerPlayer player;
@@ -107,6 +113,27 @@ public final class NativeChecks implements ModInitializer {
     (result ? passed : failed).add(label);
   }
 
+  private void checkInputCostSync() {
+    var input = (net.minecraft.world.inventory.AnvilMenu) player.containerMenu;
+    inputPackets.clear();
+    captureInputPackets = true;
+    try {
+      input.setItemName("not-a-number");
+      input.setItemName("still-not-a-number");
+    } finally {
+      captureInputPackets = false;
+    }
+    long corrections = inputPackets.stream()
+        .filter(packet -> packet instanceof ClientboundContainerSetDataPacket data
+            && data.getContainerId() == input.containerId && data.getId() == 0 && data.getValue() == 0)
+        .count();
+    check("native text input sends a zero-cost correction for each edit", corrections == 2);
+    check("native text input cost sync does not resend input contents",
+        inputPackets.stream().noneMatch(packet -> packet instanceof ClientboundContainerSetContentPacket
+            || packet instanceof ClientboundContainerSetSlotPacket slot
+                && slot.getContainerId() == input.containerId && slot.getSlot() == 0));
+  }
+
   private void initial() throws Exception {
     GameProfile profile =
         new GameProfile(UUID.fromString("e9a57af8-3bb6-4e70-9ccb-04164a8f7700"), "CCRVerification");
@@ -118,7 +145,13 @@ public final class NativeChecks implements ModInitializer {
             mod.server,
             new Connection(PacketFlow.SERVERBOUND),
             player,
-            CommonListenerCookie.createInitial(profile, false));
+            CommonListenerCookie.createInitial(profile, false)) {
+          @Override
+          public void send(Packet<?> packet) {
+            if (captureInputPackets) inputPackets.add(packet);
+            super.send(packet);
+          }
+        };
     player.gameMode.changeGameModeForPlayer(GameType.SURVIVAL);
     mod.server.getPlayerList().op(player.nameAndId());
     player.setPos(0.5, 100, 0.5);
@@ -1534,6 +1567,7 @@ public final class NativeChecks implements ModInitializer {
             check(
                 "native anvil input opens",
                 player.containerMenu instanceof net.minecraft.world.inventory.AnvilMenu));
+    steps.add(this::checkInputCostSync);
     steps.add(() -> player.closeContainer());
     steps.add(
         () ->
