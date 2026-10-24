@@ -63,7 +63,13 @@ Les commandes, journaux de compilation et résultats restent dans les dossiers `
 
 The 25 version directories now own their complete source trees, build scripts, resources and platform tools. No build reads a neighboring project or a root shared-code directory. The supplied logo is packaged as `icon.png` in each version and declared by Fabric. Technical reports and Git helpers are grouped under `validation/`; old central outputs and shared directories are preserved in its ignored build archive. New JARs stay in each version's `build/libs/`.
 
-Fresh validation for this organization is running. The following timed results describe the preceding packaging revision and must not be used as receipts for the changed sources or logo.
+Fresh standalone attempt `20261024-224044-209e05b4` passed all 25 isolated project builds and 289 unit tests at **22:48:11 Paris time**, from source revision `997087a52ef177609212c38626918ee03cafff19`. Every version branch exports its local project directly, without neighboring sources. The launcher scanner finds 25 variants, five per platform, all at `0.1.0`, each with the exact supplied logo. All 25 installable JARs contain that image and retain the required filename and metadata.
+
+Plugin cold attempt `20261024-202334-8331a856` passed all 20 variants at **22:51:19 Paris time**, with 2,140 storage assertions across three distinct JVMs per variant. Its source, JAR and verifier fingerprints still match the current files.
+
+The final unfiltered default **Full** run finished at **22:58:20 Paris time** with **zero failures across all 25 variants**, **289 unit tests** and **6,280 native checks**. Fabric also passes 126 cold-storage checks across 15 JVM launches; combined with the plugins, cold coverage is 2,266 assertions across 75 JVM launches and 50 actual restarts. The collector verifies all 25 current source fingerprints and JAR hashes, then writes links under `validation/results/artifacts/` without recreating `dist/`.
+
+This follow-up changes source organization and artwork, with a QA-only enchanting-fixture correction. No new player or visual Minecraft result is claimed. Earlier client observations retain their original hashes. The following timed results describe the preceding packaging revision and must not be used as receipts for the changed sources or logo.
 
 ## Historical automatic results — 24 October 2026, before source relocation
 

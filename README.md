@@ -1,5 +1,7 @@
 # CutClean Reborn
 
+<img src="Paper_26.3/src/main/resources/icon.png" width="128" alt="CutClean Reborn logo">
+
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
 The 25 projects target five Minecraft families. Native server, cold restart, standalone build and actual player observations are recorded separately in [the validation reports](validation/README.md) and [the client log](validation/porting/client-tests.md). Plugin players use a normal matching Minecraft client; Fabric also supports single-player.
 
