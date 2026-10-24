@@ -1,7 +1,7 @@
 # CutClean Reborn
 
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
-The 20 plugin variants have passed native-server checks; the five Fabric variants are undergoing the final parity audit. Real-client and cold-restart validation remain separate from these automated checks. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. A source folder alone is not a compatibility claim. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
+All 25 variants passed the full native-server validation on October 24, 2026: 259 unit tests and 5,935 native checks. Each also has a separate three-JVM cold-persistence proof. Real-client coverage is still partial and is not inferred from those automated checks. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. A source folder alone is not a compatibility claim. Plugin players use a normal matching Minecraft client; Fabric also targets single-player, with actual solo-client tests still pending.
 
 ## Features
 
@@ -81,7 +81,7 @@ CutCleanReborn/
 ├── Paper_26.3/             # Same structure, independently buildable
 ├── Paper_1.21.1/, Paper_1.21.11/, Paper_26.1.x/
 ├── Purpur_<Minecraft>/    # Shares the matching Paper sources in main
-├── Spigot_<Minecraft>/, Bukkit_<Minecraft>/, Fabric_<Minecraft>/ # Ports in progress
+├── Spigot_<Minecraft>/, Bukkit_<Minecraft>/, Fabric_<Minecraft>/ # Native platform/version adapters
 ├── build-logic/           # Shared platform-specific builds
 ├── porting/               # Status, platform notes and verified artifact collector
 ├── validation/            # Cross-version runner and manual test checklist
@@ -100,7 +100,7 @@ Like [CustomRecipe](https://github.com/Zazac1/CustomRecipe), version branches us
 
 - `main`: complete workspace, documentation and cross-version validation (default branch).
 - `<paper|purpur|spigot|bukkit|fabric>/<Minecraft>`: standalone projects, enabled for export only once validated.
-- The historical `fabric/1.21.11` branch is preserved until the current Fabric port is ready to extend its history.
+- The historical `fabric/1.21.11` branch keeps its ancestry when the current native port is exported.
 
 See [BRANCHES.md](BRANCHES.md) and `branch-exports.json` for the workflow. After validating and committing changes on `main`, `sync-branches.ps1` previews the updates; `-Mode Publish` synchronizes enabled branches and publishes them with `main`, without forced updates or branch deletion. GitHub publication was explicitly authorized; Modrinth publication was not.
 

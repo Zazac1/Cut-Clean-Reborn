@@ -59,21 +59,23 @@ Ordre de travail :
 
 Les commandes, journaux de compilation et résultats restent dans les dossiers `build/` des modules et `validation/results/`. Ce document sera enrichi au fur et à mesure ; il ne constitue pas une déclaration de portage terminé.
 
-## Avancement vérifié — validation finale en cours
+## Résultats automatiques — 24 octobre 2026
 
-Un passage complet des vingt variantes plugins a réussi après la correction du retour Échap en créatif. Chaque variante a réussi ses neuf tests unitaires, son démarrage sur le véritable serveur annoncé et ses vérifications natives :
+Le passage global sans filtre `.\test-all.ps1`, en mode `Full`, a terminé à 01:50, heure de Paris, avec **zéro échec sur les 25 variantes**. Il couvre 259 tests unitaires et 5 935 vérifications natives. Chaque variante a réellement démarré sur le serveur annoncé ; Fabric utilise son JAR de distribution hors de Loom. Les nombres ci-dessous sont, dans chaque cellule, **tests unitaires / vérifications natives par variante** :
 
-| Minecraft réellement testé | Java | Paper et Purpur, par variante | Spigot et CraftBukkit, par variante |
-| --- | --- | --- | --- |
-| 1.21.1 | 21 | 248 vérifications | 259 vérifications |
-| 1.21.11 | 21 | 256 vérifications | 267 vérifications |
-| 26.1.2 (famille 26.1.x) | 25 | 256 vérifications | 267 vérifications |
-| 26.2 | 25 | 257 vérifications | 268 vérifications |
-| 26.3 | 25 | 257 vérifications | 268 vérifications |
+| Minecraft réellement testé | Java | Paper et Purpur, chacun | Spigot et CraftBukkit, chacun | Fabric |
+| --- | --- | --- | --- | --- |
+| 1.21.1 | 21 | 9 / 248 | 9 / 259 | 15 / 165 |
+| 1.21.11 | 21 | 9 / 256 | 9 / 267 | 16 / 141 |
+| 26.1.2 (famille 26.1.x) | 25 | 9 / 256 | 9 / 267 | 16 / 141 |
+| 26.2 | 25 | 9 / 257 | 9 / 268 | 16 / 141 |
+| 26.3 | 25 | 9 / 257 | 9 / 268 | 16 / 141 |
 
-Ces nombres décrivent ce passage historique, pas une certification permanente des fichiers courants : le raccourcissement ultérieur d'un titre de menu exige une nouvelle preuve. La commande finale sans filtre doit revalider les 25 variantes. Les cinq variantes Fabric sont implémentées et en revalidation native après les dernières corrections de parité ; voir leurs notes détaillées ci-dessous.
+Ces reçus correspondent aux sources et JAR courants, après le raccourcissement du titre d'armure et les corrections Fabric de concurrence, cycle de vie et canne/piston. Une modification ultérieure d'un fichier couvert ou d'un JAR exige une nouvelle preuve ; ce tableau n'est pas une certification permanente.
 
-Les tests froids plugins, indépendants des tests natifs en un seul processus, relancent trois vraies JVM sur le même nouveau monde. La première matrice a conservé ses échecs de garde d'intégrité et de fixture ; une nouvelle matrice homogène est en cours. Ne pas mélanger ses résultats avec ceux d'anciens essais. Fabric vérifie également trois arrêts/redémarrages sur son JAR de distribution, en dehors de Loom.
+La reprise homogène froide des vingt plugins a réussi 107 assertions par variante, soit 2 140 contrôles sur 60 lancements réels de JVM. Fabric a réussi 22 contrôles froids en 1.21.1 et 26 dans chacune des quatre autres variantes. Au total : 2 266 contrôles de persistance, trois démarrages par variante et 50 redémarrages à froid. La première matrice conserve ses échecs historiques de garde d'intégrité, fixture gravitaire et message d'arrêt amont ; ils ne sont ni effacés ni mélangés à la reprise réussie. Les preuves et explications sont dans les notes de plateforme.
+
+Le collecteur a réuni **25 JAR sur 25 dont les empreintes sont à jour**, tous avec preuve froide ; il indique encore **0/25 parcours joueur complets**. Les cinq branches Fabric courantes ont aussi compilé dans des copies isolées, sans aucun module voisin. La compilation autonome finale de l'ensemble des 25 branches et les essais client restent distincts de cette matrice serveur.
 
 Les nombres de vérifications varient avec les registres Minecraft et les adaptateurs de plateforme. Les essais automatisés couvrent notamment les menus, caps, enchantements, origines placées, objets persistants et masse unique. Ils ne prouvent ni le ressenti de minage standard ni une interaction réalisée à la souris dans un client.
 

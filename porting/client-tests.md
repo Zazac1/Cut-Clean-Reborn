@@ -4,7 +4,17 @@ Ces observations ne remplacent ni la matrice complète ni les tests de toutes le
 
 ## Profils de test séparés
 
-Cinq nouveaux profils Modrinth sont réservés aux essais : `CCR QA 26.3 - FO`, puis `CCR QA 26.2 - préparation`, `CCR QA 26.1.2 - préparation`, `CCR QA 1.21.11 - préparation` et `CCR QA 1.21.1 - préparation`. Le suffixe « préparation » est important : ces quatre copies utilisent encore Minecraft26.3/FO15.0.0-beta.2 tant que leur installation exacte n'est pas confirmée et effectuée. Leur nom n'est pas une preuve de la version installée.
+Cinq nouveaux profils Modrinth sont réservés aux essais : `CCR QA 26.3 - FO`, puis `CCR QA 26.2 - préparation`, `CCR QA 26.1.2 - préparation`, `CCR QA 1.21.11 - préparation` et `CCR QA 1.21.1 - préparation`. Leur nom n'est jamais une preuve de la version installée. L'installation et le lancement des quatre profils supplémentaires ont été explicitement confirmés par l'utilisateur.
+
+| Profil ciblé | Version FO sélectionnée et Minecraft annoncé | Observation réelle |
+| --- | --- | --- |
+| 26.3 | 15.0.0-beta.2 / 26.3 | Client déjà utilisé pour les essais Paper décrits ci-dessous |
+| 26.2 | 14.1.1 / 26.2 | Installation terminée, bouton Play et 49 mods ; pas encore lancé |
+| 26.1.2 | 13.6.0 / 26.1.2 | Installation terminée, bouton Play et 48 mods ; pas encore lancé |
+| 1.21.11 | 12.3.0 / 1.21.11 | Installation déclenchée sur le profil dédié ; fin et lancement à revérifier |
+| 1.21.1 | 6.5.0 / 1.21.1 | Client réellement lancé, accueil terminé et écran principal atteint : Minecraft 1.21.1/Fabric, FO 6.5.0 visibles |
+
+Le premier lancement 1.21.1 vérifie seulement le profil de base : aucun CCR n'y était encore installé, aucun monde n'a été ouvert et aucun essai gameplay 1.21.1 n'est déduit de cet écran principal. Les lancements et essais restants se feront séquentiellement pour limiter la mémoire.
 
 La duplication Modrinth conservait la synchronisation globale de certains fichiers. Les quatre options par instance `Unsync game settings`, `Unsync multiplayer servers`, `Unsync command history` et `Unsync saved creative hotbars` ont été activées et vérifiées visuellement dans les cinq profils QA avant les prochains lancements. Les réglages globaux et les options des anciennes instances n'ont pas été modifiés par cette séparation. Les packs de ressources restent gérés par le modpack ; leur interrupteur est désactivé dans cette interface, et aucun réglage global de packs n'a été changé.
 

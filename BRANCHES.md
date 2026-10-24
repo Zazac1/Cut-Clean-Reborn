@@ -12,7 +12,7 @@ Le modèle suit [CustomRecipe](https://github.com/Zazac1/CustomRecipe) : une bra
 
 `main` reste la branche par défaut. Les familles sont `26.3`, `26.2`, `26.1.x` (révision concrète testée : `26.1.2`), `1.21.11` et `1.21.1`. `branch-exports.json` définit les noms, dépendances à embarquer et activations. Un dossier présent mais non validé ne justifie pas une branche annoncée comme supportée. L'ancien historique Fabric est conservé jusqu'à la synchronisation de son portage actuel.
 
-Le passage global `Full` du 24octobre2026 à01:50Paris a réussi pour les25 variantes. Les preuves de persistance couvrent aussi chacune trois JVM distinctes. Une branche activée atteste les contrôles indiqués, pas tous les essais visuels : le tableau de compatibilité et le journal client distinguent ces étapes. Une branche locale n'est pas encore une publication GitHub.
+Le passage global `Full` du 24 octobre 2026 à 01:50, heure de Paris, a réussi pour les 25 variantes. Les preuves de persistance couvrent aussi chacune trois JVM distinctes. Une branche activée atteste les contrôles indiqués, pas tous les essais visuels : le tableau de compatibilité et le journal client distinguent ces étapes. Une branche locale n'est pas encore une publication GitHub.
 
 ## Mettre à jour les branches de version
 
