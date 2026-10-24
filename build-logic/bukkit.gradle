@@ -1,0 +1,100 @@
+// Portable Bukkit source shared by CraftBukkit and Spigot; deliberately no Paper dependency.
+group = project.group
+version = project.version
+base { archivesName = 'cutcleanreborn' }
+def sharedRoot = file('src').isDirectory() ? projectDir : file('../platform-bukkit')
+def javaRelease = project.java_version.toInteger()
+def family = project.minecraft_family
+def serverPlatform = project.server_platform
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+}
+dependencies {
+    def api = "org.bukkit:bukkit:${project.bukkit_version}"
+    compileOnly(api)
+    testImplementation(api)
+    testImplementation(platform('org.junit:junit-bom:5.11.4'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+}
+sourceSets {
+    main { java.srcDirs = [new File(sharedRoot, 'src/main/java')]; resources.srcDirs = [new File(sharedRoot, 'src/main/resources')] }
+    test { java.srcDirs = [new File(sharedRoot, 'src/test/java')] }
+    smoke { java.srcDirs = [new File(sharedRoot, 'src/smoke/java')]; resources.srcDirs = [new File(sharedRoot, 'src/smoke/resources')]; compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath }
+}
+java { toolchain { languageVersion = JavaLanguageVersion.of(javaRelease) } }
+tasks.withType(JavaCompile).configureEach { options.release = javaRelease; options.encoding = 'UTF-8' }
+tasks.named('test') { useJUnitPlatform() }
+tasks.named('jar', Jar) { archiveVersion = "${project.version}+${family}" }
+tasks.named('processResources') {
+    inputs.properties(version: project.version, minecraft: project.minecraft_version, platform: serverPlatform)
+    filesMatching('plugin.yml') { expand(version: project.version); filter { line -> line.startsWith('api-version:') ? "api-version: '${project.minecraft_version}'" : line.replace('Paper plugin.', "${serverPlatform.capitalize()} plugin.") } }
+}
+tasks.named('processSmokeResources') {
+    inputs.property('minecraft', project.minecraft_version)
+    filesMatching('plugin.yml') { filter { line -> line.startsWith('api-version:') ? "api-version: '${project.minecraft_version}'" : line } }
+}
+def serverJar = layout.projectDirectory.file("run-server/${serverPlatform}-${project.minecraft_version}.jar")
+tasks.register('prepareManualServer', Copy) {
+    dependsOn tasks.named('jar')
+    into layout.buildDirectory.dir('manual-server')
+    from(new File(sharedRoot, 'src/smoke/server.properties')) {
+        filter { line -> line == 'server-port=0' ? 'server-port=25595' : line == 'online-mode=false' ? 'online-mode=true' : line }
+        eachFile { details -> if (layout.buildDirectory.file('manual-server/server.properties').get().asFile.exists()) details.exclude() }
+    }
+    from(layout.projectDirectory.file('run-server/eula.txt')) {
+        eachFile { details -> if (layout.buildDirectory.file('manual-server/eula.txt').get().asFile.exists()) details.exclude() }
+    }
+    into('plugins') { from tasks.named('jar') }
+    // Keep a manual tester's config between launches; never copy the smoke checker here.
+    doFirst {
+        if (!serverJar.asFile.exists() || !file('run-server/eula.txt').exists()) throw new GradleException('Supply the official BuildTools server JAR and accepted EULA first.')
+    }
+}
+tasks.register('runServer', JavaExec) {
+    group = 'application'
+    description = 'Starts a manual QA server on 127.0.0.1:25595 under build/manual-server, never user worlds.'
+    dependsOn tasks.named('prepareManualServer')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaRelease) }
+    workingDir layout.buildDirectory.dir('manual-server')
+    classpath files(serverJar)
+    mainClass = 'org.bukkit.craftbukkit.bootstrap.Main'
+    jvmArgs '-Xms256M', '-Xmx1G'
+    standardInput = System.in
+    args '--nogui'
+}
+tasks.register('smokePluginJar', Jar) { dependsOn tasks.named('smokeClasses'); archiveFileName = 'CCRSmoke.jar'; destinationDirectory = layout.buildDirectory.dir('smoke-plugin'); from sourceSets.smoke.output }
+tasks.register('prepareSmokeServer', Copy) {
+    dependsOn tasks.named('jar'), tasks.named('smokePluginJar')
+    outputs.upToDateWhen { false }
+    into layout.buildDirectory.dir('smoke-server')
+    from new File(sharedRoot, 'src/smoke/server.properties')
+    from layout.projectDirectory.file('run-server/eula.txt')
+    into('plugins') { from tasks.named('jar'); from tasks.named('smokePluginJar') }
+    into('plugins/CutCleanReborn') { from new File(sharedRoot, 'src/main/resources/config.yml') }
+}
+tasks.register('smokeTest', JavaExec) {
+    group = 'verification'
+    description = "Native ${serverPlatform} tests in an isolated world; never touches run-server worlds."
+    timeout = java.time.Duration.ofMinutes(5)
+    dependsOn tasks.named('prepareSmokeServer')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaRelease) }
+    workingDir layout.buildDirectory.dir('smoke-server')
+    classpath files(serverJar)
+    mainClass = 'org.bukkit.craftbukkit.bootstrap.Main'
+    jvmArgs '-Xms256M', '-Xmx1G'
+    systemProperty 'terminal.jline', 'false'
+    systemProperty 'terminal.ansi', 'false'
+    args '--nogui', '--port', '0'
+    doFirst {
+        if (!serverJar.asFile.exists() || !file('run-server/eula.txt').exists()) throw new GradleException('Build the official server with BuildTools and supply accepted run-server/eula.txt first.')
+        def result = layout.buildDirectory.file('smoke-server/smoke-result.txt').get().asFile
+        if (result.exists()) result.delete()
+    }
+    doLast {
+        def result = layout.buildDirectory.file('smoke-server/smoke-result.txt').get().asFile
+        if (!result.exists() || !result.text.startsWith('PASS')) throw new GradleException('Native Bukkit checks failed; inspect build/smoke-server/logs/latest.log.')
+    }
+}
