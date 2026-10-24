@@ -14,11 +14,11 @@ final class ConfigMainMenu extends MenuSupport {
     private static final int CLEAN_STACKS_SLOT = 20;
     private static final int BETTER_SUGAR_CANE_SLOT = 22;
     private static final int STUFF_RULES_SLOT = 24;
-    private static final int EXIT_SLOT = 31;
+    private static final int EXIT_SLOT = 35;
 
     ConfigMainMenu(CutCleanRebornPlugin plugin) {
         super(plugin, 4, "§8CCR Config");
-        inventory.setItem(4, MenuItems.item(Material.BOOK, "§6CutClean Reborn", List.of()));
+        header(Material.BOOK, "§6CutClean Reborn");
         inventory.setItem(MOB_CUSTOMISATION_SLOT, MenuItems.item(Material.SPAWNER, "§6Mob Customisation",
                 List.of("§7Configure drops, XP and cooked food.", "", "§eClick to open")));
         inventory.setItem(ORE_DROPS_SLOT, MenuItems.item(Material.DIAMOND_ORE, "§6Ore Drops",
@@ -33,7 +33,7 @@ final class ConfigMainMenu extends MenuSupport {
                 List.of("§7Status: " + CutCleanCommands.state(plugin.betterSugarCane().enabled()), "§7Configure drops for player", "§7and support breaks.", "", "§eClick to open")));
         inventory.setItem(STUFF_RULES_SLOT, MenuItems.item(Material.IRON_CHESTPLATE, "§6Stuff Rules",
                 List.of("§7Status: " + CutCleanCommands.state(plugin.stuffRules().enabled()), "§7Armor limits, enchantment caps and unique mace.", "", "§eClick to open")));
-        inventory.setItem(EXIT_SLOT, MenuItems.item(Material.BARRIER, "§cExit", List.of("§7Close the configuration.")));
+        inventory.setItem(EXIT_SLOT, MenuItems.item(Material.BARRIER, "§cClose CCR", List.of()));
     }
     @Override void handleClick(Player player, int slot, ClickType click) {
         if (slot == MOB_CUSTOMISATION_SLOT) new MobListMenu(plugin, 0).open(player);

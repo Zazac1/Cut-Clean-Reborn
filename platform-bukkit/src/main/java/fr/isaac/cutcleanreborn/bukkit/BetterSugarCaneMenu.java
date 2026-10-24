@@ -27,7 +27,7 @@ final class BetterSugarCaneMenu extends MenuSupport {
         category(24, Material.DIRT, "Support Break", BetterSugarCaneService.Cause.SUPPORT,
                 "§7Cane falls after losing its support.");
         footer("CCR Config");
-        inventory.setItem(30, MenuItems.item(Material.TNT, "§cReset Sugar Cane Settings",
+        inventory.setItem(31, MenuItems.item(Material.TNT, "§cReset Sugar Cane Settings",
                 List.of("§7Restore switches, chances and quantities.", "§7You will be asked to confirm.")));
     }
 
@@ -47,7 +47,7 @@ final class BetterSugarCaneMenu extends MenuSupport {
             refresh();
         } else if (slot == 20) new SugarCaneCauseMenu(plugin, BetterSugarCaneService.Cause.PLAYER).open(player);
         else if (slot == 24) new SugarCaneCauseMenu(plugin, BetterSugarCaneService.Cause.SUPPORT).open(player);
-        else if (slot == 30) confirm(player, "Reset all sugar cane settings?", plugin.betterSugarCane()::reset,
+        else if (slot == 31) confirm(player, "Reset all sugar cane settings?", plugin.betterSugarCane()::reset,
                 target -> new BetterSugarCaneMenu(plugin).open(target));
     }
 }

@@ -9,7 +9,7 @@ $sourceModules = @('Paper_1.21.1', 'Paper_1.21.11', 'Paper_26.1.x', 'Paper_26.2'
 $problems = [System.Collections.Generic.List[string]]::new()
 $literalPattern = '"(?:[^"\\]|\\.)*"'
 $frenchCopy = '[éèêàçùîôû]|\b(Cliquer|Confirmer|Butin|Retour|Fermer|Valider|Annuler|Supprimer|Choisir|Quantité|Niveau|Règle|aucune|joueur|Armure|Remboursement)\b'
-$internalCopy = '(?i)niveau de retour|pagination (does not|never)|Navigation & Saving|Changes are saved automatically|semantic (level|parent)|Escape history'
+$internalCopy = '(?i)niveau de retour|pagination (does not|never)|Navigation & Saving|Changes are saved automatically|semantic (level|parent)|Escape history|Menus: Escape = parent'
 $checked = 0
 foreach ($module in $sourceModules) {
     $sourceRoot = Join-Path $workspace "$module/src/main/java"
@@ -27,7 +27,7 @@ foreach ($relative in @(
     'Fabric_1.21.1/src/main/java/fr/isaac/cutcleanreborn/fabric/Menus.java',
     'platform-fabric-modern/src/main/java/fr/isaac/cutcleanreborn/fabric/RuleMenus.java')) {
     $source = [IO.File]::ReadAllText((Join-Path $workspace $relative))
-    if ($source -notmatch 'if \(pages > 1\)\s+getSlot\(49\)') {
+    if ($source -notmatch 'if \(pages > 1\)\s+getSlot\(footer \+ 4\)') {
         $problems.Add("${relative}: single-page menus must not display a redundant page counter")
     }
     if ($source -match 'Component\.literal\("CCR • " \+ title\)') {

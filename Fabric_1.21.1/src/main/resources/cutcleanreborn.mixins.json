@@ -5,7 +5,7 @@
   "mixins": [
     "BlockLootMixin", "LivingLootMixin", "EntityLootMixin", "PlacedBlockMixin",
     "ItemLifecycleMixin", "ItemEntityMixin", "ResultSlotMixin", "SlotMixin",
-    "CraftingMenuMixin", "CraftPreviewMixin", "EnchantingMixin", "AnvilRefundMixin",
+    "CraftingMenuMixin", "EnchantingMixin", "AnvilRefundMixin",
     "InventoryChangeMixin", "ContainerInteractionMixin", "PlayerEquipmentMixin"
   ],
   "injectors": { "defaultRequire": 1 }

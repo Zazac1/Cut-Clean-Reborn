@@ -61,27 +61,31 @@ Les commandes, journaux de compilation et résultats restent dans les dossiers `
 
 ## Résultats automatiques — 24 octobre 2026
 
-The latest unfiltered `.\test-all.ps1` run, in default `Full` mode, finished at **16:31:15 Paris time on 24 October 2026**, with **zero failures across all 25 variants**: 259 unit tests and 5,985 native checks. Every variant started on its actual advertised runtime; Fabric uses its release JAR outside Loom. Each cell below gives **unit tests / native checks per variant**:
+**Menu-layout follow-up in progress:** after the 17:48 blocks-only validation below, the user requested better button/settings placement. Compact centered Fabric pages, grouped dashboards, separated footer utilities and matching Paper/Bukkit presentation are now implemented. The earlier results below are historical for these changed sources until the new unfiltered Full run and cold/standalone receipts finish. Targeted Fabric checks passed 186 native assertions on 1.21.1 and 162 on 26.3 before the final short-help copy adjustment; actual-client checks are in progress on JAR `cdfe6859…`. No complete player traversal is inferred.
+
+Clean Stacks now affects only drops from blocks the player breaks, including Timber. Activation, inventory correction, unrelated pickup, mob collection and plank crafting never normalize those items. All 25 native runs have been refreshed for this change; current plugin cold receipts and standalone exports are still in progress. Client observations from the preceding release remain historical and are not relabelled.
+
+The latest unfiltered `.\test-all.ps1` run, in default `Full` mode, finished at **17:48:19 Paris time on 24 October 2026**, with **zero failures across all 25 variants**: 259 unit tests and 6,160 native checks. Every variant started on its actual advertised runtime; Fabric uses its release JAR outside Loom. Each cell below gives **unit tests / native checks per variant**:
 
 | Minecraft réellement testé | Java | Paper et Purpur, chacun | Spigot et CraftBukkit, chacun | Fabric |
 | --- | --- | --- | --- | --- |
-| 1.21.1 | 21 | 9 / 248 | 9 / 259 | 15 / 175 |
-| 1.21.11 | 21 | 9 / 256 | 9 / 267 | 16 / 151 |
-| 26.1.2 (famille 26.1.x) | 25 | 9 / 256 | 9 / 267 | 16 / 151 |
-| 26.2 | 25 | 9 / 257 | 9 / 268 | 16 / 151 |
-| 26.3 | 25 | 9 / 257 | 9 / 268 | 16 / 151 |
+| 1.21.1 | 21 | 9 / 255 | 9 / 266 | 15 / 182 |
+| 1.21.11 | 21 | 9 / 263 | 9 / 274 | 16 / 158 |
+| 26.1.2 (famille 26.1.x) | 25 | 9 / 263 | 9 / 274 | 16 / 158 |
+| 26.2 | 25 | 9 / 264 | 9 / 275 | 16 / 158 |
+| 26.3 | 25 | 9 / 264 | 9 / 275 | 16 / 158 |
 
-These receipts match the current sources and JARs, including concise English in-game copy, Fabric input title/cost corrections and list-page return preservation. All 25 source fingerprints were rechecked after the run without drift. A later covered-source or JAR change requires new evidence; this table is not a permanent certification.
+These receipts match the current sources and JARs, including the blocks-only scope, concise English in-game copy, Fabric input title/cost corrections and list-page return preservation. All 25 source fingerprints were rechecked after the run without drift. A later covered-source or JAR change requires new evidence; this table is not a permanent certification.
 
-The 20-plugin cold run `20261024-130030-0dd226f8` passed 107 assertions per variant, or 2,140 checks across 60 JVM launches. Those plugin sources/JARs remain unchanged. The latest Fabric run passed 22 cold checks for 1.21.1 and 26 for each other version. Total: **2,266 storage checks, 75 launches and 50 actual cold restarts**. Earlier failed attempts remain archived separately; they are not erased or counted as successful runs. See the platform notes for their causes and corrections.
+The latest Fabric run passed 22 cold checks for 1.21.1 and 26 for each other version, or 126 assertions across 15 JVM launches. A new 20-plugin cold run is in progress for the changed plugin sources/JARs. The earlier `20261024-130030-0dd226f8` success is historical, not evidence for this revision. Earlier failed attempts remain archived separately; they are not erased or counted as successful runs.
 
-The collector gathered **25/25 current native-verified JARs**, all with matching cold evidence. It still reports **0/25 complete player traversals**: Fabric 1.21.1 currently has only its menu/command family validated, or 1/11 families. Standalone build attempt `20261024-161746-32abe95c` passed all **25 branches and 259 unit tests** at 16:24:37 from source revision `2d24e6fd722cd504523b229a38bf98b7fdf7b2c6`. Each branch was built from a fresh archive with no sibling module, including its release and verifier JAR. Exact committed blobs and Git modes were checked as well. Logs remain under `build/branch-validation/` and receipts under `validation/results/exports/`. These checks do not replace client tests.
+All **25 current native-verified JARs** are built. The collector and 25 standalone exports must be refreshed after committing the blocks-only change. The preceding standalone attempt `20261024-161746-32abe95c` remains historical. **0/25 complete player traversals** are claimed. Logs remain under `build/branch-validation/` and receipts under `validation/results/exports/`; these checks do not replace client tests.
 
 Les nombres de vérifications varient avec les registres Minecraft et les adaptateurs de plateforme. Les essais automatisés couvrent notamment les menus, caps, enchantements, origines placées, objets persistants et masse unique. Ils ne prouvent ni le ressenti de minage standard ni une interaction réalisée à la souris dans un client.
 
 ### Essais réellement effectués dans Minecraft
 
-Current Fabric 1.21.1 release `00c3fa79…` was installed only in its isolated QA profile, preserving all 48 other mod files. Its actual-client menu/command family passed at 16:37:24: Timber/Stuff Rules/cane navigation, invalid input cancellation without fake XP cost, confirmation cancellation, explicit Close, main commands and the repaired return to a consulted second list page. The world is paused at this checkpoint. Full gameplay and solo lifecycle coverage for this release remain outstanding.
+Current Fabric 1.21.1 release `40050ed6…` was installed only in its isolated QA profile, preserving all 48 other mod files. Actual-client checks confirm unchanged activation/given inventory, ordinary thrown-and-picked-up Birch Logs, and four crafted Birch Planks. Actual survival breaks separately produced one Oak Log from Birch and one Stone from Granite, confirmed before pickup. Haste 64 enabled brief click input, not a standard-mining-feel claim. Its Clean Stacks receipt remains PARTIAL; the preceding release's menu and solo lifecycle PASS are not inherited. World B saves normally at 17:48:53 and the whole client closes at 17:49:10; cold-client verification is in progress.
 
 Historical Paper 1.21.11 checks covered menus/commands, the unique-mace lifecycle, Clean Stacks and a cold restart; historical Fabric 1.21.1 checks covered two-world solo lifecycle, Clean Stacks and persistence. Paper 26.3 also has partial mining/menu observations, with Haste used only in its QA scene; standard mining feel was not proven by that accelerated test. Their exact JAR hashes, conditions and limitations remain in [the client log](client-tests.md) and local receipt history. None is relabelled with a new release hash or promoted into a complete player traversal. Current receipts and the generated `dist` matrix remain authoritative.
 

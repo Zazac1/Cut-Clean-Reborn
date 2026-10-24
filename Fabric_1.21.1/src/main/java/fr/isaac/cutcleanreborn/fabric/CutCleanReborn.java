@@ -322,7 +322,6 @@ public final class CutCleanReborn implements ModInitializer {
     if (value != null) {
       settings.set("clean-stacks.players." + player.getUUID(), value);
       save();
-      if (value) inventory.tick(player);
     } else if (!mode.equalsIgnoreCase("status")) {
       source.sendFailure(Component.literal("CCR • Expected on, off, status or toggle"));
       return 0;

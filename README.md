@@ -1,7 +1,7 @@
 # CutClean Reborn
 
 UHC and quality-of-life rules for Minecraft. The multiplatform port targets Paper, Purpur, Spigot, CraftBukkit and Fabric on 1.21.1, 1.21.11, 26.1.2 (26.1.x family), 26.2 and 26.3. Java 21 is used for 1.21.x, Java 25 for 26.x.
-All 25 variants passed the full native-server validation on October 24, 2026: 259 unit tests and 5,935 native checks. Each also has a separate three-JVM cold-persistence proof. Real-client coverage is still partial and is not inferred from those automated checks. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. A source folder alone is not a compatibility claim. Plugin players use a normal matching Minecraft client; Fabric also targets single-player, with actual solo-client tests still pending.
+Before the current menu-layout follow-up, the 25-variant full validation passed on October 24, 2026 at 17:48 Paris time with 259 unit tests and 6,160 native checks, including broken-block-drops-only Clean Stacks. Fresh full, cold-restart and standalone-branch checks are running for the reorganized screens. Real-client coverage remains partial and is never inferred from automated checks. See [the porting status](porting/README.md) and [actual client observations](porting/client-tests.md) for evidence and remaining work. A source folder alone is not a compatibility claim. Plugin players use a normal matching Minecraft client; Fabric also targets single-player.
 
 ## Features
 
@@ -28,6 +28,8 @@ All 25 variants passed the full native-server validation on October 24, 2026: 25
 `/cutclean` and `/crr` remain aliases of `/ccr`.
 Menus save changes automatically. Escape goes up exactly one menu level; from CCR Config it closes the menu. In a text field or confirmation, Escape cancels without saving or applying the pending action. The explicit **Close CCR** button exits directly from any of the redesigned pages.
 
+Small Fabric pages use compact, centered layouts instead of a mostly empty six-row inventory. Dashboards separate their main switch, categories and footer utilities. Back stays at the lower left and Close at the lower right; Paper and Bukkit use the same darker frame and dedicated footer positions. Large catalogues keep their pagination and all entries.
+
 - **Better Sugar Cane:** one master switch, then separate Player Break and Support Break pages with a switch, bonus chance and final drop quantity.
 - **Timber:** separate Tools & Activation, Leaves & Apples, and Breaking & Limits pages. Mining effort and processing speed are explained independently.
 - **Stuff Rules:** direct access from CCR Config to armor limits, enchantment caps and the unique mace. Rules use clickable target categories, material families or exact item lists; enchantments have a searchable picker and XP refunds have their own page. New and copied rules start disabled.
@@ -53,7 +55,7 @@ Automatic enchantments keep stronger existing enchantments and do not introduce 
 They obey enabled equipment caps before stamping the item, so the two features do not fight each other.
 Refresh changes only CCR items whose enchantments have not subsequently changed; newly processed items also remember their pre-CCR enchantments.
 
-Clean Stacks keeps quantities and skips items with custom metadata. Cyclic mappings resolve to a stable output.
+Clean Stacks converts only drops from blocks you break, including Timber cuts. Enabling it never rewrites your inventory; commands, unrelated pickups, mob drops and crafting results keep their original materials. Quantities and custom metadata are preserved. Cyclic mappings resolve to a stable output.
 Placed sugar cane is tracked in chunk data so its origin survives restarts. Naturally grown blocks remain eligible for bonuses.
 The unique mace is released on despawn, destruction or breakage, rather than on pickup or chunk unload.
 Anvil/enchanting refunds are bounded by the levels actually paid in that transaction; correcting found items never refunds XP.

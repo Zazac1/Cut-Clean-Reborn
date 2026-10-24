@@ -15,7 +15,7 @@ Chaque famille a un statut `PASS`, `PARTIAL` ou `FAIL` et une observation concr�
 | `mob_loot` | Vraie mort d'animal, cuisson, quantités et expérience ; vérifier les interactions Looting pertinentes |
 | `ore_loot` | Vrai minage, outil adapté/inadapté, fusion, Fortune, Silk Touch et expérience |
 | `auto_enchants` | Application réelle sur l'objet, conservation des enchantements existants, plafonds et rafraîchissement |
-| `clean_stacks` | Commande personnelle, conversion réelle et quantités, exclusion d'objet avec métadonnées |
+| `clean_stacks` | Commande personnelle, vraie casse et conversion du butin avec quantités conservées ; activation, inventaire, /give, ramassage hors casse et craft inchangés ; exclusion d'objet avec métadonnées |
 | `stuff_rules` | Limite d'armure équipée, plafonds d'enchantements, transaction payante et remboursement borné, copie/suppression d'une règle |
 | `unique_mace` | Fabrication, ramassage et chunk rechargé sans libérer la réservation ; vraie destruction permettant une nouvelle fabrication |
 | `sugar_cane` | Casse joueur et perte de support, chance/quantité, origine placée conservée après redémarrage |

@@ -154,6 +154,7 @@ public final class NativeChecks implements ModInitializer {
               .isEmpty());
     }
     clean();
+    cleanScope();
     automatic();
     caps();
     configParity();
@@ -828,6 +829,72 @@ public final class NativeChecks implements ModInitializer {
       player.getInventory().setItem(slot, savedInventory.get(slot));
   }
 
+  private void cleanScope() {
+    List<ItemStack> saved = new ArrayList<>();
+    for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+      saved.add(player.getInventory().getItem(slot).copy());
+      player.getInventory().setItem(slot, ItemStack.EMPTY);
+    }
+    String preference = "clean-stacks.players." + player.getUUID();
+    boolean before = mod.inventory().cleanEnabled(player);
+    var woodBefore = mod.settings().section("clean-stacks.wood");
+    mod.inventory().setCleanTarget(Items.BIRCH_LOG, Items.OAK_LOG);
+    mod.settings().set(preference, false);
+    player.getInventory().setItem(6, new ItemStack(Items.BIRCH_LOG, 17));
+    player.getInventory().setItem(7, new ItemStack(Items.COBBLESTONE, 23));
+    var source = mod.server().createCommandSourceStack().withEntity(player);
+    mod.server().getCommands().performPrefixedCommand(source, "cleanstacks on");
+    check("clean enable changes preference without converting inventory",
+        mod.inventory().cleanEnabled(player)
+            && player.getInventory().getItem(6).is(Items.BIRCH_LOG)
+            && player.getInventory().getItem(6).getCount() == 17);
+    mod.server().getCommands().performPrefixedCommand(source, "give @s minecraft:spruce_log 9");
+    mod.inventory().tick(player);
+    check("clean ignores given items and later inventory corrections",
+        cleanCount(Items.SPRUCE_LOG) == 9
+            && cleanCount(Items.BIRCH_LOG) == 17
+            && cleanCount(Items.COBBLESTONE) == 23);
+    var level = player.serverLevel();
+    ItemEntity pickup = new ItemEntity(level, player.getX(), player.getY(), player.getZ(),
+        new ItemStack(Items.ACACIA_LOG, 5));
+    pickup.setNoPickUpDelay();
+    level.addFreshEntity(pickup);
+    pickup.playerTouch(player);
+    mod.inventory().tick(player);
+    check("clean ignores unrelated ground-item pickup",
+        pickup.isRemoved() && cleanCount(Items.ACACIA_LOG) == 5);
+    BlockPos pos = new BlockPos(34, 100, 34);
+    level.getChunkAt(pos);
+    player.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_AXE));
+    level.setBlockAndUpdate(pos, Blocks.BIRCH_LOG.defaultBlockState());
+    check("clean enabled native block break succeeds", player.gameMode.destroyBlock(pos));
+    var drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2));
+    check("clean converts only broken-block drops with their quantity",
+        drops.stream().filter(e -> e.getItem().is(Items.OAK_LOG))
+            .mapToInt(e -> e.getItem().getCount()).sum() == 1
+            && drops.stream().noneMatch(e -> e.getItem().is(Items.BIRCH_LOG)));
+    drops.forEach(ItemEntity::discard);
+    mod.server().getCommands().performPrefixedCommand(source, "cleanstacks off");
+    level.setBlockAndUpdate(pos, Blocks.BIRCH_LOG.defaultBlockState());
+    check("clean disabled native block break succeeds", player.gameMode.destroyBlock(pos));
+    drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2));
+    check("clean disabled block drop retains vanilla material and count",
+        drops.stream().filter(e -> e.getItem().is(Items.BIRCH_LOG))
+            .mapToInt(e -> e.getItem().getCount()).sum() == 1
+            && drops.stream().noneMatch(e -> e.getItem().is(Items.OAK_LOG)));
+    drops.forEach(ItemEntity::discard);
+    mod.settings().set(preference, before);
+    mod.settings().set("clean-stacks.wood", woodBefore);
+    for (int slot = 0; slot < saved.size(); slot++)
+      player.getInventory().setItem(slot, saved.get(slot));
+  }
+
+  private int cleanCount(net.minecraft.world.item.Item item) {
+    return java.util.stream.IntStream.range(0, player.getInventory().getContainerSize())
+        .mapToObj(slot -> player.getInventory().getItem(slot))
+        .filter(stack -> stack.is(item)).mapToInt(ItemStack::getCount).sum();
+  }
+
   private void craftPreview() {
     mod.settings().set("clean-stacks.players." + player.getUUID(), true);
     mod.inventory().setCleanTarget(Items.BIRCH_PLANKS, Items.OAK_PLANKS);
@@ -840,13 +907,13 @@ public final class NativeChecks implements ModInitializer {
     player.containerMenu = menu;
     menu.getSlot(1).set(new ItemStack(Items.BIRCH_LOG));
     check(
-        "native planks normalized before craft transfer",
-        menu.getSlot(0).getItem().is(Items.OAK_PLANKS)
+        "clean does not convert vanilla plank craft preview",
+        menu.getSlot(0).getItem().is(Items.BIRCH_PLANKS)
             && menu.getSlot(0).getItem().getCount() == 4);
     menu.clicked(0, 0, ClickType.PICKUP, player);
     check(
-        "native normalized craft quantity preserved",
-        menu.getCarried().is(Items.OAK_PLANKS) && menu.getCarried().getCount() == 4);
+        "clean leaves crafted material and quantity unchanged",
+        menu.getCarried().is(Items.BIRCH_PLANKS) && menu.getCarried().getCount() == 4);
     menu.setCarried(ItemStack.EMPTY);
     player.closeContainer();
     mod.settings().set("clean-stacks.players." + player.getUUID(), false);
@@ -1060,6 +1127,12 @@ public final class NativeChecks implements ModInitializer {
 
   private void menus() {
     mod.menus().main(player);
+    check("root uses compact four-row geometry", player.containerMenu.slots.size() - 36 == 36);
+    check("root Timber category is centered at slot 14",
+        player.containerMenu.getSlot(14).getItem().getHoverName().getString().contains("Timber"));
+    check("root reload is separated in the footer",
+        player.containerMenu.getSlot(31).getItem().getHoverName().getString().contains("Reload"));
+    check("root interior keeps breathing room", player.containerMenu.getSlot(11).getItem().isEmpty());
     check(
         "native root inventory opens",
         player
@@ -1069,7 +1142,7 @@ public final class NativeChecks implements ModInitializer {
             .getHoverName()
             .getString()
             .contains("CCR Config"));
-    player.containerMenu.clicked(11, 0, ClickType.PICKUP, player);
+    player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player);
     steps.add(
         () ->
             check(
@@ -1097,8 +1170,8 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape root closes", player.containerMenu == player.inventoryMenu));
     steps.add(() -> mod.menus().main(player));
-    steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(14, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 14), 0, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
@@ -1118,7 +1191,7 @@ public final class NativeChecks implements ModInitializer {
                         .getHoverName()
                         .getString()
                         .contains("Timber")));
-    steps.add(() -> player.containerMenu.clicked(14, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 14), 0, ClickType.PICKUP, player));
     steps.add(
         () -> {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
@@ -1142,22 +1215,22 @@ public final class NativeChecks implements ModInitializer {
                 "native valid text saves and returns to same parent",
                 player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
                     && mod.settings().integer("tree-cutter.max-logs", 256, 2, 2048) == 500));
-    steps.add(() -> player.containerMenu.clicked(53, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 53), 0, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
                 "native explicit close never opens parent",
                 player.containerMenu == player.inventoryMenu));
     steps.add(() -> mod.menus().main(player));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(50, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
                 "native mob list pagination opens page two",
                 player
                     .containerMenu
-                    .getSlot(49)
+                    .getSlot(menuSlot(player, 49))
                     .getItem()
                     .getHoverName()
                     .getString()
@@ -1182,28 +1255,28 @@ public final class NativeChecks implements ModInitializer {
   private void menuPageReturn() {
     String[] childTitle = {""};
     steps.add(() -> mod.menus().main(player));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(50, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ClickType.PICKUP, player));
     steps.add(() -> check("list return setup opens page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
     steps.add(() -> {
       childTitle[0] = player.containerMenu.getSlot(4).getItem().getHoverName().getString();
-      player.containerMenu.clicked(10, 0, ClickType.PICKUP, player);
+      player.containerMenu.clicked(menuSlot(player, 10), 0, ClickType.PICKUP, player);
     });
     steps.add(() -> check("list child opens numeric input", player.containerMenu instanceof net.minecraft.world.inventory.AnvilMenu));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("list child input cancels to its detail page",
         player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
             && player.containerMenu.getSlot(4).getItem().getHoverName().getString().equals(childTitle[0])));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape after a detail refresh restores list page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(45, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 45), 0, ClickType.PICKUP, player));
     steps.add(() -> check("Back from a list child restores page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(48, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 48), 0, ClickType.PICKUP, player));
     steps.add(() -> check("previous page can explicitly select page one", menuPage(1)));
-    steps.add(() -> player.containerMenu.clicked(50, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ClickType.PICKUP, player));
     steps.add(() -> check("next page still selects page two", menuPage(2)));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("list Escape returns directly to root after browsing",
@@ -1213,23 +1286,23 @@ public final class NativeChecks implements ModInitializer {
 
   private boolean menuPage(int page) {
     return player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
-        && player.containerMenu.getSlot(49).getItem().getHoverName().getString().contains("Page " + page + " /");
+        && player.containerMenu.getSlot(menuSlot(player, 49)).getItem().getHoverName().getString().contains("Page " + page + " /");
   }
 
   private void menuComfort() {
     steps.add(
         () -> {
           mod.settings().set("clean-stacks.wood.ACACIA_LOG", "minecraft:diamond");
-          player.containerMenu.clicked(13, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(menuSlot(player, 13), 0, ClickType.PICKUP, player);
         });
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(13, 1, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 13), 1, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
                 "native clean source right-click resets mapping",
                 !mod.settings().contains("clean-stacks.wood.ACACIA_LOG")));
-    steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
     steps.add(
         () -> {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
@@ -1244,11 +1317,11 @@ public final class NativeChecks implements ModInitializer {
                         .text("clean-stacks.wood.STRIPPED_OAK_LOG", "")
                         .equals("minecraft:cherry_log")
                     && !mod.settings().contains("clean-stacks.wood.OAK_LOG")));
-    steps.add(() -> player.containerMenu.clicked(53, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 53), 0, ClickType.PICKUP, player));
     steps.add(() -> mod.menus().main(player));
-    steps.add(() -> player.containerMenu.clicked(12, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(11, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 12), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
     steps.add(
         () -> {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
@@ -1267,8 +1340,8 @@ public final class NativeChecks implements ModInitializer {
                         .getHoverName()
                         .getString()
                         .contains("Bow")));
-    steps.add(() -> player.containerMenu.clicked(10, 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 10), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
@@ -1282,8 +1355,8 @@ public final class NativeChecks implements ModInitializer {
                         .getString()
                         .contains("Bow")));
     steps.add(() -> player.closeContainer());
-    steps.add(() -> player.containerMenu.clicked(10, 1, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 10), 1, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
     steps.add(
         () ->
             check(
@@ -1324,7 +1397,7 @@ public final class NativeChecks implements ModInitializer {
                 "native armor rule exposes paused master state",
                 player
                     .containerMenu
-                    .getSlot(9)
+                    .getSlot(menuSlot(player, 9))
                     .getItem()
                     .getHoverName()
                     .getString()
@@ -1337,7 +1410,7 @@ public final class NativeChecks implements ModInitializer {
                 "native armor family not silently selected as diamond gem",
                 player
                     .containerMenu
-                    .getSlot(9)
+                    .getSlot(menuSlot(player, 9))
                     .getItem()
                     .getHoverName()
                     .getString()
@@ -1568,10 +1641,10 @@ public final class NativeChecks implements ModInitializer {
         () -> {
           check(
               "native mob follows later global cooking and XP changes",
-              player.containerMenu.getSlot(9).getItem().getHoverName().getString().contains("OFF")
+              player.containerMenu.getSlot(menuSlot(player, 9)).getItem().getHoverName().getString().contains("OFF")
                   && player
                       .containerMenu
-                      .getSlot(10)
+                      .getSlot(menuSlot(player, 10))
                       .getItem()
                       .getHoverName()
                       .getString()
@@ -1589,7 +1662,7 @@ public final class NativeChecks implements ModInitializer {
               "native rule right click quick toggle retained",
               Settings.enabled(
                   mod.settings().entries(InventoryRules.ROOT + ".armor-rules").getFirst()));
-          for (int slot = 9; slot < 45; slot++)
+          for (int slot = 9; slot < player.containerMenu.slots.size() - 36; slot++)
             if (player
                 .containerMenu
                 .getSlot(slot)
@@ -1715,7 +1788,7 @@ public final class NativeChecks implements ModInitializer {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu).setItemName("7");
           asSecond(() -> page("ruleList", true));
         });
-    steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
+    steps.add(() -> secondAdmin.containerMenu.clicked(menuSlot(secondAdmin, 10), 0, ClickType.QUICK_MOVE, secondAdmin));
     steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> submit("7"));
     steps.add(
@@ -1738,7 +1811,7 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> page("ruleById", true, "editing"));
     steps.add(() -> clickNamed("Maximum:", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
-    steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
+    steps.add(() -> secondAdmin.containerMenu.clicked(menuSlot(secondAdmin, 10), 0, ClickType.QUICK_MOVE, secondAdmin));
     steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> submit("9"));
     steps.add(
@@ -1762,7 +1835,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickNamed("Delete Rule", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
-    steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
+    steps.add(() -> secondAdmin.containerMenu.clicked(menuSlot(secondAdmin, 10), 0, ClickType.QUICK_MOVE, secondAdmin));
     steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> clickNamed("Confirm", 0));
     steps.add(
@@ -1776,7 +1849,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickNamed("Copy to Another Target", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
-    steps.add(() -> secondAdmin.containerMenu.clicked(11, 0, ClickType.QUICK_MOVE, secondAdmin));
+    steps.add(() -> secondAdmin.containerMenu.clicked(menuSlot(secondAdmin, 11), 0, ClickType.QUICK_MOVE, secondAdmin));
     steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> clickNamed("Group: TOOLS", 0));
     steps.add(
@@ -1798,7 +1871,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickNamed("Target:", 0));
     steps.add(() -> asSecond(() -> page("ruleList", true)));
-    steps.add(() -> secondAdmin.containerMenu.clicked(10, 0, ClickType.QUICK_MOVE, secondAdmin));
+    steps.add(() -> secondAdmin.containerMenu.clicked(menuSlot(secondAdmin, 10), 0, ClickType.QUICK_MOVE, secondAdmin));
     steps.add(() -> asSecond(() -> clickNamed("Confirm", 0)));
     steps.add(() -> player.closeContainer());
     steps.add(
@@ -1807,7 +1880,7 @@ public final class NativeChecks implements ModInitializer {
                 "Escape parent resolves the same UUID after list reorder",
                 player
                     .containerMenu
-                    .getSlot(11)
+                    .getSlot(menuSlot(player, 11))
                     .getItem()
                     .getHoverName()
                     .getString()
@@ -2064,8 +2137,26 @@ public final class NativeChecks implements ModInitializer {
     }
   }
 
+  /** Resolve an entry's old logical index to its actual rendered slot, including compact footers. */
+  private int menuSlot(ServerPlayer viewer, int logical) {
+    if (!viewer.containerMenu.getClass().getSimpleName().equals("Panel")) return logical;
+    try {
+      var field = viewer.containerMenu.getClass().getDeclaredField("contentSlots");
+      field.setAccessible(true);
+      int[] positions = (int[]) field.get(viewer.containerMenu);
+      if (logical >= 9 && logical < 45) {
+        int index = logical - 9;
+        if (index >= positions.length) throw new IllegalArgumentException("No rendered entry " + index);
+        return positions[index];
+      }
+      return viewer.containerMenu.slots.size() - 36 - 9 + logical - 45;
+    } catch (ReflectiveOperationException error) {
+      throw new IllegalStateException(error);
+    }
+  }
+
   private void clickNamed(String name, int button) {
-    for (int slot = 9; slot < 45; slot++)
+    for (int slot = 9; slot < player.containerMenu.slots.size() - 36; slot++)
       if (player.containerMenu.getSlot(slot).getItem().getHoverName().getString().contains(name)) {
         player.containerMenu.clicked(slot, button, ClickType.PICKUP, player);
         return;

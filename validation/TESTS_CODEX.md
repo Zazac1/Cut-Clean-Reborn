@@ -9,7 +9,7 @@ Pour la première validation complète d'un portage, couvrir toutes les familles
 - Butin : morts d'animaux, minage avec/sans outil adapté, Fortune, Silk Touch, expérience et enchantements préexistants.
 - Stuff Rules : limites d'armure équipée, plafonds d'enchantements et remboursement limité aux niveaux réellement payés ; copie et suppression de règles.
 - Enchantements automatiques : application sur un vrai objet, enchantement préexistant plus fort, plafond actif et rafraîchissement.
-- Clean Stacks : préférence personnelle, vraie conversion sans perte de quantité et objet avec métadonnées exclu.
+- Clean Stacks : préférence personnelle, vraie casse de blocs avec butin converti sans perte de quantité et objet avec métadonnées exclu. Vérifier aussi que l'activation, /give, les objets déjà stockés, les ramassages hors casse et les planches fabriquées restent inchangés. Un test /give seul ne valide jamais les butins de blocs.
 - Masse unique : fabriquer, ramasser, décharger/recharger le chunk puis détruire la masse. Seule sa disparition réelle libère une nouvelle fabrication.
 - Canne à sucre : casse directe et perte de support, quantité finale et chance, canne placée par un joueur après redémarrage.
 - Sauvegarde : modifier un réglage, redémarrer le serveur et vérifier les préférences et règles existantes.

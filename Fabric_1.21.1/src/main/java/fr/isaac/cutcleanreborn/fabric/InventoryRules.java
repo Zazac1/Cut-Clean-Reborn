@@ -384,13 +384,6 @@ public final class InventoryRules {
   private void correct(ServerPlayer player) {
     for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
       ItemStack stack = player.getInventory().getItem(slot);
-      if (cleanEnabled(player)) {
-        ItemStack cleaned = clean(stack);
-        if (cleaned != stack) {
-          player.getInventory().setItem(slot, cleaned);
-          stack = cleaned;
-        }
-      }
       auto(stack);
       Map<Holder<Enchantment>, Integer> removed = enforceCaps(stack);
       if (!removed.isEmpty())
