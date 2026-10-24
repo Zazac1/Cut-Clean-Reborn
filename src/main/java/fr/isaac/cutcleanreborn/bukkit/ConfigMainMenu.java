@@ -18,8 +18,7 @@ final class ConfigMainMenu extends MenuSupport {
 
     ConfigMainMenu(CutCleanRebornPlugin plugin) {
         super(plugin, 4, "§8CCR Config");
-        inventory.setItem(4, MenuItems.item(Material.BOOK, "§6CutClean Reborn", List.of(
-                "§7Changes are saved automatically.", "§7Escape: go back one menu; here, close CCR.", "§7/ccr status • /ccr reload")));
+        inventory.setItem(4, MenuItems.item(Material.BOOK, "§6CutClean Reborn", List.of()));
         inventory.setItem(MOB_CUSTOMISATION_SLOT, MenuItems.item(Material.SPAWNER, "§6Mob Customisation",
                 List.of("§7Configure drops, XP and cooked food.", "", "§eClick to open")));
         inventory.setItem(ORE_DROPS_SLOT, MenuItems.item(Material.DIAMOND_ORE, "§6Ore Drops",
