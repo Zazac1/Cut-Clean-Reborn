@@ -28,15 +28,15 @@ Commande officielle : `java -Xms256M -Xmx2G -jar ../BuildTools.jar --rev <Minecr
 
 ## Vérification native
 
-La revalidation unifiée Full20 après le correctif Échap créatif a terminé sans échec sur les dix variantes ci-dessous. Le dernier raccourcissement visuel du titre « Armor • Max Equipped » est postérieur à ce contrôle ; le Full25 final doit donc produire les reçus correspondant exactement aux sources et aux JAR définitifs.
+The unfiltered Full25 run finished on 24 October 2026 at 20:07 Paris time with no failures, including the blocks-only Clean Stacks scope and menu layout changes. The ten variants below also passed matching three-JVM cold checks (107 storage assertions each) in attempt `20261024-174352-e4c3917d`. These are native checks; actual player traversals remain pending.
 
 | Minecraft | Bukkit compilation/unitaires | Bukkit natif | Spigot compilation/unitaires | Spigot natif | Joueur réel |
 | --- | --- | --- | --- | --- | --- |
-| 1.21.1 | Réussis, 9 tests | 259 contrôles réussis, arrêt propre | Réussis, 9 tests | 259 contrôles réussis, arrêt propre | Pas encore |
-| 1.21.11 | Réussis, 9 tests | 267 contrôles réussis, arrêt propre | Réussis, 9 tests | 267 contrôles réussis, arrêt propre | Pas encore |
-| 26.1.2 (famille26.1.x) | Réussis, 9 tests | 267 contrôles réussis, arrêt propre | Réussis, 9 tests | 267 contrôles réussis, arrêt propre | Pas encore |
-| 26.2 | Réussis, 9 tests | 268 contrôles réussis, arrêt propre | Réussis, 9 tests | 268 contrôles réussis, arrêt propre | Pas encore |
-| 26.3 | Réussis, 9 tests | 268 contrôles réussis, arrêt propre | Réussis, 9 tests | 268 contrôles réussis, arrêt propre | Pas encore |
+| 1.21.1 | Réussis, 9 tests | 271 contrôles réussis, arrêt propre | Réussis, 9 tests | 271 contrôles réussis, arrêt propre | Pas encore |
+| 1.21.11 | Réussis, 9 tests | 279 contrôles réussis, arrêt propre | Réussis, 9 tests | 279 contrôles réussis, arrêt propre | Pas encore |
+| 26.1.2 (famille26.1.x) | Réussis, 9 tests | 279 contrôles réussis, arrêt propre | Réussis, 9 tests | 279 contrôles réussis, arrêt propre | Pas encore |
+| 26.2 | Réussis, 9 tests | 280 contrôles réussis, arrêt propre | Réussis, 9 tests | 280 contrôles réussis, arrêt propre | Pas encore |
+| 26.3 | Réussis, 9 tests | 280 contrôles réussis, arrêt propre | Réussis, 9 tests | 280 contrôles réussis, arrêt propre | Pas encore |
 
 Les contrôles natifs utilisent vrais registres/objets/mondes/listeners/ordonnanceur, mais un joueur synthétique pour la navigation. Ils ne prouvent pas une validation visuelle ou un parcours joueur réseau. Les journaux restent dans `<module>/build/smoke-server/logs/latest.log`, le verdict dans `smoke-result.txt` et les tests unitaires dans `build/test-results/test`.
 
