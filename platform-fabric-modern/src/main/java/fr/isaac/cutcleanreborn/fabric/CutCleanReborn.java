@@ -68,7 +68,6 @@ public final class CutCleanReborn implements ModInitializer {
                                               Component.literal(
                                                   "CCR: config (admin), status, reload (admin),"
                                                       + " ping; /cleanstacks [on|off|status]."
-                                                      + " Menus: Escape = parent, Close = exit."
                                                       + " /ccr edit <value> completes a pending"
                                                       + " setting."),
                                           false);
@@ -220,7 +219,6 @@ public final class CutCleanReborn implements ModInitializer {
             default -> !enabled;
           };
       runtime.config.set(path, enabled);
-      runtime.inventory.correct(player);
     }
     player.sendSystemMessage(Component.literal("CCR • Clean Stacks: " + (enabled ? "ON" : "OFF")));
     return 1;

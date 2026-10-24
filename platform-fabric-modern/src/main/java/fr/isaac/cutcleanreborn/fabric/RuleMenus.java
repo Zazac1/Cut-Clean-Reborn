@@ -84,9 +84,17 @@ public final class RuleMenus {
   }
 
   public record Page(
-      String title, Supplier<Page> parent, Supplier<List<Entry>> entries, int index) {
+      String title, Supplier<Page> parent, Supplier<List<Entry>> entries, int index, MenuLayout layout) {
     Page(String title, Supplier<Page> parent, Supplier<List<Entry>> entries) {
-      this(title, parent, entries, -1);
+      this(title, parent, entries, -1, null);
+    }
+
+    Page(String title, Supplier<Page> parent, Supplier<List<Entry>> entries, int index) {
+      this(title, parent, entries, index, null);
+    }
+
+    Page arranged(int rows, int... slots) {
+      return new Page(title, parent, entries, index, MenuLayout.arranged(rows, slots));
     }
   }
 
@@ -263,7 +271,7 @@ public final class RuleMenus {
                                     + failure.getMessage()));
                       }
                     },
-                    "§7Reload config.yml.")));
+                    "§7Reload config.yml."))).arranged(4, 10, 12, 14, 16, 20, 22, 24, 31);
   }
 
   private Page mobs() {
@@ -915,7 +923,7 @@ public final class RuleMenus {
                     1,
                     64,
                     this::timber),
-                reset("Reset Timber", "tree-cutter", this::timber)));
+                reset("Reset Timber", "tree-cutter", this::timber))).arranged(5, 13, 20, 24, 22, 29, 31, 33, 40);
   }
 
   private Page timberTools() {
@@ -1012,7 +1020,7 @@ public final class RuleMenus {
                     "§eSupport Break",
                     () -> caneCause("support"),
                     "§7Drops when the block underneath breaks."),
-                reset("Reset Sugar Cane", "better-sugar-cane", this::cane)));
+                reset("Reset Sugar Cane", "better-sugar-cane", this::cane))).arranged(4, 13, 20, 24, 31);
   }
 
   private Page caneCause(String cause) {
@@ -1063,12 +1071,12 @@ public final class RuleMenus {
                       mod.config.set(
                           "clean-stacks.players." + player.getUUID(),
                           !mod.inventory.cleanEnabled(player));
-                      mod.inventory.correct(player);
                       open(player, clean());
                     },
+                    "§7Only converts blocks you break.",
                     "§7/cleanstacks on|off|status"),
                 reset("Reset Wood Conversions", "clean-stacks.wood", this::clean),
-                reset("Reset Stone Conversions", "clean-stacks.stone", this::clean)));
+                reset("Reset Stone Conversions", "clean-stacks.stone", this::clean))).arranged(4, 11, 15, 13, 29, 33);
   }
 
   private Page cleanGroup(String group) {
@@ -1539,7 +1547,7 @@ public final class RuleMenus {
                     Items.MACE,
                     "§6Unique Mace",
                     this::mace,
-                    "§7One mace at a time.")));
+                    "§7One mace at a time."))).arranged(4, 13, 20, 22, 24);
   }
 
   private Page mace() {
@@ -1831,15 +1839,15 @@ public final class RuleMenus {
     if (current != null) {
       if (destination.title().equals(current.title()))
         return new Page(destination.title(), current.parent(), destination.entries(),
-            destination.index() < 0 ? current.index() : destination.index());
+            destination.index() < 0 ? current.index() : destination.index(), destination.layout());
       if (current.parent() != null) {
         Page parent = current.parent().get();
         if (destination.title().equals(parent.title())) return withContext(destination, parent);
       }
       if (destination.parent() != null && destination.parent().get().title().equals(current.title()))
-        return new Page(destination.title(), () -> current, destination.entries(), Math.max(0, destination.index()));
+        return new Page(destination.title(), () -> current, destination.entries(), Math.max(0, destination.index()), destination.layout());
     }
-    return new Page(destination.title(), destination.parent(), destination.entries(), Math.max(0, destination.index()));
+    return new Page(destination.title(), destination.parent(), destination.entries(), Math.max(0, destination.index()), destination.layout());
   }
 
   private void input(
@@ -1876,58 +1884,78 @@ public final class RuleMenus {
     return stack;
   }
 
+  private static MenuType<?> menuType(int rows) {
+    return switch (rows) {
+      case 3 -> MenuType.GENERIC_9x3;
+      case 4 -> MenuType.GENERIC_9x4;
+      case 5 -> MenuType.GENERIC_9x5;
+      default -> MenuType.GENERIC_9x6;
+    };
+  }
+
   private final class Panel extends ChestMenu {
     private final Page page;
+    private final int[] contentSlots;
     private final Map<Integer, Consumer<ServerPlayer>> actions = new HashMap<>();
     private final Map<Integer, Consumer<ServerPlayer>> rightActions = new HashMap<>();
     private boolean closed;
 
     Panel(int id, Inventory inventory, Page page) {
-      super(MenuType.GENERIC_9x6, id, inventory, new SimpleContainer(54), 6);
-      for (int slot = 0; slot < 54; slot++)
-        getSlot(slot)
-            .set(icon(InventoryRules.item("minecraft:gray_stained_glass_pane"), " ", List.of()));
-      getSlot(4)
-          .set(
-              icon(
-                  Items.BOOK,
-                  "§6" + page.title(),
-                  List.of()));
-      List<Entry> entries = page.entries().get();
-      int pages = Math.max(1, (entries.size() + 35) / 36),
-          index = Math.clamp(page.index(), 0, pages - 1);
-      this.page = new Page(page.title(), page.parent(), page.entries(), index);
-      for (int offset = 0; offset < 36 && index * 36 + offset < entries.size(); offset++) {
-        Entry entry = entries.get(index * 36 + offset);
-        int slot = 9 + offset;
+      this(id, inventory, page, page.entries().get());
+    }
+
+    private Panel(int id, Inventory inventory, Page page, List<Entry> entries) {
+      this(id, inventory, page, entries,
+          page.layout() == null ? MenuLayout.forEntries(entries.size()) : page.layout());
+    }
+
+    private Panel(int id, Inventory inventory, Page page, List<Entry> entries, MenuLayout layout) {
+      super(menuType(layout.rows()), id, inventory, new SimpleContainer(layout.rows() * 9), layout.rows());
+      int size = layout.rows() * 9;
+      int footer = size - 9;
+      contentSlots = layout.slots().stream().mapToInt(Integer::intValue).toArray();
+      for (int slot = 0; slot < size; slot++) {
+        if (slot < 9 || slot >= footer)
+          getSlot(slot).set(icon(InventoryRules.item("minecraft:black_stained_glass_pane"), " ", List.of()));
+        else if (slot % 9 == 0 || slot % 9 == 8)
+          getSlot(slot).set(icon(InventoryRules.item("minecraft:gray_stained_glass_pane"), " ", List.of()));
+      }
+      getSlot(4).set(icon(Items.BOOK, "§6" + page.title(), List.of()));
+      int capacity = Math.max(1, contentSlots.length);
+      int pages = Math.max(1, (entries.size() + capacity - 1) / capacity);
+      int index = Math.clamp(page.index(), 0, pages - 1);
+      this.page = new Page(page.title(), page.parent(), page.entries(), index, layout);
+      for (int offset = 0; offset < capacity && index * capacity + offset < entries.size(); offset++) {
+        Entry entry = entries.get(index * capacity + offset);
+        int slot = contentSlots[offset];
         getSlot(slot).set(icon(entry.icon(), entry.title(), entry.lore()));
         actions.put(slot, entry.click());
         if (entry.rightClick() != null) rightActions.put(slot, entry.rightClick());
       }
       if (page.parent() != null) {
-        getSlot(45).set(icon(Items.ARROW, "§eBack", List.of("§7Esc")));
-        actions.put(45, player -> open(player, page.parent().get()));
+        getSlot(footer).set(icon(Items.ARROW, "§eBack", List.of("§7Esc")));
+        actions.put(footer, player -> open(player, page.parent().get()));
       }
       if (index > 0) {
-        getSlot(48).set(icon(Items.PAPER, "§ePrevious Page", List.of()));
+        getSlot(footer + 3).set(icon(Items.PAPER, "§ePrevious Page", List.of()));
         actions.put(
-            48,
+            footer + 3,
             player ->
-                open(player, new Page(page.title(), page.parent(), page.entries(), index - 1)));
+                open(player, new Page(page.title(), page.parent(), page.entries(), index - 1, layout)));
       }
       if (pages > 1)
-        getSlot(49)
+        getSlot(footer + 4)
             .set(icon(Items.MAP, "§fPage " + (index + 1) + " / " + pages, List.of()));
       if (index + 1 < pages) {
-        getSlot(50).set(icon(Items.PAPER, "§eNext Page", List.of()));
+        getSlot(footer + 5).set(icon(Items.PAPER, "§eNext Page", List.of()));
         actions.put(
-            50,
+            footer + 5,
             player ->
-                open(player, new Page(page.title(), page.parent(), page.entries(), index + 1)));
+                open(player, new Page(page.title(), page.parent(), page.entries(), index + 1, layout)));
       }
-      getSlot(53).set(icon(Items.BARRIER, "§cClose CCR", List.of()));
+      getSlot(footer + 8).set(icon(Items.BARRIER, "§cClose CCR", List.of()));
       actions.put(
-          53,
+          footer + 8,
           player -> {
             closed = true;
             player.closeContainer();
