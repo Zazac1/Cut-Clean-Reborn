@@ -4,7 +4,7 @@ Mod natif pour Minecraft **1.21.11**, Java 21, Fabric Loader 0.19.5 et Fabric AP
 
 ## Installation
 
-Installer Fabric et Fabric API pour cette version exacte, puis placer `build/libs/cutcleanreborn-0.1.0-SNAPSHOT+1.21.11.jar` dans `mods/`. Ne pas installer les JAR de sources, de développement ou `ccrverification`.
+Installer Fabric et Fabric API pour cette version exacte, puis placer `build/libs/cutcleanreborn-0.1.0+1.21.11.jar` dans `mods/`. Ne pas installer les JAR de sources, de développement ou `ccrverification`.
 
 En solo, installer le mod dans le profil Fabric local : le serveur intégré applique toutes les règles. Sur serveur dédié, le client peut rester vanilla ; les menus sont des inventaires et enclumes standards. Le propriétaire du monde solo a accès à la configuration sans activer les triches. Sur serveur dédié, les opérateurs de niveau 2 peuvent administrer ; les autres joueurs gardent les commandes publiques et Clean Stacks.
 
