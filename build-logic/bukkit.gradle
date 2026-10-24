@@ -27,7 +27,30 @@ sourceSets {
 java { toolchain { languageVersion = JavaLanguageVersion.of(javaRelease) } }
 tasks.withType(JavaCompile).configureEach { options.release = javaRelease; options.encoding = 'UTF-8' }
 tasks.named('test') { useJUnitPlatform() }
-tasks.named('jar', Jar) { archiveVersion = "${project.version}+${family}" }
+def archivePreviousPluginJars = { File directory, File backupDirectory, String currentName ->
+    def sourceDirectory = directory.canonicalFile
+    fileTree(sourceDirectory).matching {
+        include 'CutCleanReborn-Paper*.jar', 'cutcleanreborn-*.jar'
+    }.files.each { oldJar ->
+        if (oldJar.name == currentName || oldJar.canonicalFile.parentFile != sourceDirectory) return
+        boolean cutClean = false
+        new java.util.zip.ZipFile(oldJar).withCloseable { archive ->
+            def metadata = archive.getEntry('plugin.yml')
+            if (metadata != null) cutClean = archive.getInputStream(metadata).getText('UTF-8').readLines().any { it.trim() == 'name: CutCleanReborn' }
+        }
+        if (cutClean) {
+            backupDirectory.mkdirs()
+            java.nio.file.Files.move(oldJar.toPath(), new File(backupDirectory, "${System.currentTimeMillis()}-${oldJar.name}").toPath())
+        }
+    }
+}
+
+
+tasks.named('jar', Jar) {
+    archiveVersion = "${project.version}+${family}"
+    doLast { archivePreviousPluginJars(destinationDirectory.get().asFile,
+            layout.buildDirectory.dir('artifact-backups').get().asFile, archiveFileName.get()) }
+}
 tasks.named('processResources') {
     inputs.properties(version: project.version, minecraft: project.minecraft_version, platform: serverPlatform)
     filesMatching('plugin.yml') { expand(version: project.version); filter { line -> line.startsWith('api-version:') ? "api-version: '${project.minecraft_version}'" : line.replace('Paper plugin.', "${serverPlatform.capitalize()} plugin.") } }
@@ -67,6 +90,8 @@ tasks.register('runServer', JavaExec) {
 }
 tasks.register('smokePluginJar', Jar) { dependsOn tasks.named('smokeClasses'); archiveFileName = 'CCRSmoke.jar'; destinationDirectory = layout.buildDirectory.dir('smoke-plugin'); from sourceSets.smoke.output }
 tasks.register('prepareSmokeServer', Copy) {
+    doFirst { archivePreviousPluginJars(layout.buildDirectory.dir('smoke-server/plugins').get().asFile,
+            layout.buildDirectory.dir('smoke-server/plugin-backups').get().asFile, tasks.named('jar').get().archiveFileName.get()) }
     dependsOn tasks.named('jar'), tasks.named('smokePluginJar')
     outputs.upToDateWhen { false }
     into layout.buildDirectory.dir('smoke-server')
