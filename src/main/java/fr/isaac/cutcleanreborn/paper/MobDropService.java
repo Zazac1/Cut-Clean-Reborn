@@ -62,8 +62,7 @@ final class MobDropService implements Listener {
         List<ItemStack> remaining = new ArrayList<>();
         for (ItemStack drop : event.getDrops()) {
             plugin.autoEnchantments().apply(drop);
-            ItemStack converted = plugin.cleanStacks().enabled(killer) ? plugin.cleanStacks().normalise(drop) : drop;
-            remaining.addAll(killer.getInventory().addItem(converted).values());
+            remaining.addAll(killer.getInventory().addItem(drop).values());
         }
         event.getDrops().clear();
         event.getDrops().addAll(remaining);
