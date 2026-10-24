@@ -5,7 +5,7 @@ Port natif Fabric du gameplay actuel de CutCleanReborn, en solo (serveur intégr
 ## Installation
 
 - Minecraft **1.21.1**, Java **21**, Fabric Loader **0.20.1** (minimum déclaré) et Fabric API **0.116.17+1.21.1** (révision utilisée pour les tests).
-- Installer `cutcleanreborn-0.1.0-SNAPSHOT+1.21.1.jar` dans `mods/`. En solo, installer dans le profil client. Sur serveur dédié, installer côté serveur ; un client Fabric/FO ou vanilla peut utiliser les interfaces serveur.
+- Installer `cutcleanreborn-0.1.0+1.21.1.jar` dans `mods/`. En solo, installer dans le profil client. Sur serveur dédié, installer côté serveur ; un client Fabric/FO ou vanilla peut utiliser les interfaces serveur.
 - SnakeYAML est inclus dans le JAR : aucun téléchargement manuel supplémentaire n'est nécessaire pour la configuration.
 - Ne pas installer le JAR `ccrverification`, destiné uniquement aux tests de développement.
 

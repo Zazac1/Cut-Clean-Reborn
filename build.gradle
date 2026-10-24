@@ -23,8 +23,8 @@ tasks.withType(JavaCompile).configureEach { options.release = 21; options.encodi
 processResources { inputs.property 'version', project.version; filesMatching('fabric.mod.json') { expand version: project.version } }
 tasks.named('jar') { archiveVersion = "${project.version}+${project.minecraft_version}"; from('LICENSE') }
 tasks.named('remapJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
-tasks.named('sourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
-tasks.named('remapSourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}" }
+tasks.named('sourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}"; destinationDirectory = layout.buildDirectory.dir('sources') }
+tasks.named('remapSourcesJar') { archiveVersion = "${project.version}+${project.minecraft_version}"; destinationDirectory = layout.buildDirectory.dir('sources') }
 test { useJUnitPlatform() }
 
 def requireQaEula = {
@@ -70,6 +70,7 @@ tasks.register('smokeTest') {
     }
 }
 tasks.register('qaJar', Jar) {
+    destinationDirectory = layout.buildDirectory.dir('verification')
     dependsOn tasks.named('qaClasses')
     from sourceSets.qa.output
     archiveBaseName = 'ccrverification'
@@ -77,12 +78,31 @@ tasks.register('qaJar', Jar) {
     archiveClassifier = 'dev'
 }
 tasks.register('remapQaJar', net.fabricmc.loom.task.RemapJarTask) {
+    destinationDirectory = layout.buildDirectory.dir('verification')
     dependsOn tasks.named('qaJar')
     inputFile = tasks.named('qaJar', Jar).flatMap { it.archiveFile }
     archiveBaseName = 'ccrverification'
     archiveVersion = "1.0.0+${project.minecraft_version}"
     archiveClassifier = ''
 }
+def archivePreviousReleaseJars = { File directory ->
+    if (!directory.isDirectory()) return
+    def currentName = tasks.named('remapJar').get().archiveFileName.get()
+    fileTree(directory).matching { include 'cutcleanreborn-*.jar' }.files.each { oldJar ->
+        if (oldJar.name == currentName) return
+        boolean cutClean = false
+        new java.util.zip.ZipFile(oldJar).withCloseable { archive ->
+            def metadata = archive.getEntry('fabric.mod.json')
+            if (metadata != null) cutClean = new groovy.json.JsonSlurper().parse(archive.getInputStream(metadata)).id == 'cutcleanreborn'
+        }
+        if (cutClean) {
+            def backup = layout.buildDirectory.dir('artifact-backups').get().asFile
+            backup.mkdirs()
+            java.nio.file.Files.move(oldJar.toPath(), new File(backup, "${UUID.randomUUID()}-${oldJar.name}").toPath())
+        }
+    }
+}
+
 def productionDirectory = layout.buildDirectory.dir('smoke-server/production')
 def serverLauncher = productionDirectory.map { it.file('fabric-server-launch.jar') }
 tasks.register('downloadProductionServer') {
@@ -95,6 +115,7 @@ tasks.register('downloadProductionServer') {
     }
 }
 tasks.register('prepareProductionServer', Copy) {
+    doFirst { archivePreviousReleaseJars(productionDirectory.get().dir('mods').asFile) }
     dependsOn tasks.named('remapJar'), tasks.named('remapQaJar'), tasks.named('downloadProductionServer')
     from('src/qa/fixtures')
     from('src/main/resources/config.yml') { into 'config/cutcleanreborn' }
@@ -131,6 +152,7 @@ tasks.register('productionSmokeTest', Exec) {
 def persistenceDirectory = layout.buildDirectory.dir('smoke-server/persistence')
 
 tasks.register('prepareColdPersistenceServer', Copy) {
+    doFirst { archivePreviousReleaseJars(persistenceDirectory.get().dir('mods').asFile) }
     dependsOn tasks.named('prepareProductionServer')
     from('src/qa/fixtures')
     from('src/main/resources/config.yml') { into 'config/cutcleanreborn' }
