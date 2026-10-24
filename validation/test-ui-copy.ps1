@@ -30,6 +30,9 @@ foreach ($relative in @(
     if ($source -notmatch 'if \(pages > 1\)\s+getSlot\(49\)') {
         $problems.Add("${relative}: single-page menus must not display a redundant page counter")
     }
+    if ($source -match 'Component\.literal\("CCR • " \+ title\)') {
+        $problems.Add("${relative}: input titles must omit redundant branding to fit the anvil header")
+    }
 }
 if ($problems.Count -gt 0) { throw ($problems -join [Environment]::NewLine) }
 Write-Host "[PASS] English UI copy: $checked source files; no internal navigation copy; page counters only when needed."

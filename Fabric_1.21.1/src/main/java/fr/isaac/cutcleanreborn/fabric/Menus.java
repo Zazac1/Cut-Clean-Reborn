@@ -17,6 +17,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundContainerSetDataPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
@@ -121,7 +122,7 @@ public final class Menus {
         icon,
         (!enabled ? "§c" : available ? "§a" : "§e")
             + title
-            + " : "
+            + ": "
             + (!enabled ? "OFF" : available ? "ON" : "PAUSED"),
         player -> {
           writeSetting(path, !mod.settings().bool(path, fallback));
@@ -798,7 +799,7 @@ public final class Menus {
                     List.of(
                         configured == null
                             ? "§7Vanilla"
-                            : "§eOverride : "
+                            : "§eOverride: "
                                 + configured.get("minimum")
                                 + "–"
                                 + configured.get("maximum")
@@ -880,7 +881,7 @@ public final class Menus {
                     open(player, drop(path, 0, false, here));
                   },
                   "§7Without Fortune: " + vanilla.get("minimum") + "–" + vanilla.get("maximum"),
-                  "§7Fortune III : " + fortune.get("minimum") + "–" + fortune.get("maximum"),
+                  "§7Fortune III: " + fortune.get("minimum") + "–" + fortune.get("maximum"),
                   "§7Silk Touch keeps the ore block."));
           list.add(reset("Restore Vanilla Drop", path, here));
           list.add(
@@ -1068,7 +1069,7 @@ public final class Menus {
     String path = "better-sugar-cane." + cause;
     Supplier<Page> here = () -> caneCause(cause);
     return new Page(
-        "CCR • Cane / " + (cause.equals("player") ? "player" : "support"),
+        "Cane • " + (cause.equals("player") ? "Player Break" : "Support Break"),
         this::cane,
         () ->
             List.of(
@@ -1714,7 +1715,7 @@ public final class Menus {
           list.add(
               entry(
                   Items.HOPPER,
-                  "§eMaximum : " + rule.get("maximum"),
+                  "§eMaximum: " + rule.get("maximum"),
                   player ->
                       input(
                           player,
@@ -2126,7 +2127,7 @@ public final class Menus {
       player.openMenu(
           new SimpleMenuProvider(
               (id, inventory, p) -> new TextInput(id, inventory, title, initial, parent, submit),
-              Component.literal("CCR • " + title)));
+              Component.literal(title)));
     } finally {
       opening.remove(player.getUUID());
     }
@@ -2292,6 +2293,12 @@ public final class Menus {
     public boolean setItemName(String text) {
       value = text;
       createResult();
+      // The vanilla client predicts a rename cost even when the server cost stays zero.
+      // Send only that data field: a full inventory sync would reset the edit box.
+      if (player instanceof ServerPlayer viewer
+          && viewer.connection != null
+          && viewer.containerMenu == this)
+        viewer.connection.send(new ClientboundContainerSetDataPacket(containerId, 0, 0));
       return true;
     }
 
