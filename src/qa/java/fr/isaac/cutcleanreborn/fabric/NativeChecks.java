@@ -984,6 +984,11 @@ public final class NativeChecks implements ModInitializer {
     mod.settings().set(InventoryRules.ROOT + ".enchantment-caps", caps);
     // The visible clue guarantees a removed level, avoiding a probabilistic refund assertion.
     for (int attempt = 0; attempt < 256; attempt++) {
+      // Vanilla menus snapshot the player's seed; reopen after each seed change.
+      menu = new net.minecraft.world.inventory.EnchantmentMenu(
+          102, player.getInventory(),
+          net.minecraft.world.inventory.ContainerLevelAccess.create(level, pos));
+      player.containerMenu = menu;
       menu.getSlot(0).set(new ItemStack(Items.BOOK));
       if (menu.levelClue[2] > 1) break;
       player.onEnchantmentPerformed(new ItemStack(Items.BOOK), 0);
