@@ -33,6 +33,8 @@ Pour une nouvelle variante sans historique, son premier commit contient uniqueme
 
 `branch-export.ps1` compose les arbres depuis le commit de `main` et les dépendances déclarées. Dans `main`, les sources communes restent uniques ; dans une branche Purpur/Spigot/Bukkit, elles sont réellement présentes sous `src/`, avec la logique de compilation sous `build-logic/`. Le mode Plan n'écrit même pas d'objets Git. Les exports doivent être recompilés séparément avant publication pour prouver leur autonomie.
 
+`.\validation\check-export-trees.ps1` contrôle légèrement, sans compilation, l'égalité exacte des fichiers et modes Git avec les sources de `main` et leurs dépendances matérialisées. `.\validation\validate-exports.ps1` exige ce contrôle, extrait ensuite une archive neuve par branche et compile les 25 projets sans modules voisins. Les anciennes copies et anciens résultats de tests ne sont pas réutilisés ; les caches de dépendances restent disponibles. Le premier contrôle ne remplace jamais le second. Les rapports distincts sont `validation/results/export-trees.json` et `validation/results/exports.json`.
+
 ## Travailler depuis une branche de version
 
 Un clone d'une branche activée se compile directement avec `gradlew build`, comme les branches Fabric/NeoForge/Forge de CustomRecipe. Le contrôle global `test-all.ps1` appartient à `main` ; les tests natifs propres à une variante restent disponibles via `gradlew smokeTest` quand le vrai serveur et l'EULA sont préparés.
