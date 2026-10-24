@@ -13,7 +13,7 @@ pwsh -File tools/bootstrap-bukkit.ps1 -BuildPlugin
 Depuis le workspace complet, par exemple :
 
 ```powershell
-pwsh -File platform-bukkit/tools/bootstrap-bukkit.ps1 -ProjectDirectory Bukkit_1.21.1 -BuildPlugin
+pwsh -File Bukkit_1.21.1/tools/bootstrap-bukkit.ps1 -BuildPlugin
 ```
 
 Pour sélectionner explicitement Java : ajouter `-JavaExecutable 'C:/path/to/jdk/bin/java.exe'`. Sans ce paramètre, le script vérifie le JDK adéquat dans JAVA_HOME, PATH et les installations Adoptium Windows connues. Il ne modifie pas JAVA_HOME ni la configuration Git/Maven globale.
