@@ -202,6 +202,7 @@ public final class NativeChecks implements ModInitializer {
     craftPreview();
     origins();
     menus();
+    menuPageReturn();
     timber();
     visualSelectors();
     concurrentStuffEditors(false);
@@ -1581,6 +1582,43 @@ public final class NativeChecks implements ModInitializer {
                         .getHoverName()
                         .getString()
                         .contains("Timber")));
+  }
+
+  private void menuPageReturn() {
+    String[] childTitle = {""};
+    steps.add(() -> mod.menus.main(player));
+    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(50, 0, ClickType.PICKUP, player));
+    steps.add(() -> check("list return setup opens page two", menuPage(2)));
+    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> {
+      childTitle[0] = player.containerMenu.getSlot(4).getItem().getHoverName().getString();
+      player.containerMenu.clicked(10, 0, ClickType.PICKUP, player);
+    });
+    steps.add(() -> check("list child opens numeric input", player.containerMenu instanceof net.minecraft.world.inventory.AnvilMenu));
+    steps.add(() -> player.closeContainer());
+    steps.add(() -> check("list child input cancels to its detail page",
+        player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
+            && player.containerMenu.getSlot(4).getItem().getHoverName().getString().equals(childTitle[0])));
+    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.closeContainer());
+    steps.add(() -> check("Escape after a detail refresh restores list page two", menuPage(2)));
+    steps.add(() -> player.containerMenu.clicked(9, 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(45, 0, ClickType.PICKUP, player));
+    steps.add(() -> check("Back from a list child restores page two", menuPage(2)));
+    steps.add(() -> player.containerMenu.clicked(48, 0, ClickType.PICKUP, player));
+    steps.add(() -> check("previous page can explicitly select page one", menuPage(1)));
+    steps.add(() -> player.containerMenu.clicked(50, 0, ClickType.PICKUP, player));
+    steps.add(() -> check("next page still selects page two", menuPage(2)));
+    steps.add(() -> player.closeContainer());
+    steps.add(() -> check("list Escape returns directly to root after browsing",
+        player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
+            && player.containerMenu.getSlot(4).getItem().getHoverName().getString().contains("CCR Config")));
+  }
+
+  private boolean menuPage(int page) {
+    return player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
+        && player.containerMenu.getSlot(49).getItem().getHoverName().getString().contains("Page " + page + " /");
   }
 
   private void finish() {
