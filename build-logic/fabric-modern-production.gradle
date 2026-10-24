@@ -16,7 +16,37 @@ configurations { productionFabricApi }
 dependencies { productionFabricApi "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" }
 def obfuscated = project.minecraft_version.toString().startsWith('1.')
 def releaseJar = tasks.named(obfuscated ? 'remapJar' : 'jar')
+
+def archivePreviousReleaseJars = { File directory ->
+    if (!directory.isDirectory()) return
+    def currentName = releaseJar.get().archiveFileName.get()
+    fileTree(directory).matching { include 'cutcleanreborn-*.jar' }.files.each { oldJar ->
+        if (oldJar.name == currentName) return
+        boolean cutClean = false
+        new java.util.zip.ZipFile(oldJar).withCloseable { archive ->
+            def metadata = archive.getEntry('fabric.mod.json')
+            if (metadata != null) cutClean = new groovy.json.JsonSlurper().parse(archive.getInputStream(metadata)).id == 'cutcleanreborn'
+        }
+        if (cutClean) {
+            def backup = layout.buildDirectory.dir('artifact-backups').get().asFile
+            backup.mkdirs()
+            java.nio.file.Files.move(oldJar.toPath(), new File(backup, "${UUID.randomUUID()}-${oldJar.name}").toPath())
+        }
+    }
+}
+
+tasks.named('sourcesJar') {
+    archiveVersion = "${project.version}+${project.minecraft_family}"
+    destinationDirectory = layout.buildDirectory.dir('sources')
+}
+if (obfuscated) {
+    tasks.named('remapSourcesJar') {
+        archiveVersion = "${project.version}+${project.minecraft_family}"
+        destinationDirectory = layout.buildDirectory.dir('sources')
+    }
+}
 tasks.register('qaJar', Jar) {
+    destinationDirectory = layout.buildDirectory.dir('verification')
     dependsOn('qaClasses')
     from sourceSets.qa.output
     archiveBaseName='ccrverification'
@@ -26,6 +56,7 @@ tasks.register('qaJar', Jar) {
 if(obfuscated) {
     def remapType=Class.forName('net.fabricmc.loom.task.RemapJarTask',true,releaseJar.get().getClass().getClassLoader())
     tasks.register('remapQaJar',remapType) {
+        destinationDirectory = layout.buildDirectory.dir('verification')
         dependsOn('qaJar')
         inputFile=tasks.named('qaJar',Jar).flatMap { it.archiveFile }
         archiveBaseName='ccrverification'
@@ -45,6 +76,7 @@ tasks.register('downloadProductionServer') {
     }
 }
 tasks.register('prepareProductionServer',Copy) {
+    doFirst { archivePreviousReleaseJars(production.get().dir('mods').asFile) }
     dependsOn(releaseJar,qaReleaseJar,'downloadProductionServer')
     from(new File(nativeSourceRoot,'src/qa/fixtures'))
     from(officialLauncher)
@@ -81,6 +113,7 @@ tasks.register('productionSmokeTest',Exec) {
 // Independent world and three real JVMs: preserve state, remove it, then prove it stays removed.
 def persistence=layout.buildDirectory.dir('smoke-server/persistence')
 tasks.register('preparePersistenceServer',Copy) {
+    doFirst { archivePreviousReleaseJars(persistence.get().dir('mods').asFile) }
     dependsOn(releaseJar,qaReleaseJar,'downloadProductionServer')
     from(new File(nativeSourceRoot,'src/qa/fixtures'))
     from(officialLauncher)
