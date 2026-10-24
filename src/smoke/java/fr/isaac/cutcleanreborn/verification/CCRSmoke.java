@@ -29,6 +29,7 @@ public final class CCRSmoke extends JavaPlugin {
                 require(ccr != null && ccr.isEnabled(), "main plugin enabled");
                 enchantments();
                 cleanStacks();
+                cleanScope();
                 mobDrops();
                 persistenceAndMace();
                 menus();
@@ -96,6 +97,68 @@ public final class CCRSmoke extends JavaPlugin {
         require(((ItemStack) call(service, "normalise", named)).getType() == Material.BIRCH_LOG, "custom item identity preserved");
     }
 
+    private void cleanScope() throws Exception {
+        Object service = call(ccr, "cleanStacks");
+        java.util.UUID id = java.util.UUID.fromString("00000000-0000-0000-0000-000000000071");
+        ItemStack[] contents = new ItemStack[41];
+        contents[0] = new ItemStack(Material.BIRCH_LOG, 17);
+        contents[1] = new ItemStack(Material.COBBLESTONE, 23);
+        var inventory = (org.bukkit.inventory.PlayerInventory) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[] {org.bukkit.inventory.PlayerInventory.class},
+                (proxy, method, args) -> {
+                    if (method.getName().equals("getContents")) return contents.clone();
+                    if (method.getName().equals("getItemInMainHand")) return new ItemStack(Material.DIAMOND_AXE);
+                    if (method.getName().equals("setContents")) {
+                        System.arraycopy((ItemStack[]) args[0], 0, contents, 0, contents.length); return null;
+                    }
+                    throw new UnsupportedOperationException(method.getName());
+                });
+        var player = (org.bukkit.entity.Player) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[] {org.bukkit.entity.Player.class},
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "getUniqueId" -> id;
+                    case "getInventory" -> inventory;
+                    default -> throw new UnsupportedOperationException(method.getName());
+                });
+        call(service, "setEnabled", player, true);
+        require((Boolean) call(service, "enabled", player), "Clean Stacks preference enabled");
+        require(contents[0].getType() == Material.BIRCH_LOG && contents[0].getAmount() == 17
+                && contents[1].getType() == Material.COBBLESTONE && contents[1].getAmount() == 23,
+                "enabling Clean Stacks leaves stored and given inventory untouched");
+        var listenerMethods = java.util.Arrays.stream(service.getClass().getDeclaredMethods())
+                .filter(method -> method.isAnnotationPresent(org.bukkit.event.EventHandler.class)).toList();
+        require(listenerMethods.stream().noneMatch(method -> java.util.Arrays.asList(method.getParameterTypes())
+                .contains(org.bukkit.event.entity.EntityPickupItemEvent.class)), "Clean Stacks never handles unrelated item pickup");
+        require(listenerMethods.stream().noneMatch(method -> java.util.Arrays.asList(method.getParameterTypes())
+                .contains(org.bukkit.event.inventory.PrepareItemCraftEvent.class)), "Clean Stacks never changes crafting results");
+        ccr.getConfig().set("clean-stacks.wood.BIRCH_LOG", "minecraft:oak_log");
+        var world = getServer().getWorlds().getFirst();
+        var block = world.getBlockAt(34, 100, 34);
+        var state = block.getState();
+        state.setType(Material.BIRCH_LOG);
+        var drop = world.dropItem(block.getLocation(), new ItemStack(Material.BIRCH_LOG, 7));
+        try {
+            var event = new org.bukkit.event.block.BlockDropItemEvent(block, state, player, new ArrayList<>(List.of(drop)));
+            getServer().getPluginManager().callEvent(event);
+            require(drop.getItemStack().getType() == Material.OAK_LOG && drop.getItemStack().getAmount() == 7,
+                    "enabled block-drop listener converts material without quantity loss");
+            drop.setItemStack(new ItemStack(Material.BIRCH_LOG, 11));
+            var cancelled = new org.bukkit.event.block.BlockDropItemEvent(block, state, player, new ArrayList<>(List.of(drop)));
+            cancelled.setCancelled(true);
+            getServer().getPluginManager().callEvent(cancelled);
+            require(drop.getItemStack().getType() == Material.BIRCH_LOG && drop.getItemStack().getAmount() == 11,
+                    "cancelled block drops remain untouched");
+            call(service, "setEnabled", player, false);
+            var disabled = new org.bukkit.event.block.BlockDropItemEvent(block, state, player, new ArrayList<>(List.of(drop)));
+            getServer().getPluginManager().callEvent(disabled);
+            require(drop.getItemStack().getType() == Material.BIRCH_LOG && drop.getItemStack().getAmount() == 11,
+                    "disabled personal conversion leaves block drops untouched");
+        } finally {
+            drop.remove();
+            ccr.getConfig().set("clean-stacks.players." + id, null);
+        }
+    }
+
     private void mobDrops() throws Exception {
         Object rule = create("CutCleanRebornPlugin$MobDrop", Material.LEATHER, 2, 2, 100.0);
         call(ccr, "saveVanillaDropOverrides", EntityType.COW, List.of(rule));
@@ -151,6 +214,16 @@ public final class CCRSmoke extends JavaPlugin {
         Object main = create("ConfigMainMenu", ccr);
         ItemStack rules = ((InventoryHolder) main).getInventory().getItem(24);
         require(rules != null && rules.getType() == Material.IRON_CHESTPLATE, "Stuff Rules has a unique direct main-menu slot");
+        var root = ((InventoryHolder) main).getInventory();
+        require(root.getItem(35).getType() == Material.BARRIER, "root close uses the common right footer");
+        call(main, "decorate");
+        require(root.getItem(0).getType() == Material.BLACK_STAINED_GLASS_PANE, "header has a distinct dark frame");
+        require(root.getItem(11) == null, "dashboard interior keeps spacing between categories");
+        var clean = ((InventoryHolder) create("CleanStackMenu", ccr)).getInventory();
+        require(clean.getItem(18).getType() == Material.ARROW && clean.getItem(26).getType() == Material.BARRIER,
+                "Clean Stacks has separate Back and Close footer actions");
+        var cane = ((InventoryHolder) create("BetterSugarCaneMenu", ccr)).getInventory();
+        require(cane.getItem(31).getType() == Material.TNT, "sugar cane reset is centered away from navigation");
     }
 
     private void persistenceAndMace() throws Exception {
