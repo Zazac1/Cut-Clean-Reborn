@@ -58,7 +58,9 @@ abstract class MenuSupport implements InventoryHolder, Listener {
     private void decorate() {
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             if (inventory.getItem(slot) != null) continue;
-            if (slot < 9 || slot >= inventory.getSize() - 9 || slot % 9 == 0 || slot % 9 == 8)
+            if (slot < 9 || slot >= inventory.getSize() - 9)
+                inventory.setItem(slot, MenuItems.item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of()));
+            else if (slot % 9 == 0 || slot % 9 == 8)
                 inventory.setItem(slot, MenuItems.item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of()));
         }
     }
@@ -72,7 +74,7 @@ abstract class MenuSupport implements InventoryHolder, Listener {
         if (slot < 0 || slot >= inventory.getSize() || !(event.getWhoClicked() instanceof Player player)) return;
         if (!event.getClick().isLeftClick() && !event.getClick().isRightClick()) return;
         ItemStack item = inventory.getItem(slot);
-        if (item == null || item.getType() == Material.GRAY_STAINED_GLASS_PANE || informationSlots.contains(slot)) return;
+        if (item == null || item.getType() == Material.GRAY_STAINED_GLASS_PANE || item.getType() == Material.BLACK_STAINED_GLASS_PANE || informationSlots.contains(slot)) return;
         int tick = BukkitCompat.currentTick();
         if (lastClickTick == tick) return;
         lastClickTick = tick;
