@@ -27,7 +27,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -813,7 +813,7 @@ public final class NativeChecks implements ModInitializer {
         () -> {
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
               .setItemName("minecraft:cow");
-          player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(2, 0, ContainerInput.PICKUP, player);
         });
     steps.add(() -> clickLabel("Cook Food"));
     steps.add(
@@ -911,7 +911,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickLabel("Stuff Rules"));
     steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player));
     steps.add(() -> clickLabel("Maximum"));
     steps.add(
         () -> {
@@ -920,7 +920,7 @@ public final class NativeChecks implements ModInitializer {
           rules.removeIf(rule -> rule.get("id").equals("qa-concurrent-A"));
           mod.config.set(path, rules);
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu).setItemName("1");
-          player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(2, 0, ContainerInput.PICKUP, player);
         });
     steps.add(
         () -> {
@@ -941,7 +941,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickLabel("Stuff Rules"));
     steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 10), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 10), 0, ContainerInput.PICKUP, player));
     steps.add(() -> clickLabel("Maximum"));
     steps.add(
         () -> {
@@ -955,7 +955,7 @@ public final class NativeChecks implements ModInitializer {
           rules.removeIf(rule -> rule.get("id").equals("qa-concurrent-B"));
           mod.config.set(path, rules);
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu).setItemName("2");
-          player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(2, 0, ContainerInput.PICKUP, player);
         });
     steps.add(
         () -> {
@@ -972,7 +972,7 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> resetConcurrentRules(cap));
     steps.add(() -> clickLabel("Stuff Rules"));
     steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player));
     steps.add(() -> clickLabel("Delete Rule"));
     steps.add(
         () -> {
@@ -990,14 +990,14 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> resetConcurrentRules(cap));
     steps.add(() -> clickLabel("Stuff Rules"));
     steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player));
     steps.add(() -> clickLabel("Copy to Another Target"));
     steps.add(
         () -> {
           mod.config.removeEntryById(path, "qa-concurrent-B");
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu)
               .setItemName(cap ? "TOOLS" : "IRON");
-          player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(2, 0, ContainerInput.PICKUP, player);
         });
     steps.add(
         () ->
@@ -1014,7 +1014,7 @@ public final class NativeChecks implements ModInitializer {
         });
     steps.add(() -> clickLabel("Stuff Rules"));
     steps.add(() -> clickLabel(cap ? "Enchantment Caps" : "Armor Limits"));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player));
     steps.add(() -> clickLabel("Target"));
     steps.add(
         () -> {
@@ -1141,7 +1141,7 @@ public final class NativeChecks implements ModInitializer {
     menu.getSlot(1).set(new ItemStack(Items.HEAVY_CORE));
     menu.getSlot(4).set(new ItemStack(Items.BREEZE_ROD));
     check("native mace recipe available", menu.getSlot(0).getItem().is(Items.MACE));
-    menu.clicked(0, 0, ClickType.PICKUP, player);
+    menu.clicked(0, 0, ContainerInput.PICKUP, player);
     ItemStack mace = menu.getCarried();
     check(
         "native crafting transaction identity",
@@ -1151,26 +1151,26 @@ public final class NativeChecks implements ModInitializer {
     menu.setCarried(ItemStack.EMPTY);
     menu.getSlot(1).set(new ItemStack(Items.HEAVY_CORE));
     menu.getSlot(4).set(new ItemStack(Items.BREEZE_ROD));
-    menu.clicked(0, 0, ClickType.PICKUP, player);
+    menu.clicked(0, 0, ContainerInput.PICKUP, player);
     check(
         "native duplicate craft blocked before ingredients",
         menu.getCarried().isEmpty() && menu.getSlot(1).getItem().is(Items.HEAVY_CORE));
     mod.inventory.destroyed(mace);
-    for (ClickType type : List.of(ClickType.SWAP, ClickType.THROW)) {
+    for (ContainerInput type : List.of(ContainerInput.SWAP, ContainerInput.THROW)) {
       menu.clicked(0, 0, type, player);
       check(
           "unique craft rejects " + type + " before ingredients",
           !mod.inventory.maceBlocked() && menu.getSlot(1).getItem().is(Items.HEAVY_CORE));
     }
     menu.setCarried(new ItemStack(Items.STICK));
-    menu.clicked(0, 0, ClickType.PICKUP, player);
+    menu.clicked(0, 0, ContainerInput.PICKUP, player);
     check(
         "unique craft rejects occupied cursor before ingredients",
         !mod.inventory.maceBlocked()
             && menu.getSlot(1).getItem().is(Items.HEAVY_CORE)
             && menu.getCarried().is(Items.STICK));
     menu.setCarried(ItemStack.EMPTY);
-    menu.clicked(0, 0, ClickType.QUICK_MOVE, player);
+    menu.clicked(0, 0, ContainerInput.QUICK_MOVE, player);
     check(
         "native shift unique craft rejected safely",
         !mod.inventory.maceBlocked() && menu.getSlot(1).getItem().is(Items.HEAVY_CORE));
@@ -1192,7 +1192,7 @@ public final class NativeChecks implements ModInitializer {
         "native anvil output and paid repair cost",
         menu.getSlot(2).getItem().is(Items.DIAMOND_SWORD) && menu.getCost() > 0);
     int before = player.experienceLevel;
-    menu.clicked(2, 0, ClickType.PICKUP, player);
+    menu.clicked(2, 0, ContainerInput.PICKUP, player);
     check(
         "native anvil cap before transfer",
         EnchantmentHelper.getItemEnchantmentLevel(
@@ -1216,7 +1216,7 @@ public final class NativeChecks implements ModInitializer {
     menu.getSlot(0).set(sword);
     menu.getSlot(1).set(new ItemStack(Items.DIAMOND));
     int beforeShift = player.experienceLevel;
-    menu.clicked(2, 0, ClickType.QUICK_MOVE, player);
+    menu.clicked(2, 0, ContainerInput.QUICK_MOVE, player);
     check(
         "full inventory anvil shift does not charge",
         player.experienceLevel == beforeShift && !menu.getSlot(2).getItem().isEmpty());
@@ -1238,7 +1238,7 @@ public final class NativeChecks implements ModInitializer {
     menu.getSlot(0).set(sword);
     menu.getSlot(1).set(new ItemStack(Items.DIAMOND));
     int cost = menu.getCost(), beforeUncapped = player.experienceLevel;
-    menu.clicked(2, 0, ClickType.PICKUP, player);
+    menu.clicked(2, 0, ContainerInput.PICKUP, player);
     check(
         "new anvil recipe cannot reuse previous refund",
         cost > 0 && player.experienceLevel == beforeUncapped - cost);
@@ -1329,7 +1329,7 @@ public final class NativeChecks implements ModInitializer {
         "clean does not convert vanilla plank craft preview",
         menu.getSlot(0).getItem().is(Items.BIRCH_PLANKS)
             && menu.getSlot(0).getItem().getCount() == 4);
-    menu.clicked(0, 0, ClickType.PICKUP, player);
+    menu.clicked(0, 0, ContainerInput.PICKUP, player);
     check(
         "clean leaves crafted material and quantity unchanged",
         menu.getCarried().is(Items.BIRCH_PLANKS) && menu.getCarried().getCount() == 4);
@@ -1519,7 +1519,7 @@ public final class NativeChecks implements ModInitializer {
           .getString()
           .toLowerCase(java.util.Locale.ROOT)
           .contains(text.toLowerCase(java.util.Locale.ROOT))) {
-        player.containerMenu.clicked(slot, button, ClickType.PICKUP, player);
+        player.containerMenu.clicked(slot, button, ContainerInput.PICKUP, player);
         return;
       }
     throw new IllegalStateException("Menu button not found: " + text);
@@ -1542,14 +1542,14 @@ public final class NativeChecks implements ModInitializer {
                     .getHoverName()
                     .getString()
                     .contains("Enchantments")));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ContainerInput.PICKUP, player));
     steps.add(
         () -> {
           check(
               "native picker level input opens",
               player.containerMenu instanceof net.minecraft.world.inventory.AnvilMenu);
           ((net.minecraft.world.inventory.AnvilMenu) player.containerMenu).setItemName("2");
-          player.containerMenu.clicked(2, 0, ClickType.PICKUP, player);
+          player.containerMenu.clicked(2, 0, ContainerInput.PICKUP, player);
         });
     steps.add(
         () ->
@@ -1624,7 +1624,7 @@ public final class NativeChecks implements ModInitializer {
             .getHoverName()
             .getString()
             .contains("CCR Config"));
-    player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player);
+    player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player);
     steps.add(
         () ->
             check(
@@ -1652,8 +1652,8 @@ public final class NativeChecks implements ModInitializer {
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape root closes", player.containerMenu == player.inventoryMenu));
     steps.add(() -> mod.menus.main(player));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 14), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 11), 0, ContainerInput.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 14), 0, ContainerInput.PICKUP, player));
     steps.add(
         () ->
             check(
@@ -1678,28 +1678,28 @@ public final class NativeChecks implements ModInitializer {
   private void menuPageReturn() {
     String[] childTitle = {""};
     steps.add(() -> mod.menus.main(player));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ContainerInput.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ContainerInput.PICKUP, player));
     steps.add(() -> check("list return setup opens page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ContainerInput.PICKUP, player));
     steps.add(() -> {
       childTitle[0] = player.containerMenu.getSlot(4).getItem().getHoverName().getString();
-      player.containerMenu.clicked(menuSlot(player, 10), 0, ClickType.PICKUP, player);
+      player.containerMenu.clicked(menuSlot(player, 10), 0, ContainerInput.PICKUP, player);
     });
     steps.add(() -> check("list child opens numeric input", player.containerMenu instanceof net.minecraft.world.inventory.AnvilMenu));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("list child input cancels to its detail page",
         player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu
             && player.containerMenu.getSlot(4).getItem().getHoverName().getString().equals(childTitle[0])));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ContainerInput.PICKUP, player));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("Escape after a detail refresh restores list page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ClickType.PICKUP, player));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 45), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 9), 0, ContainerInput.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 45), 0, ContainerInput.PICKUP, player));
     steps.add(() -> check("Back from a list child restores page two", menuPage(2)));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 48), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 48), 0, ContainerInput.PICKUP, player));
     steps.add(() -> check("previous page can explicitly select page one", menuPage(1)));
-    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ClickType.PICKUP, player));
+    steps.add(() -> player.containerMenu.clicked(menuSlot(player, 50), 0, ContainerInput.PICKUP, player));
     steps.add(() -> check("next page still selects page two", menuPage(2)));
     steps.add(() -> player.closeContainer());
     steps.add(() -> check("list Escape returns directly to root after browsing",
